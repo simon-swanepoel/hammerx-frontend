@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDF HammerX - Test Portal</title>
+    <style>
+        /* Modern Plain Blue Theme */
+        body {
+            background-color: #2563eb; /* Royal Blue Background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #ffffff;
+        }
+
+        /* Centered Form Card */
+        .container {
+            background-color: #1e40af; /* Darker Blue Card */
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        /* Clickable Upload Area */
+        .upload-block {
+            border: 2px dashed #93c5fd;
+            border-radius: 8px;
+            padding: 30px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .upload-block:hover {
+            background-color: #1d4ed8;
+            border-color: #ffffff;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Hidden File Input */
+        #file-input {
+            display: none;
+        }
+
+        /* Page Ranges Inputs */
+        .inputs-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            flex: 1;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            color: #93c5fd;
+        }
+
+        .page-input {
+            width: 100%;
+            background-color: #1d4ed8;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            padding: 10px;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .page-input:focus {
+            border-color: #ffffff;
+        }
+
+        /* Hide Number Input Spinners */
+        .page-input::-webkit-outer-spin-button,
+        .page-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Send Button (Hidden by default) */
+        #send-btn {
+            display: none;
+            width: 100%;
+            background-color: #10b981; /* Emerald Green */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #send-btn:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>HammerX Ingestion Portal</h2>
+        
+        <!-- Clickable Upload Box -->
+        <div class="upload-block" id="upload-box">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text" id="upload-label">Click to Select PDF</div>
+            <input type="file" id="file-input" accept="application/pdf">
+        </div>
+
+        <!-- Target Page Ranges (Max 4 digits) -->
+        <div class="inputs-row">
+            <div class="input-group">
+                <label for="start-page">Start Page</label>
+                <input type="number" id="start-page" class="page-input" placeholder="0001" min="1" max="9999" oninput="limitDigits(this)">
+            </div>
+            <div class="input-group">
+                <label for="end-page">End Page</label>
+                <input type="number" id="end-page" class="page-input" placeholder="0010" min="1" max="9999" oninput="limitDigits(this)">
+            </div>
+        </div>
+
+        <!-- Dynamic Send Button -->
+        <button id="send-btn">Send to Mill</button>
+    </div>
+
+    <script>
+        const uploadBox = document.getElementById('upload-box');
+        const fileInput = document.getElementById('file-input');
+        const uploadLabel = document.getElementById('upload-label');
+        const startPage = document.getElementById('start-page');
+        const endPage = document.getElementById('end-page');
+        const sendBtn = document.getElementById('send-btn');
+
+        // PRODUCTION LIVE CLOUD ENDPOINT (Points to your live Render Engine)
+        const RENDER_URL = "https://hammerx-mill.onrender.com";
+
+        // Click on the box triggers the native file selection
+        uploadBox.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Update box label when file is selected and check validation
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                uploadLabel.textContent = fileInput.files[0].name;
+                uploadBox.style.borderColor = '#10b981'; // Green border on select
+            } else {
+                uploadLabel.textContent = "Click to Select PDF";
+                uploadBox.style.borderColor = '#93c5fd';
+            }
+            validateForm();
+        });
+
+        // Add listeners to text blocks to check validation on input
+        startPage.addEventListener('input', validateForm);
+        endPage.addEventListener('input', validateForm);
+
+        // Function to limit numerical inputs to 4 digits
+        function limitDigits(element) {
+            if (element.value.length > 4) {
+                element.value = element.value.slice(0, 4);
+            }
+        }
+
+        // Logic to show/hide the send button based on strict validation
+        function validateForm() {
+            const hasFile = fileInput.files.length > 0;
+            const startVal = startPage.value.trim();
+            const endVal = endPage.value.trim();
+
+            // Validate that we have a file, and both page numbers are positive integers up to 4 digits
+            const startValid = /^\d{1,4}$/.test(startVal) && parseInt(startVal) > 0;
+            const endValid = /^\d{1,4}$/.test(endVal) && parseInt(endVal) > 0;
+
+            if (hasFile && startValid && endValid) {
+                sendBtn.style.display = 'block'; // Unhides your original emerald button
+            } else {
+                sendBtn.style.display = 'none';  // Keeps it completely hidden
+            }
+        }
+
+        // Transmission Loop: Action when original Emerald Green Send button is clicked
+        sendBtn.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            // Visual loading state updates
+            sendBtn.disabled = true;
+            sendBtn.textContent = "TRANSMITTING TO MILL...";
+            sendBtn.style.backgroundColor = "#d97706"; // Shifts momentarily to Amber Warning for system transmission awareness
+
+            // Read the PDF file layout and encode it directly to a clean Base64 string
+            reader.readAsDataURL(file);
+            reader.onload = function () {
+                // Strip out the data URL wrapper to pass raw Base64 bytes down the wire
+                const base64RawString = reader.result.split(',')[1];
+
+                // Package the transmission object to match the Pydantic model inside your script
+                const payload = {
+                    filename: file.name,
+                    fileData: base64RawString,
+                    start_page: parseInt(startPage.value),
+                    end_page: parseInt(endPage.value)
+                };
+
+                // Fire the transmission straight across your production network link
+                fetch(RENDER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        alert(`[STRIKE CONFIRMED] ${file.name} successfully processed and backed up!`);
+                    } else {
+                        alert(`[TRANSMISSION FAULT] Server rejected package: ${data.message}`);
+                    }
+                    resetSendButton();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(`[ROUTING ERROR] Cannot reach Cloud Engine Room. Verify Render web service health.`);
+                    resetSendButton();
+                });
+            };
+
+            reader.onerror = function (error) {
+                alert(`[FILE READ ERROR] Could not decode local asset: ${error}`);
+                resetSendButton();
+            };
+        });
+
+        // Helper function to return button back to default Emerald Green CSS styling
+        function resetSendButton() {
+            sendBtn.disabled = false;
+            sendBtn.textContent = "Send to Mill";
+            sendBtn.style.backgroundColor = "#10b981"; // Reverts to your crisp emerald design
+        }
+    </script>
+</body>
+</html>
