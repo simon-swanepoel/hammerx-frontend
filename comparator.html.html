@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SST-comparator / Hammer-X Workstation</title>
+    <link rel="stylesheet" href="SST-comparator.css">
+</head>
+<body>
+
+    <!-- Layer 1: Universal Backdrop Canvas -->
+    <div class="nebula-canvas"></div>
+
+    <!-- Consolidated Top Navigation Header Bar -->
+    <div class="workstation-header" id="workstation-shutter-header">
+        
+        <!-- Top-Left Menu Container -->
+        <div class="top-menu-container menu-left">
+            <div class="drawer-wrapper">
+                <div class="menu-trigger">☰</div>
+                <nav class="nav-links-drawer">
+                    <a href="#home" class="sst-nav-link">HOME</a>
+                    <a href="#hammerx-home" class="sst-nav-link">HAMMERX HOME</a>
+                    <a href="#stats" class="sst-nav-link">STATS</a>
+                    <a href="#guardian-portal" class="sst-nav-link">GARDIAN PORTAL</a>
+                    <a href="#tutorials" class="sst-nav-link">TUTORIALS</a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Centered horizontal logo and text branding block -->
+        <div class="logo-wrapper">
+            <img src="SST Logo.png" alt="SST Logo" class="sst-logo" id="shutter-logo">
+            <div class="sst-branding-text-zone">
+                <h2 class="sst-title-main" id="shutter-title-main">Swanepoel Study Tools</h2>
+                <div class="sst-title-divider" id="shutter-title-divider"></div>
+                <h3 class="sst-title-sub" id="shutter-title-sub">HAMMERX COMPARATOR</h3>
+            </div>
+        </div>
+
+        <!-- Right Configuration & User Profile Anchor (3-Dots Menu) -->
+        <div class="top-menu-container menu-right">
+            <div class="drawer-wrapper">
+                <div class="user-profile-trigger">
+                    <span class="user-display-name">Simon Swanepoel</span>
+                    <div class="menu-trigger">⋮</div>
+                </div>
+                <nav class="nav-links-drawer profile-drawer">
+                    <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings">Account Settings</a>
+                    <a href="#security" class="sst-nav-link">Security</a>
+                    <a href="#logout" class="sst-nav-link">Sign Out</a>
+                </nav>
+            </div>
+        </div>
+    </div>      
+
+    <!-- The Primary Active Workspace Core -->
+    <div class="workspace-core">
+        
+        <!-- LEFT GOOGLE AD TEST ZONE -->
+        <div class="ad-zone-side">
+            <div class="google-test-ad-banner">
+                <span class="ad-label">Google Ad Test<br>120 x 600</span>
+            </div>
+        </div>
+        
+        <!-- The Central Focused Workstation Console (70vw Material Block) -->
+        <div class="workstation-console" id="main-workstation-console">
+            
+            <div class="viewport-wrapper">
+                
+                <!-- Top Control Strip -->
+                <div class="button-bar-top">
+                    <button class="viewport-button-corner active-toggle" id="btn-nav-study">COURSEWARE</button>
+                    <button class="viewport-button-center" id="btn-nav-gear">⚙</button>
+                    <button class="viewport-button-corner" id="btn-nav-slate">HAMMER</button>
+                </div>
+
+                <!-- Central Viewport -->
+                <div class="console-viewport">
+                    
+                    <!-- Viewport Display 1: Courseware -->
+                    <div id="display-study-material" class="viewport-display active">
+                        <div class="study-viewport-layout">
+                            
+                            <!-- 10 TAB HEADERS -->
+                            <div class="study-tab-strip">                              
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '01_WHAT')">01.[WHAT]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '02_PURPOSE')">02.[PURPOSE]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '03_RULE')">03.[RULE]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '04_FORMULA')">04.[FORMULA]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '05_ID')">05.[ID]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '06_RELATED')">06.[RELATED]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '07_OBJECTIVE')">07.[OBJECTIVE]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '08_SOURCE')">08.[SOURCE]</button>
+                                <button class="study-tab-button" onclick="switchStudyTab(event, '09_WHY')">09.[WHY]</button>
+                                <button class="study-tab-button active-study-tab" onclick="switchStudyTab(event, '00_SUMMARY')">SUMMARY</button>
+                            </div>
+
+                            <!-- 10 CONTENT PANES -->
+                            <div class="study-content-container">
+                                <div id="00_SUMMARY" class="study-tab-pane active">[*] Requesting payload from hamtab_data.json...</div>
+                                <div id="01_WHAT" class="study-tab-pane"></div>
+                                <div id="02_PURPOSE" class="study-tab-pane"></div>
+                                <div id="03_RULE" class="study-tab-pane"></div>
+                                <div id="04_FORMULA" class="study-tab-pane"></div>
+                                <div id="05_ID" class="study-tab-pane"></div>
+                                <div id="06_RELATED" class="study-tab-pane"></div>
+                                <div id="07_OBJECTIVE" class="study-tab-pane"></div>
+                                <div id="08_SOURCE" class="study-tab-pane"></div>
+                                <div id="09_WHY" class="study-tab-pane"></div>
+                            </div>
+                            
+                            <!-- STREAMLINED BOTTOM FOOTER STRIP -->
+                            <div class="study-footer-strip">
+                                <div class="footer-left-group">
+                                    <button id="btn-expand-toggle" class="study-footer-button" onclick="toggleExpandAll()">EXPAND/COLLAPSE</button>
+                                    <button id="btn-study-hide" class="study-footer-button">HIDE</button>
+                                    <button id="btn-study-unhide" class="study-footer-button">UNHIDE</button>
+                                </div>
+                                <div class="footer-right-group">
+                                    <button id="btn-study-delete" class="study-footer-button btn-danger-action">DELETE</button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- WARNING MODAL ANCHORED INSIDE STUDY VIEWPORT -->
+                        <div class="comparator-modal-overlay" id="sst-global-modal" style="display: none;">
+                            <div class="comparator-modal-box">
+                                <div class="modal-title" id="global-modal-title">REQUIRED FIELDS MISSING</div>
+                                <p class="modal-text" id="global-modal-body">Confirmation required.</p>
+                                <div class="modal-button-group" id="global-modal-actions"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Viewport Display 2: HAMMER (Interactive Canvas) -->
+                    <div id="display-copy-slate" class="viewport-display">
+                        <div class="copy-slate-layout">
+                            
+                            <!-- Mode & Comparison Header Strip -->
+                            <div class="copy-slate-header-strip">
+                                <div class="copy-slate-mode-group">
+                                    <button class="copy-slate-mode-btn active-slate-mode" id="btn-mode-noun">[NOUN]</button>
+                                    <button class="copy-slate-mode-btn" id="btn-mode-noun-desc">[NOUN + DESC]</button>
+                                    <button class="copy-slate-mode-btn" id="btn-mode-noun-desc-where">[NOUN + DESC + WHERE]</button>
+                                </div>
+                                <div class="copy-slate-check-group">
+                                    <button class="copy-slate-mode-btn" id="btn-slate-clear">[ CLEAR ]</button>
+                                    
+                                    <div class="copy-slate-groups-indicator">
+                                        <span class="groups-label">GROUPS:</span>
+                                        <span class="groups-list" id="slate-active-groups-display">[ ALL ]</span>
+                                    </div>
+
+                                    <span class="copy-slate-score-display" id="slate-score-display">[ --- ]</span>
+                                    <button class="copy-slate-check-toggle" id="btn-toggle-check-mode">[ VERBATUM ]</button>
+                                </div>
+                            </div>
+
+                            <!-- Live Writing Canvas Area -->
+                            <div class="copy-slate-canvas" id="copy-slate-canvas"></div>
+
+                        </div>
+
+                        <!-- Modal Confirmation Dialog for Slate -->
+                        <div class="comparator-modal-overlay" id="slate-clear-modal" style="display: none;">
+                            <div class="comparator-modal-box">
+                                <div class="modal-title">SAVE TEST RESULTS?</div>
+                                <p class="modal-text">Would you like to log your test score and attempt data before clearing the slate?</p>
+                                <div class="modal-button-group">
+                                    <button class="modal-btn btn-modal-discard" id="btn-modal-discard">CLEAR WITHOUT SAVING</button>
+                                    <button class="modal-btn btn-modal-save" id="btn-modal-save">SAVE & CLEAR</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Viewport Display 3: Settings -->
+                    <div id="display-settings" class="viewport-display">
+                        <h1 class="settings-heading">SETTINGS</h1>
+                        <div class="settings-divider"></div>
+
+                        <div class="settings-layout-container">
+                            <div class="settings-left-pane">
+                                <ul class="settings-list">
+                                    <li class="settings-item active-category" data-category="GROUP BREAKS">GROUP BREAKS</li>
+                                    <li class="settings-item" data-category="VIEWPORT APPEARANCE">VIEWPORT APPEARANCE</li>
+                                    <li class="settings-item" data-category="COLORS">COLORS</li>
+                                    <li class="settings-item" data-category="TEXT">TEXT</li>
+                                </ul>
+                            </div>
+
+                            <div class="settings-right-pane">
+                                <h3 id="sub-menu-title" class="sub-menu-heading">[ GROUP BREAKS Options ]</h3>
+                                
+                                <div id="group-breaks-control" style="font-family: monospace; font-size: 0.9rem; margin-top: 20px;">
+                                    LINES PER GROUP: 
+                                    <span id="group-size-display" style="color: #b29c6d; cursor: pointer; text-decoration: underline; font-weight: bold; margin-left: 6px;">10</span>
+                                    
+                                    <span id="group-size-edit-container" style="display: none; margin-left: 12px; align-items: center; gap: 8px;">
+                                        <input type="number" id="input-group-size" min="2" max="50" style="width: 60px; background: #111; color: #fff; border: 1px solid #b29c6d; padding: 2px 6px; font-family: monospace; font-size: 0.85rem;" />
+                                        <button id="btn-save-group-size" style="background: transparent; border: 1px solid #b29c6d; color: #b29c6d; font-family: monospace; font-size: 0.75rem; font-weight: bold; padding: 2px 8px; cursor: pointer;">SAVE</button>
+                                    </span>
+                                </div>
+
+                                <div id="viewport-appearance-control" style="display: none;">
+                                    <div class="theme-preset-grid">
+                                        <!-- Surface Boards -->
+                                        <div class="theme-preset-card card-black-board active-theme" data-theme="BLACK_BOARD"><span>BLACK BOARD</span></div>
+                                        <div class="theme-preset-card card-green-board" data-theme="GREEN_BOARD"><span>GREEN BOARD</span></div>
+                                        <div class="theme-preset-card card-red-board" data-theme="RED_BOARD"><span>RED BOARD</span></div>
+                                        <div class="theme-preset-card card-whiteboard" data-theme="WHITEBOARD"><span>WHITEBOARD</span></div>
+                                        <div class="theme-preset-card card-paper" data-theme="PAPER"><span>PAPER (PLAIN)</span></div>
+
+                                        <div class="settings-sub-divider"></div>
+
+                                        <!-- RULED LINES COLOR ROW -->
+                                        <div class="theme-preset-card card-color-picker-row">
+                                            <span class="color-row-title">RULED LINES</span>
+                                            <div class="palette-radio-group" id="palette-ruled-lines">
+                                                <div class="palette-dot dot-off active-dot" data-color="transparent" title="Off"></div>
+                                                <div class="palette-dot" style="background-color: #000000;" data-color="#000000" title="Black"></div>
+                                                <div class="palette-dot" style="background-color: #ffffff;" data-color="#ffffff" title="White"></div>
+                                                <div class="palette-dot" style="background-color: #8a8d97;" data-color="#8a8d97" title="Grey"></div>
+                                                <div class="palette-dot" style="background-color: #ff3344;" data-color="#ff3344" title="Red"></div>
+                                                <div class="palette-dot" style="background-color: #ffd700;" data-color="#ffd700" title="Yellow"></div>
+                                                <div class="palette-dot" style="background-color: #3b82f6;" data-color="#3b82f6" title="Blue"></div>
+                                                <div class="palette-dot" style="background-color: #a855f7;" data-color="#a855f7" title="Purple"></div>
+                                                <div class="palette-dot" style="background-color: #ff8800;" data-color="#ff8800" title="Orange"></div>
+                                                <div class="palette-dot" style="background-color: #10b981;" data-color="#10b981" title="Green"></div>
+                                                <div class="palette-dot" style="background-color: #06b6d4;" data-color="#06b6d4" title="Cyan"></div>
+                                                <div class="palette-dot" style="background-color: #ec4899;" data-color="#ec4899" title="Magenta"></div>
+                                                <div class="palette-dot" style="background-color: #708238;" data-color="#708238" title="Aloe"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- MARGIN COLOR ROW -->
+                                        <div class="theme-preset-card card-color-picker-row">
+                                            <span class="color-row-title">MARGIN</span>
+                                            <div class="palette-radio-group" id="palette-margin">
+                                                <div class="palette-dot dot-off active-dot" data-color="transparent" title="Off"></div>
+                                                <div class="palette-dot" style="background-color: #000000;" data-color="#000000" title="Black"></div>
+                                                <div class="palette-dot" style="background-color: #ffffff;" data-color="#ffffff" title="White"></div>
+                                                <div class="palette-dot" style="background-color: #8a8d97;" data-color="#8a8d97" title="Grey"></div>
+                                                <div class="palette-dot" style="background-color: #ff3344;" data-color="#ff3344" title="Red"></div>
+                                                <div class="palette-dot" style="background-color: #ffd700;" data-color="#ffd700" title="Yellow"></div>
+                                                <div class="palette-dot" style="background-color: #3b82f6;" data-color="#3b82f6" title="Blue"></div>
+                                                <div class="palette-dot" style="background-color: #a855f7;" data-color="#a855f7" title="Purple"></div>
+                                                <div class="palette-dot" style="background-color: #ff8800;" data-color="#ff8800" title="Orange"></div>
+                                                <div class="palette-dot" style="background-color: #10b981;" data-color="#10b981" title="Green"></div>
+                                                <div class="palette-dot" style="background-color: #06b6d4;" data-color="#06b6d4" title="Cyan"></div>
+                                                <div class="palette-dot" style="background-color: #ec4899;" data-color="#ec4899" title="Magenta"></div>
+                                                <div class="palette-dot" style="background-color: #708238;" data-color="#708238" title="Aloe"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="settings-sub-divider"></div>
+
+                                        <!-- MATERIAL BORDER PRESETS -->
+                                        <div class="theme-preset-card card-border-wood active-theme" id="btn-border-wood" data-frame="WOOD">
+                                            <span>WOOD BORDER</span>
+                                        </div>
+                                        <div class="theme-preset-card card-border-titanium" id="btn-border-titanium" data-frame="TITANIUM">
+                                            <span>TITANIUM BORDER</span>
+                                        </div>
+                                        <div class="theme-preset-card card-border-blackglass" id="btn-border-blackglass" data-frame="BLACK_GLASS">
+                                            <span>NITE-LIT (BLACK GLASS)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CATEGORY 3: COLORS -->
+                                <div id="colors-control" style="display: none;">
+                                    <div class="color-section-selector">
+                                        <span class="color-target-btn active-target" data-target="--color-part-tag">[ TAG ]</span>
+                                        <span class="color-target-btn" data-target="--color-part-name">NAME</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="color-target-btn" data-target="--color-part-desc">DESCRIPTION</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="color-target-btn" data-target="--color-part-where">WHERE</span>
+                                    </div>
+
+                                    <div style="margin-top: 12px; padding: 8px 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--divider-color); border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
+                                        <span style="color: var(--number-color); margin-right: 6px;">SAMPLE:</span>
+                                        <span class="line-part-tag">[RELATED]</span>
+                                        <span class="line-part-name">Computer systems</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="line-part-desc">One type of electrical system</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="line-part-where">"Computer systems are..."</span>
+                                    </div>
+
+                                    <div class="color-matrices-wrapper">
+                                        <div class="color-matrix-grid" id="color-matrix-container"></div>
+                                        
+                                        <div class="color-preset-3x3-container">
+                                            <div class="color-preset-3x3-label">PRESETS</div>
+                                            <div class="color-preset-3x3-grid" id="color-preset-3x3">
+                                                <div class="color-dot preset-dot" style="background-color: #ff3344;" data-color="#ff3344" title="Red"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #ffd700;" data-color="#ffd700" title="Yellow"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #3b82f6;" data-color="#3b82f6" title="Blue"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #a855f7;" data-color="#a855f7" title="Purple"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #ff8800;" data-color="#ff8800" title="Orange"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #10b981;" data-color="#10b981" title="Green"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #06b6d4;" data-color="#06b6d4" title="Cyan"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #ec4899;" data-color="#ec4899" title="Magenta"></div>
+                                                <div class="color-dot preset-dot" style="background-color: #708238;" data-color="#708238" title="Aloe"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CATEGORY 4: TEXT OPTIONS -->
+                                <div id="text-control" style="display: none;">
+                                    <div class="color-section-selector">
+                                        <span class="text-target-btn active-target" data-target="tag">[ TAG ]</span>
+                                        <span class="text-target-btn" data-target="name">NAME</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="text-target-btn" data-target="desc">DESCRIPTION</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="text-target-btn" data-target="where">WHERE</span>
+                                    </div>
+
+                                    <div style="margin-top: 12px; padding: 8px 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--divider-color); border-radius: 4px; font-family: monospace; font-size: 0.75rem;">
+                                        <span style="color: var(--number-color); margin-right: 6px;">SAMPLE:</span>
+                                        <span class="line-part-tag">[RELATED]</span>
+                                        <span class="line-part-name">Computer systems</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="line-part-desc">One type of electrical system</span>
+                                        <span style="color: var(--number-color);">|</span>
+                                        <span class="line-part-where">"Computer systems are..."</span>
+                                    </div>
+
+                                    <div class="text-options-toolbar">
+                                        <div class="text-style-toggle-group">
+                                            <button class="text-format-btn" id="btn-text-bold">[ BOLD ]</button>
+                                            <button class="text-format-btn" id="btn-text-italic">[ ITALIC ]</button>
+                                        </div>
+
+                                        <div class="text-font-select-group">
+                                            <label class="text-font-label">FONT STYLE:</label>
+                                            <select id="select-token-font" class="text-font-dropdown">
+                                                <option value="monospace">Monospace (Terminal)</option>
+                                                <option value="'Chalkboard SE', 'Chalkboard', 'Comic Sans MS', cursive">Chalkboard (Chalk)</option>
+                                                <option value="'Comic Sans MS', 'Casual', cursive">Casual / Crayon</option>
+                                                <option value="'Marker Felt', 'Arial Rounded MT Bold', sans-serif">Marker Felt (Whiteboard)</option>
+                                                <option value="'Cinzel', 'Didot', 'Times New Roman', serif">Cinzel (Formal Serif)</option>
+                                                <option value="'Courier New', Courier, monospace">Typewriter (Courier)</option>
+                                                <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">Clean Sans</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Control Strip -->
+                <div class="button-bottom-bar">
+                    <input type="file" id="json-file-input" accept=".json" style="display: none;">
+                    <button id="btn-load-file" class="action-button-large">LOAD</button>
+                    <button class="action-button-large" id="btn-check-comparator">CHECK</button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT GOOGLE AD TEST ZONE -->
+        <div class="ad-zone-side">
+            <div class="google-test-ad-banner">
+                <span class="ad-label">Google Ad Test<br>120 x 600</span>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- ACCOUNT SETTINGS MODAL VIEWPORT (TRIGGERED BY 3-DOTS TOP RIGHT) -->
+    <div class="comparator-modal-overlay" id="account-settings-modal" style="display: none;">
+        <div class="account-settings-box">
+            <div class="modal-title">ACCOUNT SETTINGS</div>
+            <div class="account-settings-body">
+                <div class="settings-modal-row">
+                    <span class="settings-modal-label">MODE</span>
+                    <div class="shutter-toggle-wrapper">
+                        <span class="mode-state-tag" id="label-mode-light">LIGHT</span>
+                        <label class="shutter-switch">
+                            <input type="checkbox" id="shutter-mode-toggle">
+                            <span class="shutter-slider"></span>
+                        </label>
+                        <span class="mode-state-tag" id="label-mode-dark">DARK</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-button-group" style="justify-content: flex-end; margin-top: 15px;">
+                <button class="modal-btn btn-modal-save" id="btn-close-account-settings">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="SST-comparator.js"></script>
+</body>
+</html>
