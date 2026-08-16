@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SST / Malinalli Gateway</title>
+    <style>
+        /* Zero out standard browser spacing resets */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* LAYER 1: Deep Nebula Canvas background */
+        .nebula-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('screen-shot-2023-03-14-at-4.14.06-pm.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        /* LAYER 2: White Cinematic Shutter Panels */
+        .shutter {
+            position: fixed;
+            left: 0;
+            width: 100vw;
+            background-color: #ffffff;
+            z-index: 3;
+            display: flex;          
+            justify-content: center; 
+            align-items: center;     
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Top Shutter: Extends from top down to 45% */
+        .shutter-top {
+            top: 0;
+            height: 45vh;
+            border-bottom: 4px solid #b29c6d;
+        }
+
+        /* Bottom Shutter: Extends from 56% down to the bottom (100%) */
+        .shutter-bottom {
+            bottom: 0;
+            height: 44vh; 
+            border-top: 4px solid #b29c6d;
+            display: flex;
+            justify-content: center; 
+            align-items: center;     
+        }
+
+        /* CONTAINER FOR LOGO: Centers it within the top white space */
+        .logo-wrapper {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* THE SST LOGO */
+        .sst-logo {
+            height: 36vh; 
+            width: auto;  
+            display: block;
+            mix-blend-mode: multiply; 
+        }
+
+        /* LAYER 3: The Viewport Slit Text Track Panel */
+        .slit-text-container {
+            position: fixed;
+            top: 45vh;  
+            left: 0;
+            width: 100vw;
+            height: 11vh;
+            z-index: 2;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* THE HAMMER-X TYPEFACE GEOMETRY & COSMIC SKIN */
+        .hammer-x-text {
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 12px;
+            white-space: nowrap;
+            line-height: 1;
+            font-size: 8.8vh; 
+
+            background: linear-gradient(
+                135deg, 
+                #2c2d30 0%,   
+                #e2e4e9 25%,  
+                #8a8d97 50%,  
+                #b29c6d 75%,  
+                #111317 100%  
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            
+            filter: drop-shadow(0px 2px 1px rgba(255,255,255,0.4)) 
+                    drop-shadow(0px -1px 1px rgba(0,0,0,0.9))
+                    drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.15));
+        }
+
+        /* THE DROP / UPLOAD BOX */
+        .upload-box {
+            height: 15vh; 
+            width: 25vw;  
+            border: 2px solid #b29c6d; 
+            border-radius: 4vh; 
+            background-color: #f4f8fb;  
+            cursor: pointer;
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        /* Expanded configuration state */
+        .upload-box.active {
+            height: 30vh; 
+            border-radius: 2vh; 
+        }
+
+        /* When drag-hovering directly over the element */
+        .upload-box.drag-over {
+            border-color: #2c2d30;
+            background-color: #eef5fa;
+            box-shadow: 0 0 15px rgba(178, 156, 109, 0.2);
+        }
+
+        /* Instruction Typography */
+        .instruction-text {
+            color: #b29c6d; 
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+            user-select: none;
+        }
+
+        /* Fully functional hidden system input */
+        .hidden-file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* PREMIUM DYNAMIC FILE VISUAL LIST CONTAINER */
+        .file-preview-list {
+            width: 100%;
+            max-height: 20vh;
+            overflow-y: auto;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 15; 
+        }
+
+        /* Individual Google-style File Badge items */
+        .file-item-chip {
+            background: #ffffff;
+            border: 1px solid rgba(178, 156, 109, 0.4);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: chipFadeIn 0.3s ease-out forwards;
+        }
+
+        .file-name {
+            color: #2c2d30;
+            font-size: 0.85rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 80%;
+        }
+
+        /* Remove / Reset Button on the chip */
+        .remove-file-btn {
+            background: none;
+            border: none;
+            color: #8a8d97;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .remove-file-btn:hover {
+            color: #b29c6d;
+        }
+
+        @keyframes chipFadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MILLING ACTION INTERFACE CLUSTER */
+        .milling-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 20;
+        }
+
+        /* Make elements actionable only when container structural framework is active */
+        .upload-box.active .milling-controls {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 4-DIGIT SLIT INPUT STRUCTURES */
+        .page-range-input {
+            width: 55px;
+            height: 28px;
+            background: #ffffff;
+            border: 1px solid rgba(178, 156, 109, 0.5);
+            border-radius: 4px;
+            text-align: center;
+            color: #2c2d30;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .page-range-input:focus {
+            outline: none;
+            border-color: #b29c6d;
+        }
+
+        .milling-label {
+            color: #8a8d97;
+            font-size: 0.85rem;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        /* CINEMATIC SEND TRIGGER BUTTON */
+        .send-milling-btn {
+            background: #b29c6d;
+            color: #ffffff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .send-milling-btn:hover {
+            background: #2c2d30;
+        }
+
+        /* TOP CORNER UTILITY ANCHORS */
+        .top-menu-container {
+            position: absolute;
+            top: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column; 
+            align-items: flex-start;
+        }
+        .menu-left { left: 30px; }
+        .menu-right { right: 30px; }
+
+        /* THE ICON TRIGGERS */
+        .menu-trigger {
+            font-size: 1.5rem;
+            color: #2c2d30;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s ease;
+            padding: 5px;
+        }
+        .menu-trigger:hover {
+            color: #b29c6d;
+        }
+
+        /* EXPANDABLE TEXT LINKS DRAWER (VERTICAL SLIDE) */
+        .nav-links-drawer {
+            display: flex;
+            flex-direction: column; 
+            gap: 12px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            padding-left: 5px;
+            margin-top: 0;
+        }
+
+        /* Vertical Expansion interaction rules on hover */
+        .menu-left:hover .nav-links-drawer {
+            opacity: 1;
+            max-height: 300px; 
+            margin-top: 10px;
+        }
+
+        /* PREMIUM TEXT-ONLY LINK STYLE */
+        .sst-nav-link {
+            color: #b29c6d;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .sst-nav-link:hover {
+            color: #2c2d30;
+            transform: translateX(4px); 
+        }
+
+        /* BOTTOM-LEFT INFO UTILITY ANCHOR */
+        .bottom-menu-container {
+            position: absolute;
+            bottom: 20px; 
+            left: 30px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column-reverse; 
+            align-items: flex-start;
+        }
+
+        /* THE INFO ICON TRIGGER */
+        .info-trigger {
+            font-size: 1.4rem;
+            color: #2c2d30;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s ease;
+            padding: 5px;
+            line-height: 1;
+        }
+        .info-trigger:hover {
+            color: #b29c6d;
+        }
+
+        /* EXPANDABLE TEXT LINKS DRAWER FOR HELP SYSTEM */
+        .info-links-drawer {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            padding-left: 5px;
+            margin-bottom: 0; 
+        }
+
+        /* Interaction rule to expand the drawer downwards when hovering over the container area */
+        .bottom-menu-container:hover .info-links-drawer {
+            opacity: 1;
+            max-height: 200px;
+            margin-bottom: 10px;
+        }
+
+        /* Hide the bottom info icon when the top menu container is hovered */
+        .top-menu-container:hover ~ .bottom-menu-container {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Hide the top hamburger icon when the bottom menu container is hovered */
+        .bottom-menu-container:hover ~ .top-menu-container {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+		/* USER PROFILE TRIGGER LAYOUT */
+		.user-profile-trigger {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			cursor: pointer;
+			user-select: none;
+		}
+
+		/* PREMIUM LIGHTWEIGHT USERNAME TYPOGRAPHY */
+		.user-display-name {
+			color: #8a8d97;
+			font-size: 0.8rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			transition: color 0.3s ease;
+		}
+
+		/* Brighten username on hovering the profile cluster */
+		.user-profile-trigger:hover .user-display-name {
+			color: #b29c6d;
+		}
+
+		/* FORCE RIGHT ALIGNMENT FOR TOP-RIGHT MENU EXTENSION */
+		.menu-right {
+			align-items: flex-end; /* Ensures links drop down aligned to the right viewport margin */
+		}
+
+		/* Vertical Expansion interaction rules for the profile menu */
+		.menu-right:hover .profile-drawer {
+			opacity: 1;
+			max-height: 200px;
+			margin-top: 10px;
+		}		
+    </style>
+</head>
+<body>
+
+    <!-- Layer 1: Universal Backdrop Canvas -->
+    <div class="nebula-canvas"></div>
+
+    <!-- Layer 2: Interstitial Text Track Layer inside the slit gap -->
+    <div class="slit-text-container">
+        <h1 class="hammer-x-text">Hammer-X</h1>
+    </div>
+
+    <!-- Layer 3: White Cinematic Shutter Panels -->
+    <div class="shutter shutter-top">
+        
+        <!-- Top-Left Menu Container -->
+        <div class="top-menu-container menu-left">
+            <div class="menu-trigger">☰</div>
+            <nav class="nav-links-drawer">
+                <a href="https://simon-swanepoel.github.io/hammerx-frontend/comparator.html" class="sst-nav-link">Main Page</a>
+                <a href="https://swanstudytools.com/comparator.html" class="sst-nav-link">HammerX</a>
+                <a href="#mathhammer" class="sst-nav-link">Math Hammer</a>
+                <a href="#mindpad" class="sst-nav-link">SST Mind Pad</a>
+                <a href="#notetaker" class="sst-nav-link">SST Note Taker</a>
+                <a href="#ai" class="sst-nav-link">SST AI</a>
+            </nav>
+        </div>
+
+        <!-- Bottom-Left Menu Container (Direct sibling of the one above) -->
+        <div class="bottom-menu-container">
+            <nav class="info-links-drawer">
+                <a href="#tutorials" class="sst-nav-link">Tutorials</a>
+                <a href="#faq" class="sst-nav-link">Commonly Asked Questions</a>
+                <a href="#report" class="sst-nav-link">Report an Issue</a>
+            </nav>
+            <div class="info-trigger">ⓘ</div>
+        </div>
+        
+        <!-- Centered logo wrapper sits safely on its own -->
+        <div class="logo-wrapper">
+            <img src="SST Logo.png" alt="SST Logo" class="sst-logo">
+        </div>
+
+        <!-- RESTORED: Right Configuration Anchor -->
+        <!-- Right Configuration & User Profile Anchor -->
+		<div class="top-menu-container menu-right">
+			<div class="user-profile-trigger">
+				<span class="user-display-name">Simon Swanepoel</span>
+				<div class="menu-trigger">⋮</div>
+			</div>
+			<!-- Profile & Configuration Dropdown Menu -->
+			<nav class="nav-links-drawer profile-drawer">
+				<a href="#account" class="sst-nav-link">Account Settings</a>
+				<a href="#security" class="sst-nav-link">Security</a>
+				<a href="#logout" class="sst-nav-link">Sign Out</a>
+			</nav>
+		</div>
+    </div>      
+
+    <div class="shutter shutter-bottom">
+        <!-- Interactive Drop-Zone Box Element -->
+        <div class="upload-box" id="sstUploadBox">
+            <!-- Hidden native file input element handling system communications -->
+            <input type="file" id="fileSystemInput" class="hidden-file-input" multiple accept=".txt,.pdf,.doc,.docx">
+            
+            <!-- Wrapper for default display states -->
+            <div id="defaultUploadContent">
+                <p class="instruction-text">Drop file or click to upload</p>
+            </div>
+
+            <!-- Wrapper for preview list tracking layouts -->
+            <div class="file-preview-list" id="filePreviewList" style="display: none;"></div>
+            
+            <!-- Milling Execution Pipeline Cluster -->
+            <div class="milling-controls" id="millingControls">
+                <input type="text" class="page-range-input" id="pageStart" maxlength="4" placeholder="0001">
+                <span class="milling-label">to</span>
+                <input type="text" class="page-range-input" id="pageEnd" maxlength="4" placeholder="0002">
+                <span class="milling-label" style="margin-right: 5px;">Pages</span>
+                <button class="send-milling-btn" id="sendMillingBtn">Send</button>
+            </div>
+        </div>      
+    </div>
+
+    <!-- System Interface Logic Execution -->
+    <script>
+     document.addEventListener('DOMContentLoaded', () => {
+        const uploadBox = document.getElementById('sstUploadBox');
+        const fileInput = document.getElementById('fileSystemInput');
+        const defaultContent = document.getElementById('defaultUploadContent');
+        const previewList = document.getElementById('filePreviewList');
+        const sendBtn = document.getElementById('sendMillingBtn');
+        const pageStartInput = document.getElementById('pageStart');
+        const pageEndInput = document.getElementById('pageEnd');
+
+        sendBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+
+            const startVal = pageStartInput.value.trim();
+            const endVal = pageEndInput.value.trim();
+
+            if (startVal === '' && endVal === '') {
+                const proceed = confirm("Sending large files can make processing time long. Click send if you would like to proceed?");
+                if (!proceed) {
+                    return; 
+                }
+                console.log("Milling pipeline active: Extracting whole document context framework.");
+            } else {
+                console.log(`Milling pipeline active: Targeting coordinates page ${startVal} to ${endVal}.`);
+            }
+        });
+
+        [pageStartInput, pageEndInput].forEach(input => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        fileInput.setAttribute('accept', '.txt,.pdf,.doc,.docx,.epub');
+        uploadBox.style.justifyContent = 'flex-start';
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadBox.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadBox.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadBox.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadBox.classList.remove('drag-over');
+            }, false);
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if(files.length > 0) {
+                fileInput.files = files; 
+                renderFilePreviews(files);
+            }
+        });
+
+        uploadBox.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-file-btn')) {
+                e.stopPropagation();
+                return;
+            }
+            
+            if (!uploadBox.classList.contains('active')) {
+                uploadBox.classList.add('active');
+            }
+        });
+
+        fileInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            renderFilePreviews(e.target.files);
+        });
+
+        function renderFilePreviews(files) {
+            if (files.length > 1) {
+                alert("SST Pipeline Restriction: Please upload only 1 document at a time.");
+                resetUploadBox();
+                return;
+            }
+
+            if (files.length === 0) {
+                resetUploadBox();
+                return;
+            }
+
+            const file = files[0];
+            const maxSizeBytes = 25 * 1024 * 1024;
+            if (file.size > maxSizeBytes) {
+                alert(`File too large. Maximum allowance is 25MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`);
+                resetUploadBox();
+                return;
+            }
+
+            uploadBox.classList.add('active');
+            defaultContent.style.display = 'none';
+            previewList.innerHTML = '';
+            previewList.style.display = 'flex';
+
+            const fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            
+            let borderColor = 'rgba(178, 156, 109, 0.4)';
+            let textColor = '#b29c6d';
+            let bgAccent = 'rgba(178, 156, 109, 0.05)';
+
+            if (fileExtension === 'pdf') {
+                borderColor = '#d93838'; 
+                textColor = '#d93838';
+                bgAccent = 'rgba(217, 56, 56, 0.05)';
+            } else if (fileExtension === 'doc' || fileExtension === 'docx') {
+                borderColor = '#2b6cb0'; 
+                textColor = '#2b6cb0';
+                bgAccent = 'rgba(43, 108, 176, 0.05)';
+            }
+
+            const chip = document.createElement('div');
+            chip.className = 'file-item-chip';
+            
+            chip.style.width = '100%';
+            chip.style.border = `1px solid ${borderColor}`;
+            chip.style.backgroundColor = bgAccent;
+            chip.style.padding = '8px 12px';
+            chip.style.borderRadius = '8px';
+            chip.style.display = 'flex';
+            chip.style.justifyContent = 'space-between';
+            chip.style.alignItems = 'center';
+            chip.style.marginTop = '5px';
+
+            chip.innerHTML = `
+                <span class="file-name" style="color: ${textColor}; font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%;">${fileName}</span>
+                <button class="remove-file-btn" data-index="0" style="background:none; border:none; color:${textColor}; font-weight:bold; cursor:pointer; font-size:1.1rem;">×</button>
+            `;
+            
+            previewList.appendChild(chip);
+
+            document.querySelectorAll('.remove-file-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resetUploadBox();
+                });
+            });
+        }
+
+        function resetUploadBox() {
+            fileInput.value = ''; 
+            previewList.innerHTML = '';
+            previewList.style.display = 'none';
+            defaultContent.style.display = 'block';
+            uploadBox.classList.remove('active');
+            uploadBox.style.justifyContent = 'center'; 
+        }
+    });
+    </script>
+</body>
+</html>
