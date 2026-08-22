@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SST / Malinalli Gateway - HammerX</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .nebula-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('screen-shot-2023-03-14-at-4.14.06-pm.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        .shutter {
+            position: fixed;
+            left: 0;
+            width: 100vw;
+            background-color: #ffffff;
+            z-index: 3;
+            display: flex;          
+            justify-content: center; 
+            align-items: center;     
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .shutter-top {
+            top: 0;
+            height: 45vh;
+            border-bottom: 4px solid #b29c6d;
+        }
+
+        .shutter-bottom {
+            bottom: 0;
+            height: 44vh; 
+            border-top: 4px solid #b29c6d;
+            display: flex;
+            justify-content: center; 
+            align-items: center;     
+        }
+
+        .logo-wrapper {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sst-logo {
+            height: 36vh; 
+            width: auto;  
+            display: block;
+            mix-blend-mode: multiply; 
+        }
+
+        .slit-text-container {
+            position: fixed;
+            top: 45vh;  
+            left: 0;
+            width: 100vw;
+            height: 11vh;
+            z-index: 2;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hammer-x-text {
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 12px;
+            white-space: nowrap;
+            line-height: 1;
+            font-size: 8.8vh; 
+            background: linear-gradient(
+                135deg, 
+                #2c2d30 0%,   
+                #e2e4e9 25%,  
+                #8a8d97 50%,  
+                #b29c6d 75%,  
+                #111317 100%  
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            filter: drop-shadow(0px 2px 1px rgba(255,255,255,0.4)) 
+                    drop-shadow(0px -1px 1px rgba(0,0,0,0.9))
+                    drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.15));
+        }
+
+        /* --- EXPANDED DROP / UPLOAD BOX --- */
+        .upload-box {
+            height: 15vh; 
+            width: 32vw;
+            min-width: 380px;
+            border: 2px solid #b29c6d; 
+            border-radius: 4vh; 
+            background-color: #f4f8fb;  
+            cursor: pointer;
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            padding: 16px 20px;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        .upload-box.active {
+            height: 34vh; 
+            border-radius: 2vh; 
+        }
+
+        .upload-box.drag-over {
+            border-color: #2c2d30;
+            background-color: #eef5fa;
+            box-shadow: 0 0 15px rgba(178, 156, 109, 0.2);
+        }
+
+        .instruction-text {
+            color: #b29c6d; 
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .hidden-file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .file-preview-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 15; 
+        }
+
+        .file-item-chip {
+            background: #ffffff;
+            border: 1px solid rgba(178, 156, 109, 0.4);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: chipFadeIn 0.3s ease-out forwards;
+        }
+
+        .file-name {
+            color: #2c2d30;
+            font-size: 0.85rem;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 85%;
+        }
+
+        .remove-file-btn {
+            background: none;
+            border: none;
+            color: #8a8d97;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .remove-file-btn:hover { color: #b29c6d; }
+
+        @keyframes chipFadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- MILLING CONTROLS CONTAINER --- */
+        .milling-config-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 20;
+        }
+
+        .upload-box.active .milling-config-panel {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .project-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .project-name-input {
+            flex: 1;
+            height: 30px;
+            background: #ffffff;
+            border: 1px solid rgba(178, 156, 109, 0.5);
+            border-radius: 6px;
+            padding: 0 10px;
+            color: #2c2d30;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .project-name-input:focus { outline: none; border-color: #b29c6d; }
+
+        .milling-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .range-cluster {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-range-input {
+            width: 50px;
+            height: 28px;
+            background: #ffffff;
+            border: 1px solid rgba(178, 156, 109, 0.5);
+            border-radius: 4px;
+            text-align: center;
+            color: #2c2d30;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .page-range-input:focus { outline: none; border-color: #b29c6d; }
+
+        .milling-label {
+            color: #8a8d97;
+            font-size: 0.8rem;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .send-milling-btn {
+            background: #b29c6d;
+            color: #ffffff;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .send-milling-btn:hover { background: #2c2d30; }
+        .send-milling-btn:disabled { background: #a4b0be; cursor: not-allowed; }
+
+        /* LIVE STATUS TICKER */
+        .milling-live-status {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #0984e3;
+            text-align: center;
+            min-height: 16px;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* --- TOP MENUS & USER AUTH --- */
+        .top-menu-container {
+            position: absolute;
+            top: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column; 
+            align-items: flex-start;
+        }
+        .menu-left { left: 30px; }
+        .menu-right { right: 30px; align-items: flex-end; }
+
+        .menu-trigger {
+            font-size: 1.5rem;
+            color: #2c2d30;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s ease;
+            padding: 5px;
+        }
+        .menu-trigger:hover { color: #b29c6d; }
+
+        .nav-links-drawer {
+            display: flex;
+            flex-direction: column; 
+            gap: 12px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            padding-left: 5px;
+            margin-top: 0;
+        }
+
+        .menu-left:hover .nav-links-drawer,
+        .menu-right:hover .profile-drawer {
+            opacity: 1;
+            max-height: 300px; 
+            margin-top: 10px;
+        }
+
+        .sst-nav-link {
+            color: #b29c6d;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .sst-nav-link:hover {
+            color: #2c2d30;
+            transform: translateX(4px); 
+        }
+
+        .bottom-menu-container {
+            position: absolute;
+            bottom: 20px; 
+            left: 30px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column-reverse; 
+            align-items: flex-start;
+        }
+
+        .info-trigger {
+            font-size: 1.4rem;
+            color: #2c2d30;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s ease;
+            padding: 5px;
+            line-height: 1;
+        }
+        .info-trigger:hover { color: #b29c6d; }
+
+        .info-links-drawer {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            padding-left: 5px;
+            margin-bottom: 0; 
+        }
+
+        .bottom-menu-container:hover .info-links-drawer {
+            opacity: 1;
+            max-height: 200px;
+            margin-bottom: 10px;
+        }
+
+        .user-profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .user-display-name {
+            color: #8a8d97;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+        .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
+
+        /* AUTH MODAL STYLING */
+        .sst-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sst-modal-box {
+            background: #ffffff;
+            border: 2px solid #b29c6d;
+            border-radius: 12px;
+            width: 360px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .sst-modal-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #2c2d30;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sst-auth-input {
+            width: 100%;
+            height: 36px;
+            border: 1px solid rgba(178, 156, 109, 0.6);
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 0.9rem;
+            color: #2c2d30;
+        }
+        .sst-auth-input:focus { outline: none; border-color: #2c2d30; }
+
+        .sst-modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nebula-canvas"></div>
+
+    <div class="slit-text-container">
+        <h1 class="hammer-x-text">Hammer-X</h1>
+    </div>
+
+    <!-- TOP SHUTTER -->
+    <div class="shutter shutter-top">
+        <div class="top-menu-container menu-left">
+            <div class="menu-trigger">☰</div>
+            <nav class="nav-links-drawer">
+                <a href="loader.html" class="sst-nav-link">Hammer Loader</a>
+                <a href="comparator.html" class="sst-nav-link">Active Comparator</a>
+                <a href="#mathhammer" class="sst-nav-link">Math Hammer</a>
+                <a href="#mindpad" class="sst-nav-link">SST Mind Pad</a>
+            </nav>
+        </div>
+
+        <div class="bottom-menu-container">
+            <nav class="info-links-drawer">
+                <a href="#tutorials" class="sst-nav-link">Tutorials</a>
+                <a href="#faq" class="sst-nav-link">Daily Limits & Tiers</a>
+                <a href="#report" class="sst-nav-link">Report an Issue</a>
+            </nav>
+            <div class="info-trigger">ⓘ</div>
+        </div>
+        
+        <div class="logo-wrapper">
+            <img src="SST Logo.png" alt="SST Logo" class="sst-logo">
+        </div>
+
+        <!-- USER PROFILE / AUTH CORNER -->
+        <div class="top-menu-container menu-right">
+            <div class="user-profile-trigger" id="profileTrigger">
+                <span class="user-display-name" id="userDisplayLabel">SIGN IN</span>
+                <div class="menu-trigger">⋮</div>
+            </div>
+            <nav class="nav-links-drawer profile-drawer" id="profileDrawerMenu">
+                <a href="javascript:void(0)" class="sst-nav-link" id="btnAuthTrigger">Sign In / Register</a>
+            </nav>
+        </div>
+    </div>      
+
+    <!-- BOTTOM SHUTTER: DROP & MILL INTERFACE -->
+    <div class="shutter shutter-bottom">
+        <div class="upload-box" id="sstUploadBox">
+            <input type="file" id="fileSystemInput" class="hidden-file-input" accept=".pdf">
+            
+            <div id="defaultUploadContent">
+                <p class="instruction-text">Drop PDF or click to load document</p>
+            </div>
+
+            <div class="file-preview-list" id="filePreviewList" style="display: none;"></div>
+            
+            <!-- MILLING CONTROLS & PROJECT SETTINGS -->
+            <div class="milling-config-panel" id="millingConfigPanel">
+                <div class="project-input-row">
+                    <span class="milling-label">Project:</span>
+                    <input type="text" class="project-name-input" id="projectNameInput" placeholder="Project Name">
+                </div>
+
+                <div class="milling-controls">
+                    <div class="range-cluster">
+                        <span class="milling-label">Pages:</span>
+                        <input type="text" class="page-range-input" id="pageStart" maxlength="4" value="1">
+                        <span class="milling-label">to</span>
+                        <input type="text" class="page-range-input" id="pageEnd" maxlength="4" value="1">
+                    </div>
+                    <button class="send-milling-btn" id="sendMillingBtn">MILL</button>
+                </div>
+
+                <div class="milling-live-status" id="millingLiveStatus"></div>
+            </div>
+        </div>      
+    </div>
+
+    <!-- AUTHENTICATION (SIGN IN / SIGN UP) MODAL -->
+    <div class="sst-modal-backdrop" id="authModal" style="display: none;">
+        <div class="sst-modal-box">
+            <div class="sst-modal-title" id="authModalTitle">ACCOUNT SIGN IN</div>
+            <input type="email" id="authEmail" class="sst-auth-input" placeholder="Email address" />
+            <input type="password" id="authPassword" class="sst-auth-input" placeholder="Password" />
+            <div id="authErrorMsg" style="color: #d63031; font-size: 0.75rem; min-height: 16px;"></div>
+            
+            <div class="sst-modal-footer">
+                <a href="javascript:void(0)" id="authToggleMode" style="font-size: 0.75rem; color: #b29c6d; text-decoration: underline;">Need an account? Sign Up</a>
+                <div style="display: flex; gap: 8px;">
+                    <button class="send-milling-btn" id="authCancelBtn" style="background:#8a8d97;">CANCEL</button>
+                    <button class="send-milling-btn" id="authSubmitBtn">LOGIN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIPELINE LOGIC -->
+    <script>
+    // --- SUPABASE CLIENT & BACKEND URL ---
+    const SUPABASE_URL = "https://lsjswxsrskaxyzvgqezu.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzanN3eHNyc2theHl6dmdxZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MzgxMTQsImV4cCI6MjA5OTIxNDExNH0._D99dnmEsQPULWcCBQcp1ThOYyzfRV4zEyMBxAPbYD8";
+    const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    // Paste your exact Render URL here
+	const BACKEND_MILL_URL = "https://freesegmill-py.onrender.com/api/mill";
+
+    let currentUserSession = null;
+    let selectedFile = null;
+    let authMode = "LOGIN";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const uploadBox = document.getElementById('sstUploadBox');
+        const fileInput = document.getElementById('fileSystemInput');
+        const defaultContent = document.getElementById('defaultUploadContent');
+        const previewList = document.getElementById('filePreviewList');
+        const sendBtn = document.getElementById('sendMillingBtn');
+        const pageStartInput = document.getElementById('pageStart');
+        const pageEndInput = document.getElementById('pageEnd');
+        const projectNameInput = document.getElementById('projectNameInput');
+        const statusTicker = document.getElementById('millingLiveStatus');
+
+        // Auth elements
+        const authModal = document.getElementById('authModal');
+        const userDisplayLabel = document.getElementById('userDisplayLabel');
+        const profileDrawerMenu = document.getElementById('profileDrawerMenu');
+        const btnAuthTrigger = document.getElementById('btnAuthTrigger');
+        const authCancelBtn = document.getElementById('authCancelBtn');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authToggleMode = document.getElementById('authToggleMode');
+        const authEmail = document.getElementById('authEmail');
+        const authPassword = document.getElementById('authPassword');
+        const authErrorMsg = document.getElementById('authErrorMsg');
+
+        // --- 1. AUTH STATE SYNC ---
+        function updateAuthUI(session) {
+            currentUserSession = session;
+            if (session && session.user) {
+                userDisplayLabel.textContent = session.user.email.split('@')[0];
+                profileDrawerMenu.innerHTML = `
+                    <a href="loader.html" class="sst-nav-link">Hammer Loader</a>
+                    <a href="javascript:void(0)" class="sst-nav-link" id="btnSignOut" style="color: #d63031;">Sign Out</a>
+                `;
+                document.getElementById('btnSignOut').addEventListener('click', async () => {
+                    await supa.auth.signOut();
+                });
+            } else {
+                userDisplayLabel.textContent = "SIGN IN";
+                profileDrawerMenu.innerHTML = `
+                    <a href="javascript:void(0)" class="sst-nav-link" id="btnTriggerLogin">Sign In / Register</a>
+                `;
+                document.getElementById('btnTriggerLogin').addEventListener('click', () => {
+                    authModal.style.display = 'flex';
+                });
+            }
+        }
+
+        if (supa) {
+            supa.auth.getSession().then(({ data: { session } }) => updateAuthUI(session));
+            supa.auth.onAuthStateChange((_, session) => updateAuthUI(session));
+        }
+
+        btnAuthTrigger.addEventListener('click', () => authModal.style.display = 'flex');
+        authCancelBtn.addEventListener('click', () => {
+            authModal.style.display = 'none';
+            authErrorMsg.textContent = '';
+        });
+
+        authToggleMode.addEventListener('click', () => {
+            if (authMode === "LOGIN") {
+                authMode = "SIGNUP";
+                document.getElementById('authModalTitle').textContent = "CREATE NEW ACCOUNT";
+                authSubmitBtn.textContent = "REGISTER";
+                authToggleMode.textContent = "Already have an account? Sign In";
+            } else {
+                authMode = "LOGIN";
+                document.getElementById('authModalTitle').textContent = "ACCOUNT SIGN IN";
+                authSubmitBtn.textContent = "LOGIN";
+                authToggleMode.textContent = "Need an account? Sign Up";
+            }
+            authErrorMsg.textContent = '';
+        });
+
+        authSubmitBtn.addEventListener('click', async () => {
+            const email = authEmail.value.trim();
+            const pass = authPassword.value.trim();
+            if (!email || !pass) {
+                authErrorMsg.textContent = "Please fill in all fields.";
+                return;
+            }
+
+            authSubmitBtn.textContent = "WAIT...";
+            try {
+                if (authMode === "LOGIN") {
+                    const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+                    if (error) throw error;
+                } else {
+                    const { error } = await supa.auth.signUp({ email, password: pass });
+                    if (error) throw error;
+                    alert("Account registered successfully!");
+                }
+                authModal.style.display = 'none';
+                authEmail.value = '';
+                authPassword.value = '';
+            } catch (err) {
+                authErrorMsg.textContent = err.message;
+            } finally {
+                authSubmitBtn.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
+            }
+        });
+
+        // --- 2. FILE SELECTION & PREVIEW ---
+        [pageStartInput, pageEndInput].forEach(input => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(name => {
+            uploadBox.addEventListener(name, (e) => {
+                e.preventDefault();
+                uploadBox.classList.add('drag-over');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            uploadBox.addEventListener(name, (e) => {
+                e.preventDefault();
+                uploadBox.classList.remove('drag-over');
+            });
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFileSelection(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFileSelection(e.target.files[0]);
+        });
+
+        uploadBox.addEventListener('click', (e) => {
+            if (e.target.closest('#millingConfigPanel') || e.target.classList.contains('remove-file-btn')) {
+                return;
+            }
+            fileInput.click();
+        });
+
+        function handleFileSelection(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert("Please upload a PDF document.");
+                return;
+            }
+
+            if (file.size > 25 * 1024 * 1024) {
+                alert("File too large. Maximum size is 25MB.");
+                return;
+            }
+
+            selectedFile = file;
+            uploadBox.classList.add('active');
+            defaultContent.style.display = 'none';
+            previewList.style.display = 'flex';
+            previewList.innerHTML = '';
+
+            const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_");
+            projectNameInput.value = baseName;
+
+            const chip = document.createElement('div');
+            chip.className = 'file-item-chip';
+            chip.style.border = '1px solid #d93838';
+            chip.style.backgroundColor = 'rgba(217, 56, 56, 0.05)';
+            chip.innerHTML = `
+                <span class="file-name" style="color: #d93838;">${file.name}</span>
+                <button class="remove-file-btn" id="removeFileBtn">×</button>
+            `;
+            previewList.appendChild(chip);
+
+            document.getElementById('removeFileBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetUploadBox();
+            });
+        }
+
+        function resetUploadBox() {
+            selectedFile = null;
+            fileInput.value = '';
+            previewList.innerHTML = '';
+            previewList.style.display = 'none';
+            defaultContent.style.display = 'block';
+            uploadBox.classList.remove('active');
+            statusTicker.textContent = '';
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'MILL';
+        }
+
+        // --- 3. MILLING DISPATCH TO LOADER ---
+        sendBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!selectedFile) return;
+
+            const proj = projectNameInput.value.trim() || "Quick_Deck";
+            const sPage = parseInt(pageStartInput.value, 10) || 1;
+            const ePage = parseInt(pageEndInput.value, 10) || 1;
+
+            if (sPage > ePage) {
+                alert("Start page cannot be greater than End page.");
+                return;
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'PROCESSING...';
+            statusTicker.style.color = '#0984e3';
+            statusTicker.textContent = 'Milling 9 dimensions & visual structures... (Free tier may take 20-40s)';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('project_name', proj);
+            formData.append('start_page', sPage);
+            formData.append('end_page', ePage);
+
+            const headers = {};
+            if (currentUserSession && currentUserSession.access_token) {
+                headers['Authorization'] = `Bearer ${currentUserSession.access_token}`;
+            }
+
+            try {
+                const response = await fetch(BACKEND_MILL_URL, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    let errText = "Milling failed.";
+                    try {
+                        const errJson = await response.json();
+                        errText = errJson.detail || JSON.stringify(errJson);
+                    } catch (_) {
+                        errText = `HTTP Error ${response.status}`;
+                    }
+                    throw new Error(errText);
+                }
+
+                // GUEST FLOW (DIRECT DISK BACKUP + REDIRECT TO LOADER)
+                if (!currentUserSession) {
+                    const manifestJson = await response.json();
+
+                    // 1. Trigger local file backup download
+                    const blob = new Blob([JSON.stringify(manifestJson, null, 2)], { type: "application/json" });
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = `${proj}_manifest.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(downloadUrl);
+                        a.remove();
+                    }, 1000);
+
+                    // 2. Stage directly into browser session for the Hammer Loader
+                    sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
+
+                    statusTicker.style.color = '#27ae60';
+                    statusTicker.textContent = 'Milling Complete! File saved. Launching Hammer Loader...';
+
+                    setTimeout(() => {
+                        window.location.href = "loader.html";
+                    }, 1200);
+                } 
+                // LOGGED-IN FLOW (SUPABASE CLOUD SYNC + REDIRECT TO LOADER)
+                else {
+                    statusTicker.style.color = '#27ae60';
+                    statusTicker.textContent = 'Milling Complete! Cloud Synced. Launching Hammer Loader...';
+
+                    setTimeout(() => {
+                        window.location.href = "loader.html";
+                    }, 1200);
+                }
+
+            } catch (err) {
+                console.error("[GATEWAY ERROR]", err);
+                statusTicker.style.color = '#d63031';
+                statusTicker.textContent = `Error: ${err.message}`;
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'MILL';
+            }
+        });
+    });
+    </script>
+</body>
+</html>
