@@ -487,8 +487,8 @@
         <div class="top-menu-container menu-left">
             <div class="menu-trigger">☰</div>
             <nav class="nav-links-drawer">
-                <a href="loader.html" class="sst-nav-link">Hammer Loader</a>
-                <a href="comparator.html" class="sst-nav-link">Active Comparator</a>
+                <a href="comparator.html" class="sst-nav-link">Main Page</a>
+                <a href="comparator.html" class="sst-nav-link">HammerX Courseware</a>
                 <a href="#mathhammer" class="sst-nav-link">Math Hammer</a>
                 <a href="#mindpad" class="sst-nav-link">SST Mind Pad</a>
             </nav>
@@ -572,13 +572,16 @@
 
     <!-- PIPELINE LOGIC -->
     <script>
+<!-- PIPELINE LOGIC -->
+    <script>
     // --- SUPABASE CLIENT & BACKEND URL ---
     const SUPABASE_URL = "https://lsjswxsrskaxyzvgqezu.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzanN3eHNyc2theHl6dmdxZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MzgxMTQsImV4cCI6MjA5OTIxNDExNH0._D99dnmEsQPULWcCBQcp1ThOYyzfRV4zEyMBxAPbYD8";
     const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-    // Direct endpoint on Render
-    const BACKEND_MILL_URL = "https://freesegmill-py.onrender.com/api/mill";
+    // Render backend endpoint
+    const BACKEND_MILL_URL = "https://hammerx-backend.onrender.com/api/mill";
+    const COMPARATOR_URL = "SST-comparatorV1.html";
 
     let currentUserSession = null;
     let selectedFile = null;
@@ -613,7 +616,7 @@
             if (session && session.user) {
                 userDisplayLabel.textContent = session.user.email.split('@')[0];
                 profileDrawerMenu.innerHTML = `
-                    <a href="loader.html" class="sst-nav-link">Hammer Loader</a>
+                    <a href="${COMPARATOR_URL}" class="sst-nav-link">My Projects</a>
                     <a href="javascript:void(0)" class="sst-nav-link" id="btnSignOut" style="color: #d63031;">Sign Out</a>
                 `;
                 document.getElementById('btnSignOut').addEventListener('click', async () => {
@@ -635,60 +638,68 @@
             supa.auth.onAuthStateChange((_, session) => updateAuthUI(session));
         }
 
-        btnAuthTrigger.addEventListener('click', () => authModal.style.display = 'flex');
-        authCancelBtn.addEventListener('click', () => {
+        if (btnAuthTrigger) btnAuthTrigger.addEventListener('click', () => authModal.style.display = 'flex');
+        if (authCancelBtn) authCancelBtn.addEventListener('click', () => {
             authModal.style.display = 'none';
             authErrorMsg.textContent = '';
         });
 
-        authToggleMode.addEventListener('click', () => {
-            if (authMode === "LOGIN") {
-                authMode = "SIGNUP";
-                document.getElementById('authModalTitle').textContent = "CREATE NEW ACCOUNT";
-                authSubmitBtn.textContent = "REGISTER";
-                authToggleMode.textContent = "Already have an account? Sign In";
-            } else {
-                authMode = "LOGIN";
-                document.getElementById('authModalTitle').textContent = "ACCOUNT SIGN IN";
-                authSubmitBtn.textContent = "LOGIN";
-                authToggleMode.textContent = "Need an account? Sign Up";
-            }
-            authErrorMsg.textContent = '';
-        });
-
-        authSubmitBtn.addEventListener('click', async () => {
-            const email = authEmail.value.trim();
-            const pass = authPassword.value.trim();
-            if (!email || !pass) {
-                authErrorMsg.textContent = "Please fill in all fields.";
-                return;
-            }
-
-            authSubmitBtn.textContent = "WAIT...";
-            try {
+        if (authToggleMode) {
+            authToggleMode.addEventListener('click', () => {
                 if (authMode === "LOGIN") {
-                    const { error } = await supa.auth.signInWithPassword({ email, password: pass });
-                    if (error) throw error;
+                    authMode = "SIGNUP";
+                    document.getElementById('authModalTitle').textContent = "CREATE NEW ACCOUNT";
+                    authSubmitBtn.textContent = "REGISTER";
+                    authToggleMode.textContent = "Already have an account? Sign In";
                 } else {
-                    const { error } = await supa.auth.signUp({ email, password: pass });
-                    if (error) throw error;
-                    alert("Account registered successfully!");
+                    authMode = "LOGIN";
+                    document.getElementById('authModalTitle').textContent = "ACCOUNT SIGN IN";
+                    authSubmitBtn.textContent = "LOGIN";
+                    authToggleMode.textContent = "Need an account? Sign Up";
                 }
-                authModal.style.display = 'none';
-                authEmail.value = '';
-                authPassword.value = '';
-            } catch (err) {
-                authErrorMsg.textContent = err.message;
-            } finally {
-                authSubmitBtn.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
-            }
-        });
+                authErrorMsg.textContent = '';
+            });
+        }
+
+        if (authSubmitBtn) {
+            authSubmitBtn.addEventListener('click', async () => {
+                const email = authEmail.value.trim();
+                const pass = authPassword.value.trim();
+                if (!email || !pass) {
+                    authErrorMsg.textContent = "Please fill in all fields.";
+                    return;
+                }
+
+                authSubmitBtn.textContent = "WAIT...";
+                try {
+                    if (authMode === "LOGIN") {
+                        const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+                        if (error) throw error;
+                        currentUserSession = data.session;
+                    } else {
+                        const { data, error } = await supa.auth.signUp({ email, password: pass });
+                        if (error) throw error;
+                        currentUserSession = data.session;
+                        alert("Account created successfully!");
+                    }
+                    authModal.style.display = 'none';
+                    authEmail.value = '';
+                    authPassword.value = '';
+                } catch (err) {
+                    authErrorMsg.textContent = err.message;
+                } finally {
+                    authSubmitBtn.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
+                }
+            });
+        }
 
         // --- 2. FILE SELECTION & PREVIEW ---
         [pageStartInput, pageEndInput].forEach(input => {
-            input.addEventListener('input', (e) => {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-            });
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+            }
         });
 
         ['dragenter', 'dragover'].forEach(name => {
@@ -712,6 +723,13 @@
 
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) handleFileSelection(e.target.files[0]);
+        });
+
+        uploadBox.addEventListener('click', (e) => {
+            if (e.target.closest('#millingConfigPanel') || e.target.classList.contains('remove-file-btn')) {
+                return;
+            }
+            fileInput.click();
         });
 
         function handleFileSelection(file) {
@@ -762,13 +780,10 @@
             sendBtn.textContent = 'MILL';
         }
 
-        // --- 3. MILLING DISPATCH TO LOADER ---
+        // --- 3. LIVE MILLING EXECUTION ---
         sendBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (!selectedFile) {
-                alert("Please select a valid PDF file first.");
-                return;
-            }
+            if (!selectedFile) return;
 
             const proj = projectNameInput.value.trim() || "Quick_Deck";
             const sPage = parseInt(pageStartInput.value, 10) || 1;
@@ -782,7 +797,7 @@
             sendBtn.disabled = true;
             sendBtn.textContent = 'PROCESSING...';
             statusTicker.style.color = '#0984e3';
-            statusTicker.textContent = 'Milling 9 dimensions & visual structures... (Takes ~15-30s)';
+            statusTicker.textContent = 'Milling 9 dimensions & visual structures...';
 
             const formData = new FormData();
             formData.append('file', selectedFile);
@@ -791,8 +806,11 @@
             formData.append('end_page', ePage);
 
             const headers = {};
-            if (currentUserSession && currentUserSession.access_token) {
-                headers['Authorization'] = `Bearer ${currentUserSession.access_token}`;
+            if (supa) {
+                const { data: { session } } = await supa.auth.getSession();
+                if (session && session.access_token) {
+                    headers['Authorization'] = `Bearer ${session.access_token}`;
+                }
             }
 
             try {
@@ -803,58 +821,37 @@
                 });
 
                 if (!response.ok) {
-                    let errText = "Milling failed.";
-                    try {
-                        const errJson = await response.json();
-                        errText = errJson.detail || JSON.stringify(errJson);
-                    } catch (_) {
-                        errText = `HTTP Error ${response.status}`;
-                    }
-                    throw new Error(errText);
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Refinery failed to process document.");
                 }
 
-                // GUEST FLOW (DIRECT DISK BACKUP + REDIRECT TO LOADER)
-                if (!currentUserSession) {
-                    const manifestJson = await response.json();
+                const resultJson = await response.json();
 
-                    // 1. Trigger local file backup download
-                    const cleanName = proj.replace(/\s+/g, '_');
-                    const blob = new Blob([JSON.stringify(manifestJson, null, 2)], { type: "application/json" });
+                // Save to local backup for instant access in Comparator
+                localStorage.setItem('sst_courseware_backup', JSON.stringify(resultJson));
+
+                if (!currentUserSession) {
+                    const blob = new Blob([JSON.stringify(resultJson, null, 2)], { type: 'application/json' });
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.style.display = 'none';
                     a.href = downloadUrl;
-                    a.download = `${cleanName}_manifest.json`;
+                    a.download = `${proj}.json`;
                     document.body.appendChild(a);
                     a.click();
-                    
-                    setTimeout(() => {
-                        window.URL.revokeObjectURL(downloadUrl);
-                        a.remove();
-                    }, 1000);
-
-                    // 2. Stage directly into browser session for the Hammer Loader
-                    sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
+                    a.remove();
 
                     statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = 'Milling Complete! File downloaded. Launching Loader...';
-
-                    setTimeout(() => {
-                        window.location.href = "loader.html";
-                    }, 1200);
-                } 
-                // LOGGED-IN FLOW (SUPABASE CLOUD SYNC + REDIRECT TO LOADER)
-                else {
+                    statusTicker.textContent = 'Milling Complete! JSON downloaded.';
+                } else {
                     statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = 'Milling Complete! Cloud Synced. Launching Loader...';
-
-                    setTimeout(() => {
-                        window.location.href = "loader.html";
-                    }, 1200);
+                    statusTicker.textContent = 'Milling Complete! Synced to Cloud.';
                 }
 
+                setTimeout(() => {
+                    window.location.href = COMPARATOR_URL;
+                }, 1500);
+
             } catch (err) {
-                console.error("[GATEWAY ERROR]", err);
                 statusTicker.style.color = '#d63031';
                 statusTicker.textContent = `Error: ${err.message}`;
                 sendBtn.disabled = false;
@@ -862,6 +859,7 @@
             }
         });
     });
+    </script>
     </script>
 </body>
 </html>
