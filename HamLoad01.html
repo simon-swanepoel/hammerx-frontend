@@ -487,10 +487,10 @@
         <div class="top-menu-container menu-left">
             <div class="menu-trigger">☰</div>
             <nav class="nav-links-drawer">
-                <a href="comparator.html" class="sst-nav-link">Main Page</a>
-                <a href="comparator.html" class="sst-nav-link">HammerX Courseware</a>
-                <a href="#mathhammer" class="sst-nav-link">Math Hammer</a>
-                <a href="#mindpad" class="sst-nav-link">SST Mind Pad</a>
+                <a href="loader.html" class="sst-nav-link">home</a>
+                <a href="comparator.html" class="sst-nav-link">noun hammer</a>
+                <a href="#mathhammer" class="sst-nav-link">Math/formula Hammer</a>
+                <a href="#mindpad" class="sst-nav-link">image hammer</a>
             </nav>
         </div>
 
@@ -572,16 +572,12 @@
 
     <!-- PIPELINE LOGIC -->
     <script>
-<!-- PIPELINE LOGIC -->
-    <script>
-    // --- SUPABASE CLIENT & BACKEND URL ---
     const SUPABASE_URL = "https://lsjswxsrskaxyzvgqezu.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzanN3eHNyc2theHl6dmdxZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MzgxMTQsImV4cCI6MjA5OTIxNDExNH0._D99dnmEsQPULWcCBQcp1ThOYyzfRV4zEyMBxAPbYD8";
     const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-    // Render backend endpoint
-    const BACKEND_MILL_URL = "https://hammerx-backend.onrender.com/api/mill";
-    const COMPARATOR_URL = "SST-comparatorV1.html";
+    const BACKEND_MILL_URL = "https://freesegmill-py.onrender.com/api/mill";
+    const LOADER_URL = "loader.html";
 
     let currentUserSession = null;
     let selectedFile = null;
@@ -598,8 +594,8 @@
         const projectNameInput = document.getElementById('projectNameInput');
         const statusTicker = document.getElementById('millingLiveStatus');
 
-        // Auth elements
         const authModal = document.getElementById('authModal');
+        const profileTrigger = document.getElementById('profileTrigger');
         const userDisplayLabel = document.getElementById('userDisplayLabel');
         const profileDrawerMenu = document.getElementById('profileDrawerMenu');
         const btnAuthTrigger = document.getElementById('btnAuthTrigger');
@@ -610,13 +606,13 @@
         const authPassword = document.getElementById('authPassword');
         const authErrorMsg = document.getElementById('authErrorMsg');
 
-        // --- 1. AUTH STATE SYNC ---
+        // 1. AUTH STATE SYNC
         function updateAuthUI(session) {
             currentUserSession = session;
             if (session && session.user) {
                 userDisplayLabel.textContent = session.user.email.split('@')[0];
                 profileDrawerMenu.innerHTML = `
-                    <a href="${COMPARATOR_URL}" class="sst-nav-link">My Projects</a>
+                    <a href="${LOADER_URL}" class="sst-nav-link">Hammer Loader</a>
                     <a href="javascript:void(0)" class="sst-nav-link" id="btnSignOut" style="color: #d63031;">Sign Out</a>
                 `;
                 document.getElementById('btnSignOut').addEventListener('click', async () => {
@@ -627,9 +623,12 @@
                 profileDrawerMenu.innerHTML = `
                     <a href="javascript:void(0)" class="sst-nav-link" id="btnTriggerLogin">Sign In / Register</a>
                 `;
-                document.getElementById('btnTriggerLogin').addEventListener('click', () => {
-                    authModal.style.display = 'flex';
-                });
+                const btnTriggerLogin = document.getElementById('btnTriggerLogin');
+                if (btnTriggerLogin) {
+                    btnTriggerLogin.addEventListener('click', () => {
+                        authModal.style.display = 'flex';
+                    });
+                }
             }
         }
 
@@ -638,11 +637,22 @@
             supa.auth.onAuthStateChange((_, session) => updateAuthUI(session));
         }
 
-        if (btnAuthTrigger) btnAuthTrigger.addEventListener('click', () => authModal.style.display = 'flex');
-        if (authCancelBtn) authCancelBtn.addEventListener('click', () => {
-            authModal.style.display = 'none';
-            authErrorMsg.textContent = '';
-        });
+        if (profileTrigger) {
+            profileTrigger.addEventListener('click', () => {
+                if (!currentUserSession) authModal.style.display = 'flex';
+            });
+        }
+
+        if (btnAuthTrigger) {
+            btnAuthTrigger.addEventListener('click', () => authModal.style.display = 'flex');
+        }
+
+        if (authCancelBtn) {
+            authCancelBtn.addEventListener('click', () => {
+                authModal.style.display = 'none';
+                authErrorMsg.textContent = '';
+            });
+        }
 
         if (authToggleMode) {
             authToggleMode.addEventListener('click', () => {
@@ -675,12 +685,12 @@
                     if (authMode === "LOGIN") {
                         const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
                         if (error) throw error;
-                        currentUserSession = data.session;
+                        updateAuthUI(data.session);
                     } else {
                         const { data, error } = await supa.auth.signUp({ email, password: pass });
                         if (error) throw error;
-                        currentUserSession = data.session;
-                        alert("Account created successfully!");
+                        updateAuthUI(data.session);
+                        alert("Account registered successfully!");
                     }
                     authModal.style.display = 'none';
                     authEmail.value = '';
@@ -693,7 +703,7 @@
             });
         }
 
-        // --- 2. FILE SELECTION & PREVIEW ---
+        // 2. FILE SELECTION & PREVIEW
         [pageStartInput, pageEndInput].forEach(input => {
             if (input) {
                 input.addEventListener('input', (e) => {
@@ -780,10 +790,13 @@
             sendBtn.textContent = 'MILL';
         }
 
-        // --- 3. LIVE MILLING EXECUTION ---
+        // 3. MILLING DISPATCH
         sendBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (!selectedFile) return;
+            if (!selectedFile) {
+                alert("Please select a valid PDF file first.");
+                return;
+            }
 
             const proj = projectNameInput.value.trim() || "Quick_Deck";
             const sPage = parseInt(pageStartInput.value, 10) || 1;
@@ -797,7 +810,7 @@
             sendBtn.disabled = true;
             sendBtn.textContent = 'PROCESSING...';
             statusTicker.style.color = '#0984e3';
-            statusTicker.textContent = 'Milling 9 dimensions & visual structures...';
+            statusTicker.textContent = 'Milling 9 dimensions & visual structures... (Takes ~15-30s)';
 
             const formData = new FormData();
             formData.append('file', selectedFile);
@@ -808,6 +821,7 @@
             const headers = {};
             if (supa) {
                 const { data: { session } } = await supa.auth.getSession();
+                currentUserSession = session;
                 if (session && session.access_token) {
                     headers['Authorization'] = `Bearer ${session.access_token}`;
                 }
@@ -821,37 +835,50 @@
                 });
 
                 if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || "Refinery failed to process document.");
+                    let errText = "Milling failed.";
+                    try {
+                        const errJson = await response.json();
+                        errText = errJson.detail || JSON.stringify(errJson);
+                    } catch (_) {
+                        errText = `HTTP Error ${response.status}`;
+                    }
+                    throw new Error(errText);
                 }
 
-                const resultJson = await response.json();
+                const manifestJson = await response.json();
 
-                // Save to local backup for instant access in Comparator
-                localStorage.setItem('sst_courseware_backup', JSON.stringify(resultJson));
+                // Always stage directly in browser session storage for immediate consumption
+                sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
                 if (!currentUserSession) {
-                    const blob = new Blob([JSON.stringify(resultJson, null, 2)], { type: 'application/json' });
+                    const cleanName = proj.replace(/\s+/g, '_');
+                    const blob = new Blob([JSON.stringify(manifestJson, null, 2)], { type: "application/json" });
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
+                    a.style.display = 'none';
                     a.href = downloadUrl;
-                    a.download = `${proj}.json`;
+                    a.download = `${cleanName}_manifest.json`;
                     document.body.appendChild(a);
                     a.click();
-                    a.remove();
+                    
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(downloadUrl);
+                        a.remove();
+                    }, 1000);
 
                     statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = 'Milling Complete! JSON downloaded.';
+                    statusTicker.textContent = 'Milling Complete! File downloaded. Launching Loader...';
                 } else {
                     statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = 'Milling Complete! Synced to Cloud.';
+                    statusTicker.textContent = 'Milling Complete! Cloud Synced. Launching Loader...';
                 }
 
                 setTimeout(() => {
-                    window.location.href = COMPARATOR_URL;
-                }, 1500);
+                    window.location.href = LOADER_URL;
+                }, 1200);
 
             } catch (err) {
+                console.error("[GATEWAY ERROR]", err);
                 statusTicker.style.color = '#d63031';
                 statusTicker.textContent = `Error: ${err.message}`;
                 sendBtn.disabled = false;
@@ -859,7 +886,6 @@
             }
         });
     });
-    </script>
     </script>
 </body>
 </html>
