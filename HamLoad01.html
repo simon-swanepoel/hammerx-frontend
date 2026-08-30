@@ -160,7 +160,7 @@
         }
 
         .upload-box.active .hidden-file-input {
-            pointer-events: none;
+            display: none; /* Fully remove from click-detection when active */
         }
 
         .file-preview-list {
@@ -254,6 +254,7 @@
             font-size: 0.82rem;
             font-weight: 600;
             outline: none;
+            cursor: text;
         }
         .project-name-input:focus { border-color: #b29c6d; }
 
@@ -308,6 +309,7 @@
             font-size: 0.8rem;
             font-weight: 600;
             outline: none;
+            cursor: text;
         }
 
         .send-milling-btn {
@@ -598,6 +600,13 @@
         const authPassword = document.getElementById('authPassword');
         const authErrorMsg = document.getElementById('authErrorMsg');
 
+        // Prevent inputs from triggering file selector
+        [projectNameInput, pageStartInput, pageEndInput, btnDestLocal, btnDestCloud, sendBtn].forEach(el => {
+            if (el) {
+                el.addEventListener('click', (e) => e.stopPropagation());
+            }
+        });
+
         // Destination Toggle Handlers
         btnDestLocal.addEventListener('click', () => {
             saveDestination = "LOCAL";
@@ -724,9 +733,7 @@
         });
 
         uploadBox.addEventListener('click', (e) => {
-            if (e.target.closest('#millingConfigPanel') || e.target.classList.contains('remove-file-btn')) {
-                return;
-            }
+            if (uploadBox.classList.contains('active')) return;
             fileInput.click();
         });
 
@@ -747,7 +754,6 @@
             previewList.style.display = 'flex';
             previewList.innerHTML = '';
 
-            // Auto-fill project input if left empty
             const cleanDocName = file.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_");
             projectNameInput.value = cleanDocName;
 
@@ -787,7 +793,13 @@
                 return;
             }
 
-            // Fallback to filename if project field is blank
+            // If Supabase Cloud chosen without an active login, prompt sign-in immediately
+            if (saveDestination === "CLOUD" && (!currentUserSession || !currentUserSession.user)) {
+                alert("Please sign in to save your project directly to Supabase Cloud.");
+                authModal.style.display = 'flex';
+                return;
+            }
+
             const fallbackName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_");
             const title = projectNameInput.value.trim() || fallbackName;
             
@@ -839,7 +851,6 @@
 
                 const manifestJson = await response.json();
 
-                // Build standardized JSONB record
                 const projectPayload = {
                     project_title: title,
                     module_type: "HAMMERX",
@@ -850,7 +861,6 @@
                     milled_manifest: manifestJson
                 };
 
-                // Cache locally for immediate comparator launch
                 localStorage.setItem('sst_courseware_backup', JSON.stringify(manifestJson));
                 sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
@@ -875,7 +885,6 @@
                         statusTicker.textContent = 'Saved to Supabase Cloud! Launching...';
                     }
                 } else {
-                    // Local file download
                     const cleanName = title.replace(/\s+/g, '_');
                     const blob = new Blob([JSON.stringify(projectPayload, null, 2)], { type: "application/json" });
                     const downloadUrl = window.URL.createObjectURL(blob);
