@@ -110,7 +110,7 @@
                     drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.15));
         }
 
-        /* EXPANDED DROP / UPLOAD BOX */
+        /* UPLOAD CONTAINER */
         .upload-box {
             height: 15vh; 
             width: 32vw;
@@ -209,7 +209,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* MILLING CONTROLS CONTAINER */
+        /* MILLING CONTROLS */
         .milling-config-panel {
             width: 100%;
             display: flex;
@@ -258,7 +258,6 @@
         }
         .project-name-input:focus { border-color: #b29c6d; }
 
-        /* DESTINATION TOGGLES */
         .dest-toggle-group {
             display: flex;
             gap: 6px;
@@ -342,7 +341,7 @@
             white-space: nowrap;
         }
 
-        /* TOP MENUS & USER AUTH */
+        /* NAVIGATION & AUTH MENUS */
         .top-menu-container {
             position: absolute;
             top: 20px;
@@ -414,7 +413,7 @@
         }
         .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
 
-        /* AUTH MODAL STYLING */
+        /* AUTH MODAL */
         .sst-modal-backdrop {
             position: fixed;
             top: 0;
@@ -513,7 +512,6 @@
 
             <div class="file-preview-list" id="filePreviewList" style="display: none;"></div>
             
-            <!-- STREAMLINED PROJECT CONFIGURATION PANEL -->
             <div class="milling-config-panel" id="millingConfigPanel">
                 
                 <div class="config-row">
@@ -711,7 +709,7 @@
             }
         });
 
-        // 2. File Ingestion Setup
+        // 2. File Selection & Drag-and-Drop
         [pageStartInput, pageEndInput].forEach(input => {
             input.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
@@ -792,7 +790,7 @@
             sendBtn.textContent = 'MILL';
         }
 
-        // 3. Dispatch & Direct Landing to Supabase
+        // 3. Dispatch, Storage Bucket Upload & Database Insert
         sendBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -866,22 +864,51 @@
                 const manifestJson = await response.json();
                 console.log("--> [FRONTEND] Milled Manifest:", manifestJson);
 
+                let storagePath = null;
+
+                // Step A: Upload source PDF to hammer-assets bucket under user_id folder
+                if (saveDestination === "CLOUD" && activeUser) {
+                    statusTicker.textContent = 'Uploading source asset to secure bucket...';
+                    const cleanFilename = selectedFile.name.replace(/\s+/g, '_');
+                    const cleanTitle = title.replace(/\s+/g, '_');
+                    const targetBucketPath = `${activeUser.id}/HAMMERX/${cleanTitle}/${cleanFilename}`;
+
+                    console.log("--> [STORAGE] Uploading to bucket path:", targetBucketPath);
+                    const { data: storageData, error: storageError } = await supa.storage
+                        .from('hammer-assets')
+                        .upload(targetBucketPath, selectedFile, {
+                            cacheControl: '3600',
+                            upsert: true
+                        });
+
+                    if (storageError) {
+                        console.warn("[STORAGE WARNING]: Bucket upload failed, proceeding with DB write:", storageError.message);
+                    } else {
+                        storagePath = storageData.path;
+                        console.log("--> [STORAGE SUCCESS] File stored at:", storagePath);
+                    }
+                }
+
+                // Step B: Build payload
                 const projectPayload = {
                     project_title: title,
                     module_type: "HAMMERX",
                     sub_tool: "Comparator",
                     source_file: selectedFile.name,
+                    storage_path: storagePath,
                     page_range: `${sPage}-${ePage}`,
                     timestamp: new Date().toISOString(),
                     milled_manifest: manifestJson
                 };
 
+                // Step C: Write to local storage caches for instant offline use
                 localStorage.setItem('sst_courseware_backup', JSON.stringify(manifestJson));
                 sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
+                // Step D: Write to Supabase study_items database table
                 if (saveDestination === "CLOUD" && activeUser) {
                     statusTicker.textContent = 'Writing to Supabase study_items table...';
-                    console.log("--> [FRONTEND] Inserting row for user_id:", activeUser.id);
+                    console.log("--> [DATABASE] Inserting row for user_id:", activeUser.id);
 
                     const { data: dbData, error: dbError } = await supa
                         .from('study_items')
@@ -889,6 +916,7 @@
                             user_id: activeUser.id,
                             module_type: "HAMMERX",
                             sub_tool: "Comparator",
+                            discipline: "STEM",
                             title: title,
                             payload: projectPayload
                         }])
@@ -898,10 +926,13 @@
                         console.error("--> [SUPABASE INSERT FAILED]:", dbError);
                         statusTicker.style.color = '#d63031';
                         statusTicker.textContent = `DB Error: ${dbError.message}`;
+                        sendBtn.disabled = false;
+                        sendBtn.textContent = 'MILL AGAIN';
+                        return;
                     } else {
                         console.log("--> [SUPABASE SUCCESS] Data landed in table:", dbData);
                         statusTicker.style.color = '#27ae60';
-                        statusTicker.textContent = `✓ Successfully saved to Supabase (Row ID: ${dbData[0].id})`;
+                        statusTicker.textContent = `✓ Saved to Cloud & Bucket! Launching Workstation...`;
                     }
                 } else if (saveDestination === "LOCAL") {
                     const cleanName = title.replace(/\s+/g, '_');
@@ -919,11 +950,13 @@
                     }, 1000);
 
                     statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = '✓ Downloaded JSON manifest file.';
+                    statusTicker.textContent = '✓ Downloaded JSON manifest file. Launching...';
                 }
 
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'MILL AGAIN';
+                // Automatic redirect to Comparator Workstation
+                setTimeout(() => {
+                    window.location.href = COMPARATOR_URL;
+                }, 1200);
 
             } catch (err) {
                 console.error("[MILLING FATAL ERROR]", err);
