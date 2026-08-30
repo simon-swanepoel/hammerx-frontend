@@ -159,7 +159,6 @@
             z-index: 10;
         }
 
-        /* Prevent invisible file-input click trap when panel is active */
         .upload-box.active .hidden-file-input {
             display: none;
         }
@@ -594,6 +593,7 @@
         const profileTrigger = document.getElementById('profileTrigger');
         const userDisplayLabel = document.getElementById('userDisplayLabel');
         const profileDrawerMenu = document.getElementById('profileDrawerMenu');
+        const btnAuthTrigger = document.getElementById('btnAuthTrigger');
         const authCancelBtn = document.getElementById('authCancelBtn');
         const authSubmitBtn = document.getElementById('authSubmitBtn');
         const authToggleMode = document.getElementById('authToggleMode');
@@ -601,14 +601,14 @@
         const authPassword = document.getElementById('authPassword');
         const authErrorMsg = document.getElementById('authErrorMsg');
 
-        // Prevent inputs from bubbling to the container click listener
+        // Prevent inputs from bubbling to container click
         [projectNameInput, pageStartInput, pageEndInput, btnDestLocal, btnDestCloud, sendBtn].forEach(el => {
             if (el) {
                 el.addEventListener('click', (e) => e.stopPropagation());
             }
         });
 
-        // Destination Toggle Handlers
+        // Destination Toggles
         btnDestLocal.addEventListener('click', () => {
             saveDestination = "LOCAL";
             btnDestLocal.classList.add('active');
@@ -649,9 +649,17 @@
             supa.auth.onAuthStateChange((_, session) => updateAuthUI(session));
         }
 
-        profileTrigger.addEventListener('click', () => {
-            if (!currentUserSession) authModal.style.display = 'flex';
-        });
+        if (profileTrigger) {
+            profileTrigger.addEventListener('click', () => {
+                if (!currentUserSession) authModal.style.display = 'flex';
+            });
+        }
+
+        if (btnAuthTrigger) {
+            btnAuthTrigger.addEventListener('click', () => {
+                authModal.style.display = 'flex';
+            });
+        }
 
         authCancelBtn.addEventListener('click', () => {
             authModal.style.display = 'none';
@@ -674,8 +682,8 @@
         });
 
         authSubmitBtn.addEventListener('click', async () => {
-            const email = authEmail.value.trim();
-            const pass = authPassword.value.trim();
+            const email = authEmail.value.trim().toLowerCase();
+            const pass = authPassword.value;
             if (!email || !pass) {
                 authErrorMsg.textContent = "Please enter email and password.";
                 return;
@@ -703,7 +711,7 @@
             }
         });
 
-        // 2. File Selection & Drag-and-Drop
+        // 2. File Ingestion Setup
         [pageStartInput, pageEndInput].forEach(input => {
             input.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
@@ -784,7 +792,7 @@
             sendBtn.textContent = 'MILL';
         }
 
-// 3. Dispatch & Direct Landing to Supabase
+        // 3. Dispatch & Direct Landing to Supabase
         sendBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -794,12 +802,11 @@
                 return;
             }
 
-            // Verify active Supabase login
             let activeUser = null;
             if (supa) {
                 const { data: { user } } = await supa.auth.getUser();
                 activeUser = user;
-                if (!activeUser) {
+                if (saveDestination === "CLOUD" && !activeUser) {
                     alert("Please sign in first to land data in Supabase.");
                     authModal.style.display = 'flex';
                     return;
@@ -859,7 +866,6 @@
                 const manifestJson = await response.json();
                 console.log("--> [FRONTEND] Milled Manifest:", manifestJson);
 
-                // Build standardized 6-division payload
                 const projectPayload = {
                     project_title: title,
                     module_type: "HAMMERX",
@@ -870,12 +876,10 @@
                     milled_manifest: manifestJson
                 };
 
-                // Local caches
                 localStorage.setItem('sst_courseware_backup', JSON.stringify(manifestJson));
                 sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
-                // Direct Supabase Landing
-                if (activeUser) {
+                if (saveDestination === "CLOUD" && activeUser) {
                     statusTicker.textContent = 'Writing to Supabase study_items table...';
                     console.log("--> [FRONTEND] Inserting row for user_id:", activeUser.id);
 
@@ -899,14 +903,24 @@
                         statusTicker.style.color = '#27ae60';
                         statusTicker.textContent = `✓ Successfully saved to Supabase (Row ID: ${dbData[0].id})`;
                     }
-                }
+                } else if (saveDestination === "LOCAL") {
+                    const cleanName = title.replace(/\s+/g, '_');
+                    const blob = new Blob([JSON.stringify(projectPayload, null, 2)], { type: "application/json" });
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = `${cleanName}_manifest.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(downloadUrl);
+                        a.remove();
+                    }, 1000);
 
-                /* 
-                 * NOTE: COMPARATOR REDIRECT (Uncomment when ready to switch pages)
-                 * setTimeout(() => {
-                 *     window.location.href = COMPARATOR_URL;
-                 * }, 1200);
-                 */
+                    statusTicker.style.color = '#27ae60';
+                    statusTicker.textContent = '✓ Downloaded JSON manifest file.';
+                }
 
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'MILL AGAIN';
@@ -919,6 +933,7 @@
                 sendBtn.textContent = 'MILL';
             }
         });
+    });
     </script>
 </body>
 </html>
