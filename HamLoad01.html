@@ -129,7 +129,7 @@
         }
 
         .upload-box.active {
-            height: 36vh; 
+            height: 38vh; 
             border-radius: 2vh; 
         }
 
@@ -334,7 +334,7 @@
             font-weight: 600;
             color: #0984e3;
             text-align: center;
-            min-height: 14px;
+            min-height: 16px;
             width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -567,7 +567,7 @@
     const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     const BACKEND_MILL_URL = "https://freesegmill-py.onrender.com/api/mill";
-    const COMPARATOR_URL = "comparator.html";
+    const COMPARATOR_URL = "SST-comparatorV1.html";
 
     let currentUserSession = null;
     let selectedFile = null;
@@ -599,11 +599,20 @@
         const authPassword = document.getElementById('authPassword');
         const authErrorMsg = document.getElementById('authErrorMsg');
 
-        // Prevent inputs from bubbling to container click
+        // Prevent inputs from bubbling
         [projectNameInput, pageStartInput, pageEndInput, btnDestLocal, btnDestCloud, sendBtn].forEach(el => {
-            if (el) {
-                el.addEventListener('click', (e) => e.stopPropagation());
-            }
+            if (el) el.addEventListener('click', (e) => e.stopPropagation());
+        });
+
+        // Online / Offline Listeners
+        window.addEventListener('offline', () => {
+            statusTicker.style.color = '#d63031';
+            statusTicker.textContent = '⚠ Network disconnected. Pausing queue...';
+        });
+
+        window.addEventListener('online', () => {
+            statusTicker.style.color = '#27ae60';
+            statusTicker.textContent = '✓ Connection restored.';
         });
 
         // Destination Toggles
@@ -750,8 +759,8 @@
                 return;
             }
 
-            if (file.size > 25 * 1024 * 1024) {
-                alert("File too large. Maximum size is 25MB.");
+            if (file.size > 30 * 1024 * 1024) {
+                alert("File too large. Maximum size is 30MB.");
                 return;
             }
 
@@ -790,7 +799,39 @@
             sendBtn.textContent = 'MILL';
         }
 
-        // 3. Dispatch, Storage Bucket Upload & Database Insert
+        // 3. Resilient Fetch Wrapper with Exponential Backoff
+        async function fetchWithRetry(url, options, maxRetries = 4, delayMs = 3000) {
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    if (!navigator.onLine) {
+                        statusTicker.textContent = `Offline: Waiting for connection...`;
+                        await new Promise(r => setTimeout(r, 2000));
+                        continue;
+                    }
+
+                    if (attempt > 0) {
+                        statusTicker.textContent = `Reconnecting & Retrying (Attempt ${attempt + 1}/${maxRetries})...`;
+                    }
+
+                    const response = await fetch(url, options);
+                    return response;
+                } catch (err) {
+                    attempt++;
+                    console.warn(`[RETRY ENGINE] Fetch failed on attempt ${attempt}/${maxRetries}:`, err.message);
+                    
+                    if (attempt >= maxRetries) {
+                        throw new Error(`Connection timeout / network drop after ${maxRetries} attempts. (${err.message})`);
+                    }
+
+                    const backoff = delayMs * Math.pow(1.5, attempt - 1);
+                    statusTicker.textContent = `Connection stutter detected — retrying in ${Math.round(backoff / 1000)}s...`;
+                    await new Promise(r => setTimeout(r, backoff));
+                }
+            }
+        }
+
+        // 4. Dispatch, Overwrite & Ingestion Execution
         sendBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -842,8 +883,8 @@
             }
 
             try {
-                console.log("--> [FRONTEND] Dispatching to Render backend...");
-                const response = await fetch(BACKEND_MILL_URL, {
+                console.log("--> [FRONTEND] Dispatching to Render backend with retry engine...");
+                const response = await fetchWithRetry(BACKEND_MILL_URL, {
                     method: 'POST',
                     headers: headers,
                     body: formData
@@ -866,30 +907,30 @@
 
                 let storagePath = null;
 
-                // Step A: Upload source PDF to hammer-assets bucket under user_id folder
+                // Step A: Binary Storage Bucket Overwrite
                 if (saveDestination === "CLOUD" && activeUser) {
-                    statusTicker.textContent = 'Uploading source asset to secure bucket...';
+                    statusTicker.textContent = 'Overwriting/Storing source asset in secure bucket...';
                     const cleanFilename = selectedFile.name.replace(/\s+/g, '_');
                     const cleanTitle = title.replace(/\s+/g, '_');
                     const targetBucketPath = `${activeUser.id}/HAMMERX/${cleanTitle}/${cleanFilename}`;
 
-                    console.log("--> [STORAGE] Uploading to bucket path:", targetBucketPath);
+                    console.log("--> [STORAGE] Upserting to bucket path:", targetBucketPath);
                     const { data: storageData, error: storageError } = await supa.storage
                         .from('hammer-assets')
                         .upload(targetBucketPath, selectedFile, {
                             cacheControl: '3600',
-                            upsert: true
+                            upsert: true // Overwrites previous binary copy
                         });
 
                     if (storageError) {
-                        console.warn("[STORAGE WARNING]: Bucket upload failed, proceeding with DB write:", storageError.message);
+                        console.warn("[STORAGE WARNING]: Bucket upload failed, continuing with DB write:", storageError.message);
                     } else {
                         storagePath = storageData.path;
                         console.log("--> [STORAGE SUCCESS] File stored at:", storagePath);
                     }
                 }
 
-                // Step B: Build payload
+                // Step B: Build Payload
                 const projectPayload = {
                     project_title: title,
                     module_type: "HAMMERX",
@@ -901,38 +942,38 @@
                     milled_manifest: manifestJson
                 };
 
-                // Step C: Write to local storage caches for instant offline use
-                localStorage.setItem('sst_courseware_backup', JSON.stringify(manifestJson));
-                sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
+                // Step C: Write Local Storage Caches
+                localStorage.setItem('sst_courseware_backup', JSON.stringify(projectPayload));
+                sessionStorage.setItem('staged_manifest_payload', JSON.stringify(projectPayload));
 
-                // Step D: Write to Supabase study_items database table
+                // Step D: Database Upsert (Overwrites matching project on conflict)
                 if (saveDestination === "CLOUD" && activeUser) {
-                    statusTicker.textContent = 'Writing to Supabase study_items table...';
-                    console.log("--> [DATABASE] Inserting row for user_id:", activeUser.id);
+                    statusTicker.textContent = 'Purging/Upserting record in Supabase study_items table...';
+                    console.log("--> [DATABASE] Upserting record for user_id:", activeUser.id);
 
                     const { data: dbData, error: dbError } = await supa
                         .from('study_items')
-                        .insert([{
+                        .upsert([{
                             user_id: activeUser.id,
                             module_type: "HAMMERX",
                             sub_tool: "Comparator",
                             discipline: "STEM",
                             title: title,
                             payload: projectPayload
-                        }])
+                        }], { onConflict: 'user_id, title' })
                         .select();
 
                     if (dbError) {
-                        console.error("--> [SUPABASE INSERT FAILED]:", dbError);
+                        console.error("--> [SUPABASE UPSERT FAILED]:", dbError);
                         statusTicker.style.color = '#d63031';
                         statusTicker.textContent = `DB Error: ${dbError.message}`;
                         sendBtn.disabled = false;
                         sendBtn.textContent = 'MILL AGAIN';
                         return;
                     } else {
-                        console.log("--> [SUPABASE SUCCESS] Data landed in table:", dbData);
+                        console.log("--> [SUPABASE SUCCESS] Data cleanly overwritten in table:", dbData);
                         statusTicker.style.color = '#27ae60';
-                        statusTicker.textContent = `✓ Saved to Cloud & Bucket! Launching Workstation...`;
+                        statusTicker.textContent = `✓ Overwritten & Secured! Launching Workstation...`;
                     }
                 } else if (saveDestination === "LOCAL") {
                     const cleanName = title.replace(/\s+/g, '_');
@@ -950,7 +991,7 @@
                     }, 1000);
 
                     statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = '✓ Downloaded JSON manifest file. Launching...';
+                    statusTicker.textContent = '✓ Downloaded JSON manifest. Launching...';
                 }
 
                 // Automatic redirect to Comparator Workstation
