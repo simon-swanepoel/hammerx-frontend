@@ -784,7 +784,7 @@
             sendBtn.textContent = 'MILL';
         }
 
-        // 3. Dispatch & Direct Routing
+// 3. Dispatch & Direct Landing to Supabase
         sendBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -794,11 +794,13 @@
                 return;
             }
 
-            // Verify authentication if Supabase Cloud destination is chosen
-            if (saveDestination === "CLOUD" && supa) {
+            // Verify active Supabase login
+            let activeUser = null;
+            if (supa) {
                 const { data: { user } } = await supa.auth.getUser();
-                if (!user) {
-                    alert("Please sign in first to save directly to Supabase Cloud.");
+                activeUser = user;
+                if (!activeUser) {
+                    alert("Please sign in first to land data in Supabase.");
                     authModal.style.display = 'flex';
                     return;
                 }
@@ -806,7 +808,6 @@
 
             const fallbackName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_");
             const title = projectNameInput.value.trim() || fallbackName;
-            
             const sPage = parseInt(pageStartInput.value, 10) || 1;
             const ePage = parseInt(pageEndInput.value, 10) || 1;
 
@@ -818,7 +819,7 @@
             sendBtn.disabled = true;
             sendBtn.textContent = 'MILLING...';
             statusTicker.style.color = '#0984e3';
-            statusTicker.textContent = 'Milling 9 dimensions & visual structures...';
+            statusTicker.textContent = 'Milling document & visual structures...';
 
             const formData = new FormData();
             formData.append('file', selectedFile);
@@ -836,6 +837,7 @@
             }
 
             try {
+                console.log("--> [FRONTEND] Dispatching to Render backend...");
                 const response = await fetch(BACKEND_MILL_URL, {
                     method: 'POST',
                     headers: headers,
@@ -853,9 +855,11 @@
                     throw new Error(errText);
                 }
 
+                console.log("--> [FRONTEND] Extraction successful. Parsing JSON manifest...");
                 const manifestJson = await response.json();
+                console.log("--> [FRONTEND] Milled Manifest:", manifestJson);
 
-                // 6-Division unified project payload
+                // Build standardized 6-division payload
                 const projectPayload = {
                     project_title: title,
                     module_type: "HAMMERX",
@@ -866,67 +870,55 @@
                     milled_manifest: manifestJson
                 };
 
-                // Cache for immediate comparator display
+                // Local caches
                 localStorage.setItem('sst_courseware_backup', JSON.stringify(manifestJson));
                 sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
-                if (saveDestination === "CLOUD") {
-                    const { data: { user } } = await supa.auth.getUser();
-                    
-                    if (user) {
-                        statusTicker.textContent = 'Writing directly to Supabase...';
-                        
-                        const { error: dbError } = await supa
-                            .from('study_items')
-                            .insert([{
-                                user_id: user.id,
-                                module_type: "HAMMERX",
-                                sub_tool: "Comparator",
-                                title: title,
-                                payload: projectPayload
-                            }]);
+                // Direct Supabase Landing
+                if (activeUser) {
+                    statusTicker.textContent = 'Writing to Supabase study_items table...';
+                    console.log("--> [FRONTEND] Inserting row for user_id:", activeUser.id);
 
-                        if (dbError) {
-                            console.error("[SUPABASE SAVE ERROR]:", dbError.message);
-                            statusTicker.textContent = 'Local synced (Supabase write failed).';
-                        } else {
-                            statusTicker.style.color = '#27ae60';
-                            statusTicker.textContent = 'Saved to Supabase Cloud! Launching...';
-                        }
+                    const { data: dbData, error: dbError } = await supa
+                        .from('study_items')
+                        .insert([{
+                            user_id: activeUser.id,
+                            module_type: "HAMMERX",
+                            sub_tool: "Comparator",
+                            title: title,
+                            payload: projectPayload
+                        }])
+                        .select();
+
+                    if (dbError) {
+                        console.error("--> [SUPABASE INSERT FAILED]:", dbError);
+                        statusTicker.style.color = '#d63031';
+                        statusTicker.textContent = `DB Error: ${dbError.message}`;
+                    } else {
+                        console.log("--> [SUPABASE SUCCESS] Data landed in table:", dbData);
+                        statusTicker.style.color = '#27ae60';
+                        statusTicker.textContent = `✓ Successfully saved to Supabase (Row ID: ${dbData[0].id})`;
                     }
-                } else {
-                    // Local fallback file download
-                    const cleanName = title.replace(/\s+/g, '_');
-                    const blob = new Blob([JSON.stringify(projectPayload, null, 2)], { type: "application/json" });
-                    const downloadUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = downloadUrl;
-                    a.download = `${cleanName}_manifest.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => {
-                        window.URL.revokeObjectURL(downloadUrl);
-                        a.remove();
-                    }, 1000);
-
-                    statusTicker.style.color = '#27ae60';
-                    statusTicker.textContent = 'Downloaded JSON file! Launching...';
                 }
 
-                setTimeout(() => {
-                    window.location.href = COMPARATOR_URL;
-                }, 1200);
+                /* 
+                 * NOTE: COMPARATOR REDIRECT (Uncomment when ready to switch pages)
+                 * setTimeout(() => {
+                 *     window.location.href = COMPARATOR_URL;
+                 * }, 1200);
+                 */
+
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'MILL AGAIN';
 
             } catch (err) {
-                console.error("[MILLING ERROR]", err);
+                console.error("[MILLING FATAL ERROR]", err);
                 statusTicker.style.color = '#d63031';
                 statusTicker.textContent = `Error: ${err.message}`;
                 sendBtn.disabled = false;
                 sendBtn.textContent = 'MILL';
             }
         });
-    });
     </script>
 </body>
 </html>
