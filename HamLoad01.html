@@ -110,7 +110,7 @@
                     drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.15));
         }
 
-        /* EXPANDED DROP BOX */
+        /* EXPANDED DROP / UPLOAD BOX */
         .upload-box {
             height: 15vh; 
             width: 32vw;
@@ -159,8 +159,9 @@
             z-index: 10;
         }
 
+        /* Prevent invisible file-input click trap when panel is active */
         .upload-box.active .hidden-file-input {
-            display: none; /* Fully remove from click-detection when active */
+            display: none;
         }
 
         .file-preview-list {
@@ -209,7 +210,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* STREAMLINED HAMMERX CONTROLS */
+        /* MILLING CONTROLS CONTAINER */
         .milling-config-panel {
             width: 100%;
             display: flex;
@@ -258,7 +259,7 @@
         }
         .project-name-input:focus { border-color: #b29c6d; }
 
-        /* DESTINATION TOGGLE BUTTONS */
+        /* DESTINATION TOGGLES */
         .dest-toggle-group {
             display: flex;
             gap: 6px;
@@ -342,7 +343,7 @@
             white-space: nowrap;
         }
 
-        /* MENUS & AUTH */
+        /* TOP MENUS & USER AUTH */
         .top-menu-container {
             position: absolute;
             top: 20px;
@@ -414,7 +415,7 @@
         }
         .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
 
-        /* MODAL */
+        /* AUTH MODAL STYLING */
         .sst-modal-backdrop {
             position: fixed;
             top: 0;
@@ -562,7 +563,7 @@
         </div>
     </div>
 
-    <!-- PIPELINE ENGINE -->
+    <!-- PIPELINE LOGIC -->
     <script>
     const SUPABASE_URL = "https://lsjswxsrskaxyzvgqezu.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzanN3eHNyc2theHl6dmdxZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MzgxMTQsImV4cCI6MjA5OTIxNDExNH0._D99dnmEsQPULWcCBQcp1ThOYyzfRV4zEyMBxAPbYD8";
@@ -600,7 +601,7 @@
         const authPassword = document.getElementById('authPassword');
         const authErrorMsg = document.getElementById('authErrorMsg');
 
-        // Prevent inputs from triggering file selector
+        // Prevent inputs from bubbling to the container click listener
         [projectNameInput, pageStartInput, pageEndInput, btnDestLocal, btnDestCloud, sendBtn].forEach(el => {
             if (el) {
                 el.addEventListener('click', (e) => e.stopPropagation());
@@ -793,11 +794,14 @@
                 return;
             }
 
-            // If Supabase Cloud chosen without an active login, prompt sign-in immediately
-            if (saveDestination === "CLOUD" && (!currentUserSession || !currentUserSession.user)) {
-                alert("Please sign in to save your project directly to Supabase Cloud.");
-                authModal.style.display = 'flex';
-                return;
+            // Verify authentication if Supabase Cloud destination is chosen
+            if (saveDestination === "CLOUD" && supa) {
+                const { data: { user } } = await supa.auth.getUser();
+                if (!user) {
+                    alert("Please sign in first to save directly to Supabase Cloud.");
+                    authModal.style.display = 'flex';
+                    return;
+                }
             }
 
             const fallbackName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_");
@@ -851,6 +855,7 @@
 
                 const manifestJson = await response.json();
 
+                // 6-Division unified project payload
                 const projectPayload = {
                     project_title: title,
                     module_type: "HAMMERX",
@@ -861,30 +866,36 @@
                     milled_manifest: manifestJson
                 };
 
+                // Cache for immediate comparator display
                 localStorage.setItem('sst_courseware_backup', JSON.stringify(manifestJson));
                 sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
-                if (saveDestination === "CLOUD" && currentUserSession && currentUserSession.user) {
-                    statusTicker.textContent = 'Writing directly to Supabase...';
+                if (saveDestination === "CLOUD") {
+                    const { data: { user } } = await supa.auth.getUser();
                     
-                    const { error: dbError } = await supa
-                        .from('study_items')
-                        .insert([{
-                            user_id: currentUserSession.user.id,
-                            module_type: "HAMMERX",
-                            sub_tool: "Comparator",
-                            title: title,
-                            payload: projectPayload
-                        }]);
+                    if (user) {
+                        statusTicker.textContent = 'Writing directly to Supabase...';
+                        
+                        const { error: dbError } = await supa
+                            .from('study_items')
+                            .insert([{
+                                user_id: user.id,
+                                module_type: "HAMMERX",
+                                sub_tool: "Comparator",
+                                title: title,
+                                payload: projectPayload
+                            }]);
 
-                    if (dbError) {
-                        console.warn("[SUPABASE SAVE WARNING]:", dbError.message);
-                        statusTicker.textContent = 'Synced locally (Cloud write error).';
-                    } else {
-                        statusTicker.style.color = '#27ae60';
-                        statusTicker.textContent = 'Saved to Supabase Cloud! Launching...';
+                        if (dbError) {
+                            console.error("[SUPABASE SAVE ERROR]:", dbError.message);
+                            statusTicker.textContent = 'Local synced (Supabase write failed).';
+                        } else {
+                            statusTicker.style.color = '#27ae60';
+                            statusTicker.textContent = 'Saved to Supabase Cloud! Launching...';
+                        }
                     }
                 } else {
+                    // Local fallback file download
                     const cleanName = title.replace(/\s+/g, '_');
                     const blob = new Blob([JSON.stringify(projectPayload, null, 2)], { type: "application/json" });
                     const downloadUrl = window.URL.createObjectURL(blob);
