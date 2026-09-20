@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swanepoel Study Tools | Stress-Resilient Memory & Operational Drilling</title>
     
+    <!-- Canonical URL to resolve duplicate indexing warnings -->
+    <link rel="canonical" href="https://yourdomain.com/" />
+
     <!-- SEO & High-Intent Discoverability Metadata -->
     <meta name="description" content="Swanepoel Study Tools (SST): Cognitive muscle memory and operational recall systems. High-repetition memory tools, STEM formula extraction, critical procedure simulators, and sandbox environments designed for stress-resilient retention.">
     <meta name="keywords" content="repetitive memory tools, critical memory simulators, emergency checklist retention, STEM formula drills, KaTeX flashcards, operational muscle memory, air-gapped memory, artisan study tools">
@@ -81,24 +84,27 @@
             display: flex;          
             justify-content: center; 
             align-items: center;     
-            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: all 0.7s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* Top Shutter: Extends from top down to 60% */
+        /* Top Shutter: Defaults to 60% height */
         .shutter-top {
             top: 0;
             height: 60vh;
             border-bottom: 4px solid #b29c6d;
+            overflow: hidden;
         }
 
-        /* CONTAINER FOR LOGO: Stacks items vertically and centers them */
+        /* CONTAINER FOR LOGO: Handles vertical alignment and smooth transform scaling */
         .logo-wrapper {
             text-align: center;
             display: flex;
             flex-direction: column; 
             justify-content: center;
             align-items: center;
-            margin-top: 2vh; 
+            margin-top: 2vh;
+            transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+            transform-origin: top center;
         }
 
         /* THE SST LOGO */
@@ -109,13 +115,45 @@
             mix-blend-mode: multiply; 
         }
 
-        /* Independent Text Wrapper with Custom Height Parameters */
+        /* Independent Text Wrapper */
         .sst-branding-text-zone {
             display: flex;
             flex-direction: column;   
             justify-content: center;  
             align-items: center;      
-            height: 24vh;            
+            height: 18vh;
+            transition: opacity 0.5s ease;
+        }
+
+        /* PRIMARY LUXURY NAVY HEADLINE */
+        .sst-title-main {
+            color: #0b2545;
+            font-family: "Cinzel", "Didot", "Bodoni MT", "Times New Roman", serif;
+            font-size: clamp(2.8rem, 6.4vh, 5.2rem); 
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;   
+            margin: 0;               
+            user-select: none;
+        }
+
+        /* --- REDUCED / RETRACTED STATE --- */
+        .shutter-top.shutter-reduced {
+            height: 13vh;
+        }
+
+        /* Scale down the logo and title into a compact top masthead */
+        .shutter-top.shutter-reduced .logo-wrapper {
+            transform: scale(0.38) translateY(-4vh);
+        }
+
+        /* --- HOVER EXPANSION WHEN REDUCED --- */
+        .shutter-top.shutter-reduced:hover {
+            height: 60vh;
+        }
+
+        .shutter-top.shutter-reduced:hover .logo-wrapper {
+            transform: scale(1) translateY(0);
         }
 
         /* LAYER 3: The Viewport Slit Text Track Panel */
@@ -158,32 +196,42 @@
                     drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.15));
         }
 
-        /* TOP CORNER UTILITY ANCHOR */
+        /* TOP CORNER UTILITY ANCHORS */
         .top-menu-container {
             position: absolute;
             top: 20px;
-            left: 30px;
             z-index: 100;
             display: flex;
             flex-direction: column; 
-            align-items: flex-start;
+        }
+
+        .menu-left { 
+            left: 30px; 
+            align-items: flex-start; 
+        }
+
+        .menu-right { 
+            right: 30px; 
+            align-items: flex-end; 
         }
 
         /* THE ICON TRIGGERS */
-        .menu-trigger {
+        .menu-trigger, .info-trigger {
             font-size: 1.5rem;
             color: #2c2d30;
             cursor: pointer;
             user-select: none;
             transition: color 0.3s ease;
             padding: 5px;
+            line-height: 1;
         }
-        .menu-trigger:hover {
+
+        .menu-trigger:hover, .info-trigger:hover {
             color: #b29c6d;
         }
 
-        /* EXPANDABLE TEXT LINKS DRAWER (VERTICAL SLIDE) */
-        .nav-links-drawer {
+        /* EXPANDABLE TEXT LINKS DRAWERS (VERTICAL SLIDE DOWN) */
+        .nav-links-drawer, .info-links-drawer {
             display: flex;
             flex-direction: column; 
             gap: 12px;
@@ -192,14 +240,29 @@
             overflow: hidden;
             white-space: nowrap;
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            padding-left: 5px;
             margin-top: 0;
         }
 
+        .menu-left .nav-links-drawer {
+            padding-left: 5px;
+            align-items: flex-start;
+        }
+
+        .menu-right .info-links-drawer {
+            padding-right: 5px;
+            align-items: flex-end;
+        }
+
         /* Vertical Expansion interaction rules on hover */
-        .top-menu-container:hover .nav-links-drawer {
+        .menu-left:hover .nav-links-drawer {
             opacity: 1;
             max-height: 400px; 
+            margin-top: 10px;
+        }
+
+        .menu-right:hover .info-links-drawer {
+            opacity: 1;
+            max-height: 250px;
             margin-top: 10px;
         }
 
@@ -213,94 +276,108 @@
             letter-spacing: 1px;
             transition: color 0.2s ease, transform 0.2s ease;
         }
-        .sst-nav-link:hover {
+
+        .menu-left .sst-nav-link:hover {
             color: #2c2d30;
             transform: translateX(4px); 
         }
 
-        /* BOTTOM-LEFT INFO UTILITY ANCHOR */
-        .bottom-menu-container {
-            position: absolute;
-            bottom: 20px; 
-            left: 30px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column-reverse; 
-            align-items: flex-start;
-        }
-
-        /* THE INFO ICON TRIGGER */
-        .info-trigger {
-            font-size: 1.4rem;
+        .menu-right .sst-nav-link:hover {
             color: #2c2d30;
-            cursor: pointer;
-            user-select: none;
-            transition: color 0.3s ease;
-            padding: 5px;
-            line-height: 1;
-        }
-        .info-trigger:hover {
-            color: #b29c6d;
+            transform: translateX(-4px); 
         }
 
-        /* EXPANDABLE TEXT LINKS DRAWER FOR HELP SYSTEM */
-        .info-links-drawer {
+        /* LAYER 2.5: Centered Crawlable Brief Zone (Aerospace High-Contrast HUD) */
+        .platform-brief-zone {
+            position: fixed;
+            top: 17vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 86vw;
+            max-width: 940px;
+            z-index: 2;
+            text-align: center;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            align-items: center;
+            gap: 1.6vh;
+            pointer-events: auto;
             opacity: 0;
-            max-height: 0;
-            overflow: hidden;
-            white-space: nowrap;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            padding-left: 5px;
-            margin-bottom: 0; 
+            padding: 24px 34px;
+            border-radius: 14px;
+            
+            /* High-density deep blackout chassis with SST Gold border */
+            background: rgba(7, 9, 13, 0.88);
+            border: 1px solid rgba(178, 156, 109, 0.7);
+            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.95), 
+                        inset 0 0 1px 1px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+
+            transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.2s;
         }
 
-        /* Interaction rule to expand the drawer downwards when hovering over the container area */
-        .bottom-menu-container:hover .info-links-drawer {
+        /* Reveal smoothly when shutter rolls up */
+        .shutter-top.shutter-reduced ~ .platform-brief-zone {
             opacity: 1;
-            max-height: 200px;
-            margin-bottom: 10px;
         }
 
-        /* Hide the bottom info icon when the top menu container is hovered */
-        .top-menu-container:hover ~ .bottom-menu-container {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-        }
-
-        /* Hide the top hamburger icon when the bottom menu container is hovered */
-        .bottom-menu-container:hover ~ .top-menu-container {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-        }
-
-        /* PRIMARY LUXURY NAVY HEADLINE */
-        .sst-title-main {
-            color: #0b2545;
+        /* High-Definition Machined Platinum Headline (Statically Inked - No Smear) */
+        .brief-headline {
             font-family: "Cinzel", "Didot", "Bodoni MT", "Times New Roman", serif;
-            font-size: clamp(2.8rem, 6.4vh, 5.2rem); 
-            font-weight: 600;
+            font-size: clamp(1.2rem, 2.4vh, 1.95rem);
+            letter-spacing: 0.16em;
             text-transform: uppercase;
-            letter-spacing: 0.2em;   
-            margin: 0;               
-            user-select: none;
+            font-weight: 800;
+            line-height: 1.25;
+            color: #ffffff;
+
+            /* Multi-stage hard shadow halo: carves out crisp edges against all nebula zones */
+            text-shadow: 
+                0 0 2px #000000,
+                0 2px 4px #000000,
+                0 4px 12px rgba(0, 0, 0, 0.95),
+                0 0 20px rgba(0, 0, 0, 0.8);
         }
 
-        /* SIGNATURE SST GOLD SUBTITLE */
-        .sst-title-sub {
-            color: #b29c6d;
-            font-family: "Cinzel", "Didot", "Bodoni MT", "Times New Roman", serif;
-            font-size: clamp(1.8rem, 4vh, 3.0rem); 
+        /* Polar-White Body Copy with Contrast Halo */
+        .brief-body {
+            color: #ffffff;
+            font-size: clamp(0.9rem, 1.45vh, 1.08rem);
+            line-height: 1.65;
             font-weight: 500;
+            max-width: 820px;
+            letter-spacing: 0.04em;
+            
+            /* Prevents muddy blurring and eliminates background bleeding */
+            text-shadow: 
+                0 1px 2px #000000,
+                0 2px 6px rgba(0, 0, 0, 0.95),
+                0 0 14px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Tactical Pillar Badges */
+        .brief-pillars {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 0.5vh;
+        }
+
+        .pillar-tag {
+            color: #ffd88a;
+            border: 1px solid rgba(178, 156, 109, 0.85);
+            background: #0f131a;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: clamp(0.72rem, 1.15vh, 0.82rem);
+            font-weight: 700;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            letter-spacing: 0.4em;   
-            margin-top: 0.5vh;         
-            user-select: none;
-        }       
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+            text-shadow: 0 1px 3px #000000;
+        }
     </style>
 </head>
 <body>
@@ -313,42 +390,86 @@
         <h1 class="hammer-x-text">"Make The Future Yours"</h1>
     </div>
 
-    <!-- Layer 3: White Cinematic Shutter Panels -->
+    <!-- Layer 3: White Cinematic Shutter Panel -->
     <div class="shutter shutter-top">
         
         <!-- Top-Left Modular Directory Menu Container -->
-        <div class="top-menu-container">
+        <div class="top-menu-container menu-left">
             <div class="menu-trigger">☰</div>
             <nav class="nav-links-drawer">
-                <a href="https://simon-swanepoel.github.io/hammerx-frontend/HamLoad01.html" class="sst-nav-link">Repetitive Memory Tools</a>
-               <!--<a href="#creative" class="sst-nav-link">Creative Assistants</a>
+                <a href="HAM35.html" class="sst-nav-link">Repetitive Memory Tools</a>
+                <!-- Future Modules temporarily commented to avoid broken crawler anchors:
+                <a href="#creative" class="sst-nav-link">Creative Assistants</a>
                 <a href="#tutors" class="sst-nav-link">Tutors & Training</a>
                 <a href="#sandbox" class="sst-nav-link">Sandbox Sims</a>
                 <a href="#critical-memory" class="sst-nav-link">Critical Memory Simulators</a>
-                <a href="#guardian" class="sst-nav-link">Guardian Portal</a> -->
+                <a href="#guardian" class="sst-nav-link">Guardian Portal</a>
+                -->
             </nav>
         </div>
 
-        <!-- Bottom-Left Info Utility Container -->
-        <div class="bottom-menu-container">
+        <!-- Top-Right Info Utility Container -->
+        <div class="top-menu-container menu-right">
+            <div class="info-trigger">ⓘ</div>
             <nav class="info-links-drawer">
                 <a href="#tutorials" class="sst-nav-link">Tutorials</a>
                 <a href="#faq" class="sst-nav-link">Commonly Asked Questions</a>
                 <a href="#report" class="sst-nav-link">Report an Issue</a>
             </nav>
-            <div class="info-trigger">ⓘ</div>
         </div>
         
         <!-- Centered logo & title wrapper -->
         <div class="logo-wrapper">
-            <img src="SST Logo.png" alt="SST Logo" class="sst-logo">
+            <img src="SST Logo.png" alt="Swanepoel Study Tools - Operational Cognitive Memory Systems" class="sst-logo">
             <div class="sst-branding-text-zone">
                 <h2 class="sst-title-main">Swanepoel Study Tools</h2>
-                
             </div>
         </div>
         
     </div>      
+
+    <!-- Layer 2.5: Crawlable High-Contrast Mission Brief Zone (Placed after shutter-top for CSS sibling selector) -->
+    <main class="platform-brief-zone">
+        <h2 class="brief-headline">Operational Muscle Memory for Critical Recall</h2>
+        <p class="brief-body">
+            Swanepoel Study Tools engineers stress-resilient retention systems for STEM learners, 
+            artisans, and technical operators. By translating formulas, procedural checklists, and complex 
+            theory into high-repetition kinetic drills, SST creates an air-gapped cognitive reflex 
+            that performs reliably under high-pressure conditions.
+        </p>
+        <div class="brief-pillars">
+            <span class="pillar-tag">STEM & KaTeX Formula Drills</span>
+            <span class="pillar-tag">Interrupted Checklist Retention</span>
+            <span class="pillar-tag">Simulated Sandbox Environments</span>
+        </div>
+    </main>
+
+    <!-- Dynamic Shutter Controller Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const shutter = document.querySelector('.shutter-top');
+            if (!shutter) return;
+
+            const reduceShutter = () => {
+                shutter.classList.add('shutter-reduced');
+            };
+
+            // 1. Fallback timer: retract after 3 seconds of inactivity
+            const timer = setTimeout(() => {
+                reduceShutter();
+            }, 3000);
+
+            // 2. Mouse position trigger: retract immediately when cursor crosses into lower half
+            window.addEventListener('mousemove', (e) => {
+                const triggerThreshold = window.innerHeight * 0.50;
+
+                if (e.clientY > triggerThreshold) {
+                    clearTimeout(timer);
+                    reduceShutter();
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>
