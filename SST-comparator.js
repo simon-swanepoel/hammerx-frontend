@@ -1321,7 +1321,7 @@ async function populateCloudProjectsDropdown() {
         }
 
         const { data: items, error } = await supa
-            .from('study_items')
+            .from('hammer-assets')
             .select('id, title, created_at')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
