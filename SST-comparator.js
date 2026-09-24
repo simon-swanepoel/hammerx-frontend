@@ -154,7 +154,17 @@ let activeEditingRow = null;
 // --- SUPABASE CLIENT & AUTH SESSION STATE ---
 const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
-const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// PERSISTENCE FIX: Keeps you logged in across tab resets and reloads
+const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        storageKey: 'sst_auth_token',
+        storage: window.localStorage,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    }
+}) : null;
 
 let currentUserSession = null;
 let activeUserId = null;
@@ -1305,7 +1315,7 @@ function checkSessionHandoff() {
 }
 
 // ==========================================
-// CLOUD STORAGE & DATABASE INGESTION
+// CLOUD STORAGE & DATABASE INGESTION (UPDATED)
 // ==========================================
 async function populateCloudProjectsDropdown() {
     const dropdown = document.getElementById('select-cloud-projects');
@@ -1314,16 +1324,18 @@ async function populateCloudProjectsDropdown() {
     dropdown.innerHTML = '<option value="">Scanning cloud projects...</option>';
 
     try {
-        const { data: { user } } = await supa.auth.getUser();
+        const { data: { session } } = await supa.auth.getSession();
+        const user = session?.user;
         if (!user) {
             dropdown.innerHTML = '<option value="">Please sign in to view projects</option>';
             return;
         }
 
+        // Query the correct table: study_materials, filtering by owner_id
         const { data: items, error } = await supa
-            .from('hammer-assets') 
-            .select('id, title, created_at')
-            .eq('user_id', user.id)
+            .from('study_materials') 
+            .select('id, title, created_at, page_range')
+            .eq('owner_id', user.id)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -1338,7 +1350,8 @@ async function populateCloudProjectsDropdown() {
             const opt = document.createElement('option');
             opt.value = proj.id;
             const dateStr = new Date(proj.created_at).toLocaleDateString();
-            opt.textContent = `${proj.title || 'Untitled'} (${dateStr})`;
+            const rangeStr = proj.page_range ? ` (${proj.page_range})` : '';
+            opt.textContent = `${proj.title || 'Untitled'}${rangeStr} [${dateStr}]`;
             dropdown.appendChild(opt);
         });
 
@@ -1352,8 +1365,9 @@ async function loadCloudNouns(projectId) {
     if (!supa || !projectId) return;
 
     try {
+        // Query the correct table: study_materials
         const { data: row, error } = await supa
-            .from('study_items')
+            .from('study_materials')
             .select('*')
             .eq('id', projectId)
             .single();
@@ -1364,7 +1378,16 @@ async function loadCloudNouns(projectId) {
             return;
         }
 
-        const payload = row.payload;
+        // Safely parse double-serialized string payloads
+        let payload = row.payload;
+        if (typeof payload === 'string') {
+            try {
+                payload = JSON.parse(payload);
+            } catch (e) {
+                console.warn("[SST] Raw payload string parse pass failed:", e);
+            }
+        }
+
         if (!payload.title && row.title) payload.title = row.title;
         processAndDistributePayload(payload);
 
@@ -1977,7 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+            if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
             } else {
