@@ -1,6 +1,4 @@
-/* ===================================================
-   01. CSS DYNAMIC THEME ENGINE (DEFAULT: BLACK BOARD)
-   =================================================== */
+/* CSS DYNAMIC THEME ENGINE (DEFAULT: BLACK BOARD) */
 :root {
     --board-bg: #0d0f12;
     --board-ink: #f0f0f0;
@@ -53,7 +51,7 @@
     box-sizing: border-box;
 }
 
-/* NATURAL VERTICAL FLOW & SMOOTH SCROLL DOWN TO FAT FOOTER */
+/* NATURAL VERTICAL FLOW ALLOWING SCROLL DOWN TO FAT FOOTER */
 body, html {
     width: 100%;
     min-height: 100%;
@@ -63,6 +61,16 @@ body, html {
     background-color: #000;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     scroll-behavior: smooth;
+}
+
+/* 100vh STAGE: Keeps shutter and console locked in their original coordinates */
+.comparator-stage-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    z-index: 5;
 }
 
 /* EDITING LOCK STATE */
@@ -86,18 +94,16 @@ body.is-editing-locked .action-button-large {
     z-index: 1;
 }
 
-/* ===================================================
-   02. WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE
-   =================================================== */
+/* WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE (RESTORED FROM 112) */
 .workstation-header {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100vw;
     height: 16vh; 
     background-color: var(--shutter-bg);
     border-bottom: 3px solid #b29c6d;
-    z-index: 1000;
+    z-index: 20;
     display: flex;          
     flex-direction: column;   
     justify-content: center; 
@@ -268,27 +274,24 @@ body.is-editing-locked .action-button-large {
 }
 .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
 
-/* ===================================================
-   03. WORKSPACE CORE (NATURAL STACKING FLOW)
-   =================================================== */
+/* WORKSPACE CORE (RESTORED FROM 112) */
 .workspace-core {
-    position: relative;
-    margin-top: 16vh;
+    position: absolute;
+    top: 16vh;
     left: 0;
     width: 100vw;
     height: 84vh;
-    min-height: 600px;
-    z-index: 5;
+    z-index: 10;
     padding: 1.5vh 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
-    transition: margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .workspace-core.workspace-expanded {
-    margin-top: 5vh;
+    top: 5vh;
     height: 95vh;
 }
 
@@ -325,9 +328,7 @@ body.is-editing-locked .action-button-large {
     font-family: sans-serif;
 }
 
-/* ===================================================
-   04. WORKSTATION CONSOLE FRAME & THEMES
-   =================================================== */
+/* WORKSTATION CONSOLE FRAME */
 .workstation-console {
     width: calc(100vw - 300px);             
     height: 100%;            
@@ -344,7 +345,7 @@ body.is-editing-locked .action-button-large {
     box-shadow: 
         inset -2px -2px 4px rgba(255, 255, 255, 0.4), 
         inset 3px 3px 6px rgba(0, 0, 0, 0.7),         
-        0px 12px 35px rgba(0, 0, 0, 0.85);            
+        0px 12px 35px rgba(0, 0, 0, 0.85);           
 
     padding: 1.5vh 20px; 
     display: flex;
@@ -530,9 +531,6 @@ body.is-editing-locked .action-button-large {
         0px 0px 8px rgba(178, 156, 109, 0.6);
 }
 
-/* ===================================================
-   05. SETTINGS PANEL & PALETTE ENGINE
-   =================================================== */
 .settings-heading {
     font-family: "Cinzel", "Didot", serif;
     font-size: 2.2rem;
@@ -959,9 +957,6 @@ body.is-editing-locked .action-button-large {
     display: inline;
 }
 
-/* ===================================================
-   06. STUDY VIEWPORT & 9-BIN SLATES
-   =================================================== */
 .study-viewport-layout {
     display: flex;
     flex-direction: column;
@@ -1195,9 +1190,6 @@ body.is-editing-locked .action-button-large {
     border-bottom: 2px solid #b29c6d !important;
 }
 
-/* ===================================================
-   07. HAMMER COPY-SLATE & VERBATIM TESTING
-   =================================================== */
 .copy-slate-layout {
     display: flex;
     flex-direction: column;
@@ -1338,28 +1330,19 @@ body.is-editing-locked .action-button-large {
     caret-color: #ffffff;
 }
 
-/* ===================================================
-   08. MODALS & OVERLAYS (NO CURSOR TRAPPING)
-   =================================================== */
 .comparator-modal-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(3px);
-    z-index: 2000;
+    z-index: 200;
     display: flex;
     justify-content: center;
     align-items: center;
     animation: modalFadeIn 0.2s ease-out;
-}
-
-/* Ensure closed overlays NEVER capture hover events */
-.comparator-modal-overlay[style*="display: none"] {
-    display: none !important;
-    pointer-events: none !important;
 }
 
 .comparator-modal-box {
@@ -1468,9 +1451,7 @@ body.is-editing-locked .action-button-large {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* ===================================================
-   09. UNIVERSAL FAT FOOTER WEB COMPONENT PLACEMENT
-   =================================================== */
+/* FOOTER CLEARANCE LAYER */
 sst-footer {
     display: block;
     position: relative;
