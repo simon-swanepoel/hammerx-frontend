@@ -1323,7 +1323,7 @@ async function populateCloudProjectsDropdown() {
         const { data: items, error } = await supa
             .from('study_materials') 
             .select('id, title, created_at')
-            .eq('user_id', user.id)
+            .eq('owner_id', user.id)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -1353,7 +1353,7 @@ async function loadCloudNouns(projectId) {
 
     try {
         const { data: row, error } = await supa
-            .from('study_items')
+            .from('study_materials')
             .select('*')
             .eq('id', projectId)
             .single();
@@ -1977,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+            if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
             } else {
