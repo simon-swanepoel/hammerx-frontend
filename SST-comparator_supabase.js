@@ -153,60 +153,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. WORKSTATION SHUTTER HEADER DUAL-TRIGGER ENGINE ---
-    const shutterHeader = document.getElementById('workstation-shutter-header');
-    const workspaceCore = document.querySelector('.workspace-core');
-    let shutterIdleTimer = null;
+    // --- 2. WORKSTATION SHUTTER HEADER (EXACT FORMATH ENGINE PATTERN) ---
+    const shutterHeader = document.getElementById("workstation-shutter-header");
+    const workspaceCore = document.querySelector(".workspace-core");
+    let shutterTimer = null;
 
     function collapseShutter() {
         if (shutterHeader && workspaceCore) {
-            shutterHeader.classList.add('shutter-collapsed');
-            workspaceCore.classList.add('workspace-expanded');
-            setTimeout(autofitViewportText, 450);
+            shutterHeader.classList.add("shutter-collapsed");
+            workspaceCore.classList.add("workspace-expanded");
+            if (typeof autofitViewportText === 'function') {
+                setTimeout(autofitViewportText, 450);
+            }
         }
     }
 
     function expandShutter() {
         if (shutterHeader && workspaceCore) {
-            shutterHeader.classList.remove('shutter-collapsed');
-            workspaceCore.classList.remove('workspace-expanded');
-            setTimeout(autofitViewportText, 450);
+            shutterHeader.classList.remove("shutter-collapsed");
+            workspaceCore.classList.remove("workspace-expanded");
+            if (typeof autofitViewportText === 'function') {
+                setTimeout(autofitViewportText, 450);
+            }
         }
     }
 
-    function resetShutterIdleTimer() {
-        clearTimeout(shutterIdleTimer);
-        shutterIdleTimer = setTimeout(() => {
-            collapseShutter();
-        }, 2000); // Retracts after 2.0s of idle
-    }
-
-    if (shutterHeader && workspaceCore) {
-        // Trigger A: Direct Element Hover
-        shutterHeader.addEventListener('mouseenter', () => {
-            clearTimeout(shutterIdleTimer);
+    if (shutterHeader) {
+        // Expand immediately on hover
+        shutterHeader.addEventListener("mouseenter", () => {
+            clearTimeout(shutterTimer);
             expandShutter();
         });
 
-        shutterHeader.addEventListener('mouseleave', () => {
-            resetShutterIdleTimer();
+        // 2-second collapse countdown when cursor leaves
+        shutterHeader.addEventListener("mouseleave", () => {
+            clearTimeout(shutterTimer);
+            shutterTimer = setTimeout(collapseShutter, 2000);
         });
 
-        // Trigger B: Screen Coordinate Tracking (Fail-Safe)
-        window.addEventListener('mousemove', (e) => {
-            const topBoundary = window.innerHeight * 0.16; // 16vh threshold
-            if (e.clientY <= 30) {
-                // Pinched near very top edge: expand
-                clearTimeout(shutterIdleTimer);
-                expandShutter();
-            } else if (e.clientY > topBoundary && !shutterHeader.classList.contains('shutter-collapsed')) {
-                // Moved into workspace: begin collapse countdown
-                resetShutterIdleTimer();
-            }
-        });
-
-        // Initial launch collapse
-        resetShutterIdleTimer();
+        // Initial launch countdown: collapse after 2 seconds
+        shutterTimer = setTimeout(collapseShutter, 2000);
     }
 
     // --- 3. WORKSTATION VIEW SWITCHING ---
