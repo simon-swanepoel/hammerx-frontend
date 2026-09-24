@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. WORKSTATION SHUTTER HEADER PHYSICS ---
+    // --- 2. WORKSTATION SHUTTER HEADER DUAL-TRIGGER ENGINE ---
     const shutterHeader = document.getElementById('workstation-shutter-header');
     const workspaceCore = document.querySelector('.workspace-core');
     let shutterIdleTimer = null;
@@ -178,10 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(shutterIdleTimer);
         shutterIdleTimer = setTimeout(() => {
             collapseShutter();
-        }, 2000); // Retracts after 2 seconds of inactivity
+        }, 2000); // Retracts after 2.0s of idle
     }
 
-    if (shutterHeader) {
+    if (shutterHeader && workspaceCore) {
+        // Trigger A: Direct Element Hover
         shutterHeader.addEventListener('mouseenter', () => {
             clearTimeout(shutterIdleTimer);
             expandShutter();
@@ -191,7 +192,20 @@ document.addEventListener('DOMContentLoaded', () => {
             resetShutterIdleTimer();
         });
 
-        // Trigger auto-collapse on initial load
+        // Trigger B: Screen Coordinate Tracking (Fail-Safe)
+        window.addEventListener('mousemove', (e) => {
+            const topBoundary = window.innerHeight * 0.16; // 16vh threshold
+            if (e.clientY <= 30) {
+                // Pinched near very top edge: expand
+                clearTimeout(shutterIdleTimer);
+                expandShutter();
+            } else if (e.clientY > topBoundary && !shutterHeader.classList.contains('shutter-collapsed')) {
+                // Moved into workspace: begin collapse countdown
+                resetShutterIdleTimer();
+            }
+        });
+
+        // Initial launch collapse
         resetShutterIdleTimer();
     }
 
