@@ -1,4 +1,6 @@
-/* CSS DYNAMIC THEME ENGINE (DEFAULT: BLACK BOARD) */
+/* ===================================================
+   01. CSS DYNAMIC THEME ENGINE (DEFAULT: BLACK BOARD)
+   =================================================== */
 :root {
     --board-bg: #0d0f12;
     --board-ink: #f0f0f0;
@@ -51,12 +53,16 @@
     box-sizing: border-box;
 }
 
+/* NATURAL VERTICAL FLOW & SMOOTH SCROLL DOWN TO FAT FOOTER */
 body, html {
     width: 100%;
-    height: 100%;
-    overflow: hidden;
+    min-height: 100%;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     background-color: #000;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    scroll-behavior: smooth;
 }
 
 /* EDITING LOCK STATE */
@@ -80,7 +86,9 @@ body.is-editing-locked .action-button-large {
     z-index: 1;
 }
 
-/* WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE */
+/* ===================================================
+   02. WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE
+   =================================================== */
 .workstation-header {
     position: fixed;
     top: 0;
@@ -89,7 +97,7 @@ body.is-editing-locked .action-button-large {
     height: 16vh; 
     background-color: var(--shutter-bg);
     border-bottom: 3px solid #b29c6d;
-    z-index: 10;
+    z-index: 1000;
     display: flex;          
     flex-direction: column;   
     justify-content: center; 
@@ -260,24 +268,27 @@ body.is-editing-locked .action-button-large {
 }
 .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
 
-/* WORKSPACE CORE */
+/* ===================================================
+   03. WORKSPACE CORE (NATURAL STACKING FLOW)
+   =================================================== */
 .workspace-core {
-    position: absolute;
-    top: 16vh;
+    position: relative;
+    margin-top: 16vh;
     left: 0;
     width: 100vw;
     height: 84vh;
+    min-height: 600px;
     z-index: 5;
     padding: 1.5vh 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
-    transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .workspace-core.workspace-expanded {
-    top: 5vh;
+    margin-top: 5vh;
     height: 95vh;
 }
 
@@ -314,7 +325,9 @@ body.is-editing-locked .action-button-large {
     font-family: sans-serif;
 }
 
-/* WORKSTATION CONSOLE FRAME */
+/* ===================================================
+   04. WORKSTATION CONSOLE FRAME & THEMES
+   =================================================== */
 .workstation-console {
     width: calc(100vw - 300px);             
     height: 100%;            
@@ -331,7 +344,7 @@ body.is-editing-locked .action-button-large {
     box-shadow: 
         inset -2px -2px 4px rgba(255, 255, 255, 0.4), 
         inset 3px 3px 6px rgba(0, 0, 0, 0.7),         
-        0px 12px 35px rgba(0, 0, 0, 0.85);           
+        0px 12px 35px rgba(0, 0, 0, 0.85);            
 
     padding: 1.5vh 20px; 
     display: flex;
@@ -496,7 +509,7 @@ body.is-editing-locked .action-button-large {
 .action-button-large:active {
     transform: translateY(2px);
     box-shadow: 
-        inset 2px 2px 4px rgba(0, 0, 0, 0.9),
+        inset 2px 2px 4px rgba(0, 0, 0, 0.9), 
         0px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -517,6 +530,9 @@ body.is-editing-locked .action-button-large {
         0px 0px 8px rgba(178, 156, 109, 0.6);
 }
 
+/* ===================================================
+   05. SETTINGS PANEL & PALETTE ENGINE
+   =================================================== */
 .settings-heading {
     font-family: "Cinzel", "Didot", serif;
     font-size: 2.2rem;
@@ -943,6 +959,9 @@ body.is-editing-locked .action-button-large {
     display: inline;
 }
 
+/* ===================================================
+   06. STUDY VIEWPORT & 9-BIN SLATES
+   =================================================== */
 .study-viewport-layout {
     display: flex;
     flex-direction: column;
@@ -1031,8 +1050,8 @@ body.is-editing-locked .action-button-large {
     justify-content: flex-start; 
     align-items: center;
     border-top: 2px solid var(--divider-color);  
-    padding-top: 8px;               
-    margin-top: 10px;               
+    padding-top: 8px;                
+    margin-top: 10px;                
 }
 
 .footer-left-group {
@@ -1176,6 +1195,9 @@ body.is-editing-locked .action-button-large {
     border-bottom: 2px solid #b29c6d !important;
 }
 
+/* ===================================================
+   07. HAMMER COPY-SLATE & VERBATIM TESTING
+   =================================================== */
 .copy-slate-layout {
     display: flex;
     flex-direction: column;
@@ -1316,19 +1338,28 @@ body.is-editing-locked .action-button-large {
     caret-color: #ffffff;
 }
 
+/* ===================================================
+   08. MODALS & OVERLAYS (NO CURSOR TRAPPING)
+   =================================================== */
 .comparator-modal-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(3px);
-    z-index: 200;
+    z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
     animation: modalFadeIn 0.2s ease-out;
+}
+
+/* Ensure closed overlays NEVER capture hover events */
+.comparator-modal-overlay[style*="display: none"] {
+    display: none !important;
+    pointer-events: none !important;
 }
 
 .comparator-modal-box {
@@ -1435,4 +1466,15 @@ body.is-editing-locked .action-button-large {
 @keyframes modalFadeIn {
     from { opacity: 0; transform: scale(0.96); }
     to { opacity: 1; transform: scale(1); }
+}
+
+/* ===================================================
+   09. UNIVERSAL FAT FOOTER WEB COMPONENT PLACEMENT
+   =================================================== */
+sst-footer {
+    display: block;
+    position: relative;
+    width: 100vw;
+    z-index: 10;
+    clear: both;
 }
