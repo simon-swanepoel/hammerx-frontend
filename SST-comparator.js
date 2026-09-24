@@ -152,8 +152,8 @@ let draggedRowElement = null;
 let activeEditingRow = null;
 
 // --- SUPABASE CLIENT & AUTH SESSION STATE ---
-const SUPABASE_URL = "https://lsjswxsrskaxyzvgqezu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzanN3eHNyc2theHl6dmdxZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MzgxMTQsImV4cCI6MjA5OTIxNDExNH0._D99dnmEsQPULWcCBQcp1ThOYyzfRV4zEyMBxAPbYD8";
+const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
 const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 let currentUserSession = null;
