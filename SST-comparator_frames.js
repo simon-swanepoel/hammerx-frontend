@@ -86,7 +86,7 @@ let activeFrameKey = localStorage.getItem('sst_active_frame') || DEFAULT_FRAME_K
 function applyConsoleFrame(frameKey) {
     const root = document.documentElement;
 
-    // Safety fallback: if preset was deleted or invalid, fallback to Wood
+    // Safety fallback: if preset does not exist, fall back to Oiled Wood
     if (!FRAME_PRESETS[frameKey]) {
         console.warn(`[Frame Engine] Preset "${frameKey}" does not exist. Reverting to "${DEFAULT_FRAME_KEY}".`);
         frameKey = DEFAULT_FRAME_KEY;
@@ -98,7 +98,7 @@ function applyConsoleFrame(frameKey) {
     const preset = FRAME_PRESETS[frameKey];
     const consoleEl = document.getElementById('main-workstation-console');
 
-    // 1. Inject root CSS variables for buttons and borders
+    // 1. Inject root CSS variables for buttons and border textures
     if (preset.vars) {
         for (const [vKey, vVal] of Object.entries(preset.vars)) {
             root.style.setProperty(vKey, vVal);
