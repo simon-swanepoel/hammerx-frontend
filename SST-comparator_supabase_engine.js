@@ -90,31 +90,34 @@ async function populateCloudProjectsDropdown() {
         const { data: { session } } = await supa.auth.getSession();
         const user = session?.user;
 
-        let query = supa
-            .from('study_materials')
-            .select('id, title, created_at, page_range, is_sample');
-
-        if (user) {
-            query = query.or(`owner_id.eq.${user.id},is_sample.eq.true`);
-        } else {
-            query = query.eq('is_sample', true);
+        // If not logged in, RLS blocks selecting private rows, so show a clear prompt
+        if (!user) {
+            dropdown.innerHTML = '<option value="">Please sign in to view cloud projects</option>';
+            return;
         }
 
-        const { data: items, error } = await query.order('created_at', { ascending: false });
+        // Exact match to your sst_database_master_v1.sql columns
+        const { data: items, error } = await supa
+            .from('study_materials')
+            .select('id, title, created_at, page_range')
+            .eq('owner_id', user.id)
+            .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error("[SST Supabase] Query failed:", error.message);
+            dropdown.innerHTML = '<option value="">Error reading projects</option>';
+            return;
+        }
 
         dropdown.innerHTML = '';
         if (!items || items.length === 0) {
-            dropdown.innerHTML = user 
-                ? '<option value="">No projects found in database</option>'
-                : '<option value="">No public sample projects available</option>';
+            dropdown.innerHTML = '<option value="">No projects found</option>';
             return;
         }
 
         const promptOpt = document.createElement('option');
         promptOpt.value = "";
-        promptOpt.textContent = user ? "-- SELECT YOUR PROJECT OR SAMPLE --" : "-- SELECT A SAMPLE DRILL DECK --";
+        promptOpt.textContent = "-- SELECT YOUR PROJECT --";
         dropdown.appendChild(promptOpt);
 
         items.forEach(proj => {
@@ -122,17 +125,15 @@ async function populateCloudProjectsDropdown() {
             opt.value = proj.id;
             const dateStr = new Date(proj.created_at).toLocaleDateString();
             const rangeStr = proj.page_range ? ` (${proj.page_range})` : '';
-            const sampleTag = proj.is_sample ? ' [SAMPLE]' : '';
-            opt.textContent = `${proj.title || 'Untitled'}${rangeStr}${sampleTag} [${dateStr}]`;
+            opt.textContent = `${proj.title || 'Untitled'}${rangeStr} [${dateStr}]`;
             dropdown.appendChild(opt);
         });
 
     } catch (err) {
-        console.error("[SST Supabase] Error listing projects:", err);
+        console.error("[SST Supabase] Error:", err);
         dropdown.innerHTML = '<option value="">Error listing projects</option>';
     }
 }
-
 async function loadCloudNouns(projectId) {
     if (!supa || !projectId) return;
 
