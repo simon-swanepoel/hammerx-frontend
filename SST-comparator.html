@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="SST-comparator.css">
 
     <!-- Universal Mega-Footer Web Component -->
-    <script src="SST-footer.js?v=1.0"></script>
+    <script src="SST-footer_2.js?v=1.0"></script>
 </head>
 <body>
 
@@ -283,18 +283,20 @@
                                                 </div>
                                             </div>
 
+                                            <!-- DYNAMIC MATERIAL BORDER PRESETS -->
                                             <div class="settings-sub-divider"></div>
+                                            <div class="sub-menu-heading" style="margin-top: 10px;">CONSOLE BEZEL MATERIAL</div>
+                                            <div class="theme-preset-grid" id="material-presets-container">
+                                                <!-- Automatically populated by SST-comparator_frames.js -->
+                                            </div>
 
-                                            <!-- MATERIAL BORDER PRESETS -->
-                                            <div class="theme-preset-card card-border-wood active-theme" id="btn-border-wood" data-frame="WOOD">
-                                                <span data-i18n="frame_wood">WOOD BORDER</span>
+                                            <!-- NITE-LIT OPTIONAL ACCENT (Auto-managed for Glass) -->
+                                            <div id="glass-neon-toggle-row" style="display: none; margin-top: 10px; padding: 6px 10px; background: rgba(0,240,255,0.06); border: 1px dashed rgba(0,240,255,0.3); border-radius: 4px;">
+                                                <label style="color: #00f0ff; font-family: monospace; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                                    <input type="checkbox" id="chk-glass-neon"> [ x ] AMBIENT NITE-LIT GLOW
+                                                </label>
                                             </div>
-                                            <div class="theme-preset-card card-border-titanium" id="btn-border-titanium" data-frame="TITANIUM">
-                                                <span data-i18n="frame_titanium">TITANIUM BORDER</span>
-                                            </div>
-                                            <div class="theme-preset-card card-border-blackglass" id="btn-border-blackglass" data-frame="BLACK_GLASS">
-                                                <span data-i18n="frame_blackglass">NITE-LIT (BLACK GLASS)</span>
-                                            </div>
+
                                         </div>
                                     </div>
 
@@ -499,6 +501,7 @@
 
     <!-- SST Modular Scripts (Strict Dependency Order) -->
     <script src="SST-comparator_config.js"></script>
+    <script src="SST-comparator_frames_2.js"></script>
     <script src="SST-comparator_supabase.js"></script>
     <script src="SST-comparator_supabase_engine.js"></script>
     <script src="SST-comparator_courseware_engine.js"></script>
