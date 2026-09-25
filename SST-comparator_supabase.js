@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- 3. WORKSTATION VIEW SWITCHING ---
-    const btnStudy = document.getElementById('btn-nav-study');
+  
 
     function expandShutter() {
         if (shutterHeader && workspaceCore) {
