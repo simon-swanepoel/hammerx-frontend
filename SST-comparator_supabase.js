@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. WORKSTATION SHUTTER HEADER (EXACT FORMATH ENGINE PATTERN) ---
+// --- 2. WORKSTATION SHUTTER HEADER (FORMATH PATTERN) ---
     const shutterHeader = document.getElementById("workstation-shutter-header");
     const workspaceCore = document.querySelector(".workspace-core");
     let shutterTimer = null;
@@ -179,19 +179,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (shutterHeader) {
-        // Expand immediately on hover
         shutterHeader.addEventListener("mouseenter", () => {
             clearTimeout(shutterTimer);
             expandShutter();
         });
 
-        // 2-second collapse countdown when cursor leaves
         shutterHeader.addEventListener("mouseleave", () => {
             clearTimeout(shutterTimer);
             shutterTimer = setTimeout(collapseShutter, 2000);
         });
 
-        // Initial launch countdown: collapse after 2 seconds
+        // 2-second collapse countdown on page load
         shutterTimer = setTimeout(collapseShutter, 2000);
     }
 
