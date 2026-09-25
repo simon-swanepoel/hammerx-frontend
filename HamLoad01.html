@@ -6,6 +6,8 @@
     <title>SST / Malinalli Gateway - HammerX</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Universal Mega-Footer Web Component -->
+    <script src="SST-footer.js?v=1.0"></script>
     <style>
         * {
             margin: 0;
@@ -15,10 +17,12 @@
 
         body, html {
             width: 100%;
-            height: 100%;
-            overflow: hidden;
+            min-height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto; /* Allows natural scroll down to fat footer */
             background-color: #000;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            scroll-behavior: smooth;
         }
 
         .nebula-canvas {
@@ -33,12 +37,22 @@
             z-index: 1;
         }
 
+        /* FULL VIEWPORT STAGE: Guarantees footer is 100% offscreen on load */
+        .stage-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            min-height: 100dvh;
+            z-index: 3;
+            overflow: hidden;
+        }
+
         .shutter {
-            position: fixed;
+            position: absolute;
             left: 0;
             width: 100vw;
             background-color: #ffffff;
-            z-index: 3;
+            z-index: 4;
             display: flex;          
             justify-content: center; 
             align-items: center;     
@@ -76,7 +90,7 @@
         }
 
         .slit-text-container {
-            position: fixed;
+            position: absolute;
             top: 45vh;  
             left: 0;
             width: 100vw;
@@ -151,8 +165,8 @@
         /* --- DROP / UPLOAD BOX --- */
         .upload-box {
             height: 15vh; 
-            width: 32vw;
-            min-width: 380px;
+            width: 34vw;
+            min-width: 420px;
             border: 2px solid #b29c6d; 
             border-radius: 4vh; 
             background-color: #f4f8fb;  
@@ -200,7 +214,7 @@
             user-select: none;
             margin: 0;
             padding: 0 10px;
-            line-height: 1;
+            line-height: 1.3;
         }
 
         .hidden-file-input {
@@ -260,7 +274,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- MILLING CONTROLS CONTAINER --- */
+        /* --- CONTROLS & PROJECT SETTINGS --- */
         .milling-config-panel {
             width: 100%;
             display: flex;
@@ -295,6 +309,7 @@
             color: #2c2d30;
             font-size: 0.85rem;
             font-weight: 600;
+            cursor: pointer;
         }
         .project-name-input:focus { outline: none; border-color: #b29c6d; }
 
@@ -331,21 +346,33 @@
             user-select: none;
         }
 
-        .send-milling-btn {
+        .action-btn-cluster {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-sub-btn {
             background: #b29c6d;
             color: #ffffff;
             border: none;
-            padding: 6px 18px;
+            padding: 6px 14px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .send-milling-btn:hover { background: #2c2d30; }
-        .send-milling-btn:disabled { background: #a4b0be; cursor: not-allowed; }
+        .action-sub-btn:hover { background: #2c2d30; }
+        .action-sub-btn:disabled { background: #a4b0be; cursor: not-allowed; }
+
+        .btn-save-list {
+            background: #475569;
+        }
+        .btn-save-list:hover {
+            background: #1e293b;
+        }
 
         /* LIVE STATUS TICKER */
         .milling-live-status {
@@ -475,7 +502,7 @@
         }
         .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
 
-        /* AUTH MODAL STYLING */
+        /* AUTH & STORAGE MODAL STYLING */
         .sst-modal-backdrop {
             position: fixed;
             top: 0;
@@ -494,7 +521,8 @@
             background: #ffffff;
             border: 2px solid #b29c6d;
             border-radius: 12px;
-            width: 360px;
+            width: 420px;
+            max-height: 80vh;
             padding: 24px;
             display: flex;
             flex-direction: column;
@@ -527,87 +555,167 @@
             align-items: center;
             margin-top: 6px;
         }
+
+        .project-vault-list {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #f8fafc;
+        }
+
+        .project-vault-item {
+            padding: 8px 10px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .project-vault-item:hover {
+            border-color: #b29c6d;
+            background: #fdfbf7;
+            color: #b29c6d;
+        }
+
+        /* SCROLL PROMPT INDICATOR */
+        .scroll-down-hint {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            color: #b29c6d;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            user-select: none;
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="nebula-canvas"></div>
 
-    <div class="slit-text-container">
-        <h1 class="hammer-x-text">Hammer-X</h1>
-    </div>
-
-    <!-- TOP SHUTTER -->
-    <div class="shutter shutter-top">
-        <div class="top-menu-container menu-left">
-            <div class="menu-trigger">☰</div>
-            <nav class="nav-links-drawer">
-                <a href="loader.html" class="sst-nav-link">home</a>
-                <a href="SST-comparator.html" class="sst-nav-link">noun hammer</a>
-                <a href="#mathhammer" class="sst-nav-link">Math/formula Hammer</a>
-                <a href="#mindpad" class="sst-nav-link">image hammer</a>
-            </nav>
+    <!-- MAIN VIEWPORT STAGE (Locked to 100vh so footer is hidden initially) -->
+    <div class="stage-wrapper">
+        <div class="slit-text-container">
+            <h1 class="hammer-x-text">Hammer-X</h1>
         </div>
 
-        <div class="bottom-menu-container">
-            <nav class="info-links-drawer">
-                <a href="#tutorials" class="sst-nav-link">Tutorials</a>
-                <a href="#faq" class="sst-nav-link">Daily Limits & Tiers</a>
-                <a href="#report" class="sst-nav-link">Report an Issue</a>
-            </nav>
-            <div class="info-trigger">ⓘ</div>
-        </div>
-        
-        <div class="logo-wrapper">
-            <img src="SST Logo.png" alt="SST Logo" class="sst-logo">
-        </div>
-
-        <!-- USER PROFILE / AUTH CORNER -->
-        <div class="top-menu-container menu-right">
-            <div class="user-profile-trigger" id="profileTrigger">
-                <span class="user-display-name" id="userDisplayLabel">SIGN IN</span>
-                <div class="menu-trigger">⋮</div>
-            </div>
-            <nav class="nav-links-drawer profile-drawer" id="profileDrawerMenu">
-                <a href="javascript:void(0)" class="sst-nav-link" id="btnAuthTrigger">Sign In / Register</a>
-            </nav>
-        </div>
-    </div>      
-
-    <!-- BOTTOM SHUTTER: DROP & MILL INTERFACE -->
-    <div class="shutter shutter-bottom">
-        <div class="auth-gate-warning" id="authGateWarning">Please log in first or create an account</div>
-        <a href="javascript:void(0)" class="load-existing-link" id="btnLoadExisting">LOAD EXISTING PROJECT</a>
-
-        <div class="upload-box" id="sstUploadBox">
-            <input type="file" id="fileSystemInput" class="hidden-file-input" accept=".pdf">
-            
-            <div id="defaultUploadContent">
-                <p class="instruction-text">Drop PDF or click to load document</p>
+        <!-- TOP SHUTTER -->
+        <div class="shutter shutter-top">
+            <div class="top-menu-container menu-left">
+                <div class="menu-trigger">☰</div>
+                <nav class="nav-links-drawer">
+                    <a href="loader.html" class="sst-nav-link">home</a>
+                    <a href="SST-comparator.html" class="sst-nav-link">noun hammer</a>
+                    <a href="#mathhammer" class="sst-nav-link">Math/formula Hammer</a>
+                    <a href="#mindpad" class="sst-nav-link">image hammer</a>
+                </nav>
             </div>
 
-            <div class="file-preview-list" id="filePreviewList" style="display: none;"></div>
+            <div class="bottom-menu-container">
+                <nav class="info-links-drawer">
+                    <a href="#tutorials" class="sst-nav-link">Tutorials</a>
+                    <a href="#faq" class="sst-nav-link">Daily Limits & Tiers</a>
+                    <a href="#report" class="sst-nav-link">Report an Issue</a>
+                </nav>
+                <div class="info-trigger">ⓘ</div>
+            </div>
             
-            <!-- MILLING CONTROLS & PROJECT SETTINGS -->
-            <div class="milling-config-panel" id="millingConfigPanel">
-                <div class="project-input-row">
-                    <span class="milling-label">Project:</span>
-                    <input type="text" class="project-name-input" id="projectNameInput" placeholder="Project Name">
-                </div>
+            <div class="logo-wrapper">
+                <img src="SST Logo.png" alt="SST Logo" class="sst-logo">
+            </div>
 
-                <div class="milling-controls">
-                    <div class="range-cluster">
-                        <span class="milling-label">Pages:</span>
-                        <input type="text" class="page-range-input" id="pageStart" maxlength="4" value="1">
-                        <span class="milling-label">to</span>
-                        <input type="text" class="page-range-input" id="pageEnd" maxlength="4" value="1">
-                    </div>
-                    <button class="send-milling-btn" id="sendMillingBtn">MILL</button>
+            <!-- USER PROFILE / AUTH CORNER -->
+            <div class="top-menu-container menu-right">
+                <div class="user-profile-trigger" id="profileTrigger">
+                    <span class="user-display-name" id="userDisplayLabel">SIGN IN</span>
+                    <div class="menu-trigger">⋮</div>
                 </div>
-
-                <div class="milling-live-status" id="millingLiveStatus"></div>
+                <nav class="nav-links-drawer profile-drawer" id="profileDrawerMenu">
+                    <a href="javascript:void(0)" class="sst-nav-link" id="btnAuthTrigger">Sign In / Register</a>
+                </nav>
             </div>
         </div>      
+
+        <!-- BOTTOM SHUTTER: DROP & MILL INTERFACE -->
+        <div class="shutter shutter-bottom">
+            <div class="auth-gate-warning" id="authGateWarning">Please log in first or create an account</div>
+            <a href="javascript:void(0)" class="load-existing-link" id="btnLoadExisting">LOAD EXISTING PROJECT</a>
+
+            <div class="upload-box" id="sstUploadBox">
+                <input type="file" id="fileSystemInput" class="hidden-file-input" accept=".pdf,.txt,.docx,.xlsx,.csv">
+                
+                <div id="defaultUploadContent">
+                    <p class="instruction-text">Drop PDF, TXT, DOCX, XLSX, CSV or click to load document</p>
+                </div>
+
+                <div class="file-preview-list" id="filePreviewList" style="display: none;"></div>
+                
+                <!-- CONTROLS & PROJECT SETTINGS -->
+                <div class="milling-config-panel" id="millingConfigPanel">
+                    <div class="project-input-row">
+                        <span class="milling-label">Project:</span>
+                        <input type="text" class="project-name-input" id="projectNameInput" placeholder="Choose or type project name (Required)" readonly>
+                    </div>
+
+                    <div class="milling-controls">
+                        <div class="range-cluster">
+                            <span class="milling-label">Pages:</span>
+                            <input type="text" class="page-range-input" id="pageStart" maxlength="4" value="1">
+                            <span class="milling-label">to</span>
+                            <input type="text" class="page-range-input" id="pageEnd" maxlength="4" value="1">
+                        </div>
+                        <div class="action-btn-cluster">
+                            <button class="action-sub-btn btn-save-list" id="btnSaveList">SAVE LIST</button>
+                            <button class="action-sub-btn" id="sendMillingBtn">MILL</button>
+                        </div>
+                    </div>
+
+                    <div class="milling-live-status" id="millingLiveStatus"></div>
+                </div>
+            </div>      
+        </div>
+
+        <div class="scroll-down-hint">&darr; SCROLL DOWN FOR SITE DIRECTORY</div>
+    </div>
+
+    <!-- UNIVERSAL FAT FOOTER COMPONENT -->
+    <sst-footer></sst-footer>
+
+    <!-- PROJECT VAULT / SELECT MODAL -->
+    <div class="sst-modal-backdrop" id="projectVaultModal" style="display: none;">
+        <div class="sst-modal-box">
+            <div class="sst-modal-title">PROJECT REGISTRATION</div>
+            <p style="font-size: 0.8rem; color: #64748b;">Enter a distinct project name or review your existing cloud projects below.</p>
+            
+            <input type="text" id="vaultProjectNameInput" class="sst-auth-input" placeholder="Type new project name..." />
+
+            <div style="font-size: 0.75rem; font-weight: 700; color: #8a8d97; text-transform: uppercase;">Existing Cloud Projects:</div>
+            <div class="project-vault-list" id="vaultProjectsContainer">
+                <div style="font-size: 0.8rem; color: #94a3b8; text-align: center; padding: 10px;">Loading projects...</div>
+            </div>
+
+            <div class="sst-modal-footer">
+                <button class="action-sub-btn" id="vaultCancelBtn" style="background:#8a8d97;">CANCEL</button>
+                <button class="action-sub-btn" id="vaultConfirmBtn">APPLY NAME</button>
+            </div>
+        </div>
     </div>
 
     <!-- AUTHENTICATION MODAL -->
@@ -621,8 +729,8 @@
             <div class="sst-modal-footer">
                 <a href="javascript:void(0)" id="authToggleMode" style="font-size: 0.75rem; color: #b29c6d; text-decoration: underline;">Need an account? Sign Up</a>
                 <div style="display: flex; gap: 8px;">
-                    <button class="send-milling-btn" id="authCancelBtn" style="background:#8a8d97;">CANCEL</button>
-                    <button class="send-milling-btn" id="authSubmitBtn">LOGIN</button>
+                    <button class="action-sub-btn" id="authCancelBtn" style="background:#8a8d97;">CANCEL</button>
+                    <button class="action-sub-btn" id="authSubmitBtn">LOGIN</button>
                 </div>
             </div>
         </div>
@@ -630,9 +738,6 @@
 
     <!-- PIPELINE LOGIC -->
     <script>
-    // =========================================================================
-    // SUPABASE CREDENTIALS
-    // =========================================================================
     const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
     
@@ -646,6 +751,7 @@
     let currentUserSession = null;
     let selectedFile = null;
     let authMode = "LOGIN";
+    let cachedUserProjects = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         const uploadBox = document.getElementById('sstUploadBox');
@@ -653,6 +759,7 @@
         const defaultContent = document.getElementById('defaultUploadContent');
         const previewList = document.getElementById('filePreviewList');
         const sendBtn = document.getElementById('sendMillingBtn');
+        const btnSaveList = document.getElementById('btnSaveList');
         const pageStartInput = document.getElementById('pageStart');
         const pageEndInput = document.getElementById('pageEnd');
         const projectNameInput = document.getElementById('projectNameInput');
@@ -673,6 +780,13 @@
         const authPassword = document.getElementById('authPassword');
         const authErrorMsg = document.getElementById('authErrorMsg');
 
+        // Vault Modal Elements
+        const projectVaultModal = document.getElementById('projectVaultModal');
+        const vaultProjectNameInput = document.getElementById('vaultProjectNameInput');
+        const vaultProjectsContainer = document.getElementById('vaultProjectsContainer');
+        const vaultCancelBtn = document.getElementById('vaultCancelBtn');
+        const vaultConfirmBtn = document.getElementById('vaultConfirmBtn');
+
         let warningTimer = null;
         function triggerAuthWarning(msg) {
             authGateWarning.textContent = msg || "Please log in first or create an account";
@@ -684,13 +798,98 @@
             authModal.style.display = 'flex';
         }
 
+        // FETCH USER EXISTING PROJECTS FROM SUPABASE
+        async function fetchUserProjects() {
+            if (!currentUserSession || !currentUserSession.user || !supa) return [];
+            try {
+                const { data, error } = await supa
+                    .from('study_materials')
+                    .select('id, title, created_at')
+                    .eq('owner_id', currentUserSession.user.id)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                cachedUserProjects = (data || []).map(d => d.title.trim().toLowerCase());
+                renderProjectVault(data || []);
+                return cachedUserProjects;
+            } catch (err) {
+                console.warn("[PROJECT FETCH ERROR]", err.message);
+                vaultProjectsContainer.innerHTML = `<div style="font-size: 0.8rem; color: #ef4444; text-align: center;">Could not load existing projects.</div>`;
+                return [];
+            }
+        }
+
+        function renderProjectVault(projects) {
+            vaultProjectsContainer.innerHTML = '';
+            if (projects.length === 0) {
+                vaultProjectsContainer.innerHTML = `<div style="font-size: 0.8rem; color: #94a3b8; text-align: center; padding: 10px;">No existing projects found. Enter a new name above.</div>`;
+                return;
+            }
+
+            projects.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'project-vault-item';
+                item.innerHTML = `<span>${p.title}</span><span style="color:#94a3b8; font-size:0.75rem;">(In Use)</span>`;
+                item.addEventListener('click', () => {
+                    vaultProjectNameInput.value = p.title;
+                });
+                vaultProjectsContainer.appendChild(item);
+            });
+        }
+
+        function openProjectVault() {
+            if (!currentUserSession || !currentUserSession.user) {
+                triggerAuthWarning("Log in first to select or manage projects");
+                return;
+            }
+            vaultProjectNameInput.value = projectNameInput.value;
+            projectVaultModal.style.display = 'flex';
+            fetchUserProjects();
+        }
+
+        projectNameInput.addEventListener('click', openProjectVault);
+
+        vaultCancelBtn.addEventListener('click', () => {
+            projectVaultModal.style.display = 'none';
+        });
+
+        vaultConfirmBtn.addEventListener('click', () => {
+            const enteredName = vaultProjectNameInput.value.trim();
+            if (!enteredName) {
+                alert("Please enter a valid project name.");
+                return;
+            }
+
+            const cleanCompare = enteredName.toLowerCase();
+            if (cachedUserProjects.includes(cleanCompare)) {
+                alert(`Warning: The project name "${enteredName}" already exists in your cloud storage. Please enter a unique name to avoid conflicts.`);
+                return;
+            }
+
+            projectNameInput.value = enteredName;
+            projectVaultModal.style.display = 'none';
+        });
+
         // LOAD EXISTING PROJECT INTERCEPT
-        btnLoadExisting.addEventListener('click', () => {
+        btnLoadExisting.addEventListener('click', async () => {
             if (!currentUserSession || !currentUserSession.user) {
                 triggerAuthWarning("Log in first or create an account to view projects");
                 return;
             }
-            window.location.href = LOADER_URL;
+            
+            // Query Supabase directly to ensure user has projects before redirecting
+            try {
+                const { count, error } = await supa
+                    .from('study_materials')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('owner_id', currentUserSession.user.id);
+                
+                if (error) throw error;
+                window.location.href = LOADER_URL;
+            } catch (err) {
+                console.warn("[PROJECT CHECK ERROR]", err.message);
+                window.location.href = LOADER_URL;
+            }
         });
 
         // 1. AUTH STATE SYNC
@@ -706,6 +905,7 @@
                     await supa.auth.signOut();
                 });
                 authGateWarning.classList.remove('visible');
+                fetchUserProjects();
             } else {
                 userDisplayLabel.textContent = "SIGN IN";
                 profileDrawerMenu.innerHTML = `
@@ -815,7 +1015,7 @@
 
         uploadBox.addEventListener('drop', (e) => {
             if (!currentUserSession || !currentUserSession.user) {
-                triggerAuthWarning("Log in first or create an account to mill documents");
+                triggerAuthWarning("Log in first or create an account to process documents");
                 return;
             }
             const files = e.dataTransfer.files;
@@ -833,15 +1033,18 @@
             if (!currentUserSession || !currentUserSession.user) {
                 e.preventDefault();
                 e.stopPropagation();
-                triggerAuthWarning("Log in first or create an account to mill documents");
+                triggerAuthWarning("Log in first or create an account to process documents");
                 return;
             }
             fileInput.click();
         });
 
         function handleFileSelection(file) {
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                alert("Please upload a PDF document.");
+            const ext = file.name.toLowerCase().split('.').pop();
+            const allowed = ['pdf', 'txt', 'docx', 'xlsx', 'csv'];
+
+            if (!allowed.includes(ext)) {
+                alert("Please upload a PDF, TXT, DOCX, XLSX, or CSV file.");
                 return;
             }
 
@@ -856,15 +1059,15 @@
             previewList.style.display = 'flex';
             previewList.innerHTML = '';
 
-            const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "_");
-            projectNameInput.value = baseName;
+            // Enforce blank name to trigger user choice
+            projectNameInput.value = '';
 
             const chip = document.createElement('div');
             chip.className = 'file-item-chip';
-            chip.style.border = '1px solid #d93838';
-            chip.style.backgroundColor = 'rgba(217, 56, 56, 0.05)';
+            chip.style.border = '1px solid #b29c6d';
+            chip.style.backgroundColor = 'rgba(178, 156, 109, 0.08)';
             chip.innerHTML = `
-                <span class="file-name" style="color: #d93838;">${file.name}</span>
+                <span class="file-name" style="color: #2c2d30;">${file.name}</span>
                 <button class="remove-file-btn" id="removeFileBtn">×</button>
             `;
             previewList.appendChild(chip);
@@ -873,6 +1076,8 @@
                 e.stopPropagation();
                 resetUploadBox();
             });
+
+            openProjectVault();
         }
 
         function resetUploadBox() {
@@ -885,9 +1090,102 @@
             statusTicker.textContent = '';
             sendBtn.disabled = false;
             sendBtn.textContent = 'MILL';
+            btnSaveList.disabled = false;
+            projectNameInput.value = '';
         }
 
-        // 3. MILLING DISPATCH & CLOUD STORAGE PIPELINE
+        function validateProjectNameBeforeAction() {
+            const name = projectNameInput.value.trim();
+            if (!name) {
+                openProjectVault();
+                return null;
+            }
+            if (cachedUserProjects.includes(name.toLowerCase())) {
+                alert(`Warning: The project name "${name}" already exists in your cloud storage. Please change the name before proceeding.`);
+                openProjectVault();
+                return null;
+            }
+            return name;
+        }
+
+        // =========================================================================
+        // 3. "SAVE LIST" CLIENT-SIDE NUMBERING & EXTRACTION
+        // =========================================================================
+        btnSaveList.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!currentUserSession || !currentUserSession.user) {
+                triggerAuthWarning("Log in first or create an account to save lists");
+                return;
+            }
+
+            if (!selectedFile) {
+                alert("Please select a valid document first.");
+                return;
+            }
+
+            const rawProj = validateProjectNameBeforeAction();
+            if (!rawProj) return;
+
+            btnSaveList.disabled = true;
+            statusTicker.style.color = '#0984e3';
+            statusTicker.textContent = 'Reading and numbering list items...';
+
+            try {
+                const textContent = await selectedFile.text();
+                // Numbering rule: Each non-empty line becomes a numbered item
+                const lines = textContent.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+                if (lines.length === 0) {
+                    throw new Error("The selected file is empty or could not be parsed as text.");
+                }
+
+                const numberedItems = lines.map((line, idx) => {
+                    const cleanLine = line.replace(/^\d+[\.\)]\s*/, '').replace(/^[-*•]\s*/, '');
+                    return `${idx + 1}. ${cleanLine}`;
+                });
+
+                const listManifest = {
+                    title: rawProj,
+                    type: "RAW_NUMBERED_LIST",
+                    source_file: selectedFile.name,
+                    items_count: numberedItems.length,
+                    items: numberedItems
+                };
+
+                statusTicker.textContent = 'Saving numbered list to cloud...';
+
+                const { error: dbErr } = await supa
+                    .from('study_materials')
+                    .insert({
+                        owner_id: currentUserSession.user.id,
+                        created_by: currentUserSession.user.id,
+                        module_type: 'STRUCTURED_LIST',
+                        title: rawProj,
+                        source_file: selectedFile.name,
+                        page_range: `1-${numberedItems.length} items`,
+                        payload: listManifest
+                    });
+
+                if (dbErr) throw new Error(dbErr.message);
+
+                statusTicker.style.color = '#27ae60';
+                statusTicker.textContent = `Saved ${numberedItems.length} items to "${rawProj}". Launching Loader...`;
+
+                setTimeout(() => {
+                    window.location.href = LOADER_URL;
+                }, 1200);
+
+            } catch (err) {
+                console.error("[SAVE LIST ERROR]", err);
+                statusTicker.style.color = '#d63031';
+                statusTicker.textContent = `Error: ${err.message}`;
+                btnSaveList.disabled = false;
+            }
+        });
+
+        // =========================================================================
+        // 4. MILLING DISPATCH & CLOUD STORAGE PIPELINE
+        // =========================================================================
         sendBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (!currentUserSession || !currentUserSession.user) {
@@ -896,11 +1194,13 @@
             }
 
             if (!selectedFile) {
-                alert("Please select a valid PDF file first.");
+                alert("Please select a valid document first.");
                 return;
             }
 
-            const rawProj = projectNameInput.value.trim() || "Quick_Deck";
+            const rawProj = validateProjectNameBeforeAction();
+            if (!rawProj) return;
+
             const sPage = parseInt(pageStartInput.value, 10) || 1;
             const ePage = parseInt(pageEndInput.value, 10) || 1;
 
@@ -915,7 +1215,7 @@
             sendBtn.disabled = true;
             sendBtn.textContent = 'PROCESSING...';
             statusTicker.style.color = '#0984e3';
-            statusTicker.textContent = 'Milling 9 dimensions & visual structures... (~15-30s)';
+            statusTicker.textContent = 'Milling structures & formulas... (~15-30s)';
 
             const formData = new FormData();
             formData.append('file', selectedFile);
@@ -949,30 +1249,25 @@
                 }
 
                 const manifestJson = await response.json();
-
-                // Stage payload for immediate single-session workstation use
                 sessionStorage.setItem('staged_manifest_payload', JSON.stringify(manifestJson));
 
-                // 4. CLOUD PERSISTENCE: Send to Supabase schema
                 if (activeUser && supa) {
                     statusTicker.textContent = 'Archiving source to hammer-assets & database...';
 
-                    // A. Upload PDF to user-scoped folder in hammer-assets
                     const cleanFileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
                     const storagePath = `${activeUser.id}/${Date.now()}_${cleanFileName}`;
 
                     const { error: storageErr } = await supa.storage
                         .from('hammer-assets')
                         .upload(storagePath, selectedFile, {
-                            contentType: 'application/pdf',
+                            contentType: selectedFile.type || 'application/octet-stream',
                             upsert: false
                         });
 
                     if (storageErr) {
-                        console.warn("[STORAGE WARNING] Could not archive raw PDF:", storageErr.message);
+                        console.warn("[STORAGE WARNING] Could not archive raw asset:", storageErr.message);
                     }
 
-                    // B. Insert into public.study_materials
                     const { error: dbErr } = await supa
                         .from('study_materials')
                         .insert({
