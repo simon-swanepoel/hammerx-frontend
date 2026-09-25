@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400..700&family=Cinzel:wght@400..900&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400..700&family=Inter:wght@300..800&family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Merriweather:ital,wght@0,300..900;1,300..900&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,300..900;1,300..900&family=Roboto+Mono:ital,wght@0,300..700;1,300..700&family=Roboto:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="SST-comparator.css">
 
-    <!-- Universal Mega-Footer Web Component -->
-    <script src="SST-footer_2.js?v=1.0"></script>
+    <!-- Universal Mega-Footer Web Component (Loaded once only) -->
+    <script src="SST-footer_2.js?v=2.0"></script>
 </head>
 <body>
 
@@ -286,9 +286,9 @@
                                             <div class="settings-sub-divider"></div>
                                             <span class="color-row-title" style="display:block; margin: 10px 0 6px 0;">BEZEL FRAME MATERIAL</span>
                                             <div class="theme-preset-grid" id="material-presets-container">
-                                                <!-- Rendered by SST-comparator_frames_2.js -->
+                                                <!-- Dynamic Presets built by SST-comparator_frames_2.js -->
                                             </div>
-                                        
+
                                             <!-- NITE-LIT OPTIONAL ACCENT (Auto-managed for Glass) -->
                                             <div id="glass-neon-toggle-row" style="display: none; margin-top: 10px; padding: 6px 10px; background: rgba(0,240,255,0.06); border: 1px dashed rgba(0,240,255,0.3); border-radius: 4px;">
                                                 <label style="color: #00f0ff; font-family: monospace; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
@@ -497,13 +497,12 @@
     <!-- Supabase CDN (Must execute first) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- SST Modular Scripts (Strict Dependency Order) -->
+    <!-- SST Modular Scripts (Strict Dependency Order & Exact File Names) -->
     <script src="SST-comparator_config.js"></script>
-    <script src="SST-comparator_frames.js"></script>
+    <script src="SST-comparator_frames_2.js"></script>
     <script src="SST-comparator_supabase.js"></script>
     <script src="SST-comparator_supabase_engine.js"></script>
     <script src="SST-comparator_courseware_engine.js"></script>
     <script src="SST-comparator_hammer_engine.js"></script>
-    <script src="SST-footer.js"></script>
 </body>
 </html>
