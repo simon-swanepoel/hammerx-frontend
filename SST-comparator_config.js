@@ -1,6 +1,6 @@
 // ==========================================
 // SST-COMPARATOR CONFIG & GLOBAL STATE
-// File: SST-Comparator_config.js
+// File: SST-comparator_config.js
 // ==========================================
 
 const TRANSLATIONS = {
@@ -134,13 +134,27 @@ let currentProjectMetadata = {
 };
 let hasUnsavedChanges = false;
 
-let currentThemeKey = 'BLACK_BOARD';
+// Overlay & Color Controls
 let activeRuledLineColor = 'transparent';
 let activeMarginColor = 'transparent';
-let activeFrameBorder = 'WOOD';
 let activeColorTargetVar = '--color-part-tag';
 let activeTextTarget = 'tag';
 
+function markUnsavedChanges() {
+    hasUnsavedChanges = true;
+}
+
+// ==========================================
+// MASTER THEMES & DYNAMIC MATERIAL PRESETS
+// ==========================================
+
+const DEFAULT_BOARD_THEME = 'BLACK_BOARD';
+const DEFAULT_FRAME = 'WOOD';
+
+let currentThemeKey = localStorage.getItem('sst_theme_board') || DEFAULT_BOARD_THEME;
+let activeFrameBorder = localStorage.getItem('sst_theme_frame') || DEFAULT_FRAME;
+
+// 1. BOARD SURFACES
 const BOARD_THEMES = {
     'BLACK_BOARD': {
         '--board-bg': '#0d0f12',
@@ -179,6 +193,71 @@ const BOARD_THEMES = {
     }
 };
 
-function markUnsavedChanges() {
-    hasUnsavedChanges = true;
-}
+// 2. CONSOLE BEZELS & MATCHING BUTTON STYLES
+const FRAME_PRESETS = {
+    'WOOD': {
+        name: 'Oiled Wood',
+        cssClass: 'wood-frame',
+        hasNeonToggle: false,
+        vars: {
+            '--console-frame-bg': "url('wood.png')",
+            '--btn-frame-bg': "url('wood.png')",
+            '--btn-text-color': '#000000',
+            '--btn-border-color': 'rgba(0, 0, 0, 0.6)',
+            '--btn-text-shadow': '-1px -1px 1px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.4)',
+            '--btn-box-shadow': 'inset -1px -1px 2px rgba(0, 0, 0, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0px 4px 8px rgba(0, 0, 0, 0.5)'
+        }
+    },
+    'GLASS': {
+        name: 'Studio Glass',
+        cssClass: 'glass-frame',
+        hasNeonToggle: true,
+        vars: {
+            '--console-frame-bg': 'none',
+            '--btn-frame-bg': 'linear-gradient(180deg, #181a24 0%, #0d0e14 60%, #050608 100%)',
+            '--btn-text-color': '#00f0ff',
+            '--btn-border-color': '#00f0ff',
+            '--btn-text-shadow': '0 0 6px #00f0ff, 0 0 14px rgba(0, 240, 255, 0.6)',
+            '--btn-box-shadow': 'inset 0 1px 2px rgba(255, 255, 255, 0.3), inset 0 -1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 240, 255, 0.5), 0 4px 10px rgba(0, 0, 0, 0.8)'
+        }
+    },
+    'CONCRETE': {
+        name: 'Cast Concrete',
+        cssClass: 'concrete-frame',
+        hasNeonToggle: false,
+        vars: {
+            '--console-frame-bg': 'none',
+            '--btn-frame-bg': 'linear-gradient(180deg, #32363e 0%, #202227 60%, #17181c 100%)',
+            '--btn-text-color': '#e2e4e9',
+            '--btn-border-color': '#3d4149',
+            '--btn-text-shadow': '0 1px 2px rgba(0, 0, 0, 0.9)',
+            '--btn-box-shadow': 'inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.8), 0 4px 8px rgba(0, 0, 0, 0.6)'
+        }
+    },
+    'GRAPHITE': {
+        name: 'Matte Graphite',
+        cssClass: 'graphite-frame',
+        hasNeonToggle: false,
+        vars: {
+            '--console-frame-bg': 'none',
+            '--btn-frame-bg': 'linear-gradient(180deg, #1d1f26 0%, #121317 60%, #0a0b0d 100%)',
+            '--btn-text-color': '#00ff66',
+            '--btn-border-color': 'rgba(0, 255, 102, 0.5)',
+            '--btn-text-shadow': '0 0 5px rgba(0, 255, 102, 0.5)',
+            '--btn-box-shadow': 'inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 3px rgba(0, 0, 0, 0.9), 0 4px 10px rgba(0, 0, 0, 0.7)'
+        }
+    },
+    'GUNMETAL': {
+        name: 'Bead-Blasted Alloy',
+        cssClass: 'gunmetal-frame',
+        hasNeonToggle: false,
+        vars: {
+            '--console-frame-bg': 'none',
+            '--btn-frame-bg': 'linear-gradient(180deg, #30343e 0%, #1f2127 60%, #151619 100%)',
+            '--btn-text-color': '#ffd700',
+            '--btn-border-color': 'rgba(255, 215, 0, 0.5)',
+            '--btn-text-shadow': '0 1px 2px rgba(0, 0, 0, 0.9), 0 0 6px rgba(255, 215, 0, 0.4)',
+            '--btn-box-shadow': 'inset 0 1px 2px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.8), 0 4px 8px rgba(0, 0, 0, 0.6)'
+        }
+    }
+};
