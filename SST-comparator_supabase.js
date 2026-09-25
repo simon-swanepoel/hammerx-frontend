@@ -18,7 +18,7 @@ function autofitViewportText() {
     }
 }
 
-// Appearance & Theme Presets
+// Appearance & Board Theme Presets
 function applyViewportAppearance() {
     if (typeof BOARD_THEMES === 'undefined' || !BOARD_THEMES[currentThemeKey]) return;
     const theme = BOARD_THEMES[currentThemeKey];
@@ -31,32 +31,6 @@ function applyViewportAppearance() {
     root.style.setProperty('--divider-color', theme['--divider-color']);
     root.style.setProperty('--grid-line-color', activeRuledLineColor);
     root.style.setProperty('--margin-line-color', activeMarginColor);
-
-    const consoleEl = document.getElementById('main-workstation-console');
-    const btnWood = document.getElementById('btn-border-wood');
-    const btnTitanium = document.getElementById('btn-border-titanium');
-    const btnBlackGlass = document.getElementById('btn-border-blackglass');
-
-    if (consoleEl) {
-        consoleEl.classList.remove('titanium-frame', 'blackglass-frame');
-    }
-
-    [btnWood, btnTitanium, btnBlackGlass].forEach(btn => {
-        if (btn) btn.classList.remove('active-theme');
-    });
-
-    if (activeFrameBorder === 'BLACK_GLASS') {
-        root.style.setProperty('--console-frame-bg', 'none');
-        if (consoleEl) consoleEl.classList.add('blackglass-frame');
-        if (btnBlackGlass) btnBlackGlass.classList.add('active-theme');
-    } else if (activeFrameBorder === 'TITANIUM') {
-        root.style.setProperty('--console-frame-bg', 'linear-gradient(135deg, #2c2d30 0%, #e2e4e9 25%, #8a8d97 50%, #b29c6d 75%, #111317 100%)');
-        if (consoleEl) consoleEl.classList.add('titanium-frame');
-        if (btnTitanium) btnTitanium.classList.add('active-theme');
-    } else {
-        root.style.setProperty('--console-frame-bg', "url('wood.png')");
-        if (btnWood) btnWood.classList.add('active-theme');
-    }
 
     document.querySelectorAll('.theme-preset-card[data-theme]').forEach(card => {
         card.classList.toggle('active-theme', card.getAttribute('data-theme') === currentThemeKey);
@@ -155,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. WORKSTATION SHUTTER HEADER (FORMATH PATTERN) ---
+    // --- 2. WORKSTATION SHUTTER HEADER ---
     const shutterHeader = document.getElementById("workstation-shutter-header");
     const workspaceCore = document.querySelector(".workspace-core");
     let shutterTimer = null;
@@ -181,26 +155,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (shutterHeader) {
-        // Expand immediately on mouse enter
         shutterHeader.addEventListener("mouseenter", () => {
             clearTimeout(shutterTimer);
             expandShutter();
         });
 
-        // Start 2-second collapse timer on mouse leave
         shutterHeader.addEventListener("mouseleave", () => {
             clearTimeout(shutterTimer);
             shutterTimer = setTimeout(collapseShutter, 2000);
         });
 
-        // Clicking collapsed bar restores it
         shutterHeader.addEventListener("click", () => {
             if (shutterHeader.classList.contains("shutter-collapsed")) {
                 expandShutter();
             }
         });
 
-        // Initial launch countdown: collapse after 2 seconds
         clearTimeout(shutterTimer);
         shutterTimer = setTimeout(collapseShutter, 2000);
     }
@@ -229,6 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof updateActiveGroupsIndicator === 'function') updateActiveGroupsIndicator();
         autofitViewportText();
     }
+
+    window.switchConsoleView = switchView;
 
     if (displayStudy && btnStudy) switchView(displayStudy, btnStudy);
 
@@ -394,32 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Border Frame Selection
-    const btnWood = document.getElementById('btn-border-wood');
-    const btnTitanium = document.getElementById('btn-border-titanium');
-    const btnBlackGlass = document.getElementById('btn-border-blackglass');
-
-    if (btnWood) {
-        btnWood.addEventListener('click', () => {
-            activeFrameBorder = 'WOOD';
-            applyViewportAppearance();
-        });
-    }
-
-    if (btnTitanium) {
-        btnTitanium.addEventListener('click', () => {
-            activeFrameBorder = 'TITANIUM';
-            applyViewportAppearance();
-        });
-    }
-
-    if (btnBlackGlass) {
-        btnBlackGlass.addEventListener('click', () => {
-            activeFrameBorder = 'BLACK_GLASS';
-            applyViewportAppearance();
-        });
-    }
-
     // Color Targets Matrix
     document.querySelectorAll('.color-target-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -474,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.theme-preset-card[data-theme]').forEach(card => {
         card.addEventListener('click', () => {
             currentThemeKey = card.getAttribute('data-theme');
+            localStorage.setItem('sst_theme_board', currentThemeKey);
             applyViewportAppearance();
         });
     });
