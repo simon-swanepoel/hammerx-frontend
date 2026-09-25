@@ -1358,9 +1358,26 @@ body.is-editing-locked .action-button-large {
     animation: modalFadeIn 0.2s ease-out;
 }
 
-.comparator-modal-overlay[style*="display: none"] {
-    display: none !important;
-    pointer-events: none !important;
+/* ALL MODALS ARE HIDDEN BY DEFAULT WITHOUT INLINE STYLES */
+.comparator-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(3px);
+    z-index: 99999 !important;
+    display: none;                /* Base hidden state */
+    pointer-events: none;         /* Cannot intercept clicks when closed */
+    justify-content: center;
+    align-items: center;
+}
+
+/* OPEN STATE (TOGGLED BY JAVASCRIPT) */
+.comparator-modal-overlay.active-modal {
+    display: flex !important;
+    pointer-events: auto !important;
 }
 
 .comparator-modal-box {
