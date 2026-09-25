@@ -1480,11 +1480,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resetShutterIdleTimer();
     }
 
-    // --- BURGER (☰) & PROFILE (⋮) DRAWER EVENT DISPATCHERS ---
+    // --- DRAWER CONTROLS (☰ LEFT & ⋮ RIGHT) ---
     const leftDrawer = document.querySelector('.menu-left .drawer-wrapper');
     const rightDrawer = document.querySelector('.menu-right .drawer-wrapper');
     const burgerTrigger = document.querySelector('.menu-left .menu-trigger');
     const userProfileTrigger = document.getElementById('comparator-user-profile-trigger');
+    const authModal = document.getElementById('sst-auth-modal');
 
     if (burgerTrigger && leftDrawer) {
         burgerTrigger.onclick = (e) => {
@@ -1499,11 +1500,15 @@ document.addEventListener('DOMContentLoaded', () => {
         userProfileTrigger.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
+
             if (!currentUserSession) {
-                const authModal = document.getElementById('sst-auth-modal');
-                if (authModal) authModal.style.display = 'flex';
+                if (authModal) {
+                    authModal.style.display = 'flex';
+                    authModal.classList.add('active-modal');
+                }
                 return;
             }
+
             rightDrawer.classList.toggle('drawer-open');
             if (leftDrawer) leftDrawer.classList.remove('drawer-open');
         };
@@ -1514,15 +1519,65 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
     });
 
+    // Stop inside-clicks on open drawers from closing themselves prematurely
+    document.querySelectorAll('.nav-links-drawer').forEach(drawer => {
+        drawer.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
+
+    // --- UNIVERSAL MODAL CLOSE & ESCAPE CONTROLLER ---
+    function closeModalSafely(modal) {
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.classList.remove('active-modal');
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.comparator-modal-overlay').forEach(closeModalSafely);
+            if (leftDrawer) leftDrawer.classList.remove('drawer-open');
+            if (rightDrawer) rightDrawer.classList.remove('drawer-open');
+        }
+    });
+
+    document.querySelectorAll('.comparator-modal-overlay').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModalSafely(modal);
+            }
+        });
+    });
+
+    // Explicit Cancel Handlers for All Known Dialogs
+    const btnCloseSource = document.getElementById('btn-close-source-modal');
+    const sourceModal = document.getElementById('sst-source-modal');
+    if (btnCloseSource && sourceModal) {
+        btnCloseSource.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModalSafely(sourceModal);
+        };
+    }
+
+    const btnAuthCancel = document.getElementById('btn-auth-cancel');
+    if (btnAuthCancel && authModal) {
+        btnAuthCancel.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModalSafely(authModal);
+            const authError = document.getElementById('auth-error-msg');
+            if (authError) authError.textContent = "";
+        };
+    }
+
     // --- SUPABASE AUTHENTICATION ENGINE ---
-    const authModal = document.getElementById('sst-auth-modal');
     const authTitle = document.getElementById('auth-modal-title');
     const inputEmail = document.getElementById('auth-input-email');
     const inputPass = document.getElementById('auth-input-password');
     const authError = document.getElementById('auth-error-msg');
     const btnAuthToggle = document.getElementById('btn-auth-toggle-mode');
     const btnAuthSubmit = document.getElementById('btn-auth-submit');
-    const btnAuthCancel = document.getElementById('btn-auth-cancel');
     const userDisplaySpan = document.querySelector('.user-display-name');
     const profileDrawer = document.getElementById('comparator-profile-drawer');
     const accountModal = document.getElementById('account-settings-modal');
@@ -1563,6 +1618,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.stopPropagation();
                         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
                         accountModal.style.display = 'flex';
+                        accountModal.classList.add('active-modal');
                     };
                 }
             }
@@ -1585,6 +1641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.stopPropagation();
                         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
                         authModal.style.display = 'flex';
+                        authModal.classList.add('active-modal');
                     };
                 }
 
@@ -1595,6 +1652,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.stopPropagation();
                         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
                         accountModal.style.display = 'flex';
+                        accountModal.classList.add('active-modal');
                     };
                 }
             }
@@ -1626,14 +1684,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnAuthSubmit.textContent = "LOGIN";
                 btnAuthToggle.textContent = "Need an account? Sign Up";
             }
-            authError.textContent = "";
-        });
-    }
-
-    if (btnAuthCancel && authModal) {
-        btnAuthCancel.addEventListener('click', () => {
-            authModal.style.display = 'none';
-            authError.textContent = "";
+            if (authError) authError.textContent = "";
         });
     }
 
@@ -1641,10 +1692,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAuthSubmit.addEventListener('click', async () => {
             const email = inputEmail.value.trim().toLowerCase();
             const pass = inputPass.value.trim();
-            authError.textContent = "";
+            if (authError) authError.textContent = "";
 
             if (!email || !pass) {
-                authError.textContent = "Please fill in all fields.";
+                if (authError) authError.textContent = "Please fill in all fields.";
                 return;
             }
 
@@ -1660,11 +1711,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateAuthUi(data.session);
                     alert("Account registered successfully! You are now signed in.");
                 }
-                authModal.style.display = 'none';
+                closeModalSafely(authModal);
                 inputEmail.value = "";
                 inputPass.value = "";
             } catch (err) {
-                authError.textContent = err.message;
+                if (authError) authError.textContent = err.message;
             } finally {
                 btnAuthSubmit.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
             }
@@ -1676,15 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCloseAccountSettings && accountModal) {
         btnCloseAccountSettings.addEventListener('click', () => {
-            accountModal.style.display = 'none';
-        });
-    }
-
-    if (accountModal) {
-        accountModal.addEventListener('click', (e) => {
-            if (e.target === accountModal) {
-                accountModal.style.display = 'none';
-            }
+            closeModalSafely(accountModal);
         });
     }
 
@@ -1812,8 +1855,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // FILE & CLOUD LOADING
     const btnLoadFile = document.getElementById('btn-load-file');
     const jsonFileInput = document.getElementById('json-file-input');
-    const sourceModal = document.getElementById('sst-source-modal');
-    const btnCloseSourceModal = document.getElementById('btn-close-source-modal');
     const btnChoiceLocal = document.getElementById('btn-choice-local');
     const btnChoiceCloud = document.getElementById('btn-choice-cloud');
     const selectProjects = document.getElementById('select-cloud-projects');
@@ -1861,6 +1902,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (sourceModal) {
                     populateCloudProjectsDropdown();
                     sourceModal.style.display = 'flex';
+                    sourceModal.classList.add('active-modal');
                 } else if (jsonFileInput) {
                     jsonFileInput.click();
                 }
@@ -1868,15 +1910,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (btnCloseSourceModal && sourceModal) {
-        btnCloseSourceModal.addEventListener('click', () => {
-            sourceModal.style.display = 'none';
-        });
-    }
-
     if (btnChoiceLocal && jsonFileInput) {
         btnChoiceLocal.addEventListener('click', () => {
-            if (sourceModal) sourceModal.style.display = 'none';
+            if (sourceModal) closeModalSafely(sourceModal);
             jsonFileInput.click();
         });
     }
@@ -1888,7 +1924,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Please select a project.");
                 return;
             }
-            if (sourceModal) sourceModal.style.display = 'none';
+            if (sourceModal) closeModalSafely(sourceModal);
             loadCloudNouns(chosen);
         });
     }
@@ -2173,13 +2209,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSlateClear && clearModal) {
         btnSlateClear.addEventListener('click', () => {
             if (getCopySlateLines().length === 0) performSlateClear();
-            else clearModal.style.display = 'flex';
+            else {
+                clearModal.style.display = 'flex';
+                clearModal.classList.add('active-modal');
+            }
         });
     }
 
     if (btnModalDiscard) {
         btnModalDiscard.addEventListener('click', () => {
-            clearModal.style.display = 'none';
+            closeModalSafely(clearModal);
             performSlateClear();
         });
     }
@@ -2187,7 +2226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnModalSave) {
         btnModalSave.addEventListener('click', () => {
             const record = compileTestResultRecord();
-            clearModal.style.display = 'none';
+            closeModalSafely(clearModal);
             performSlateClear();
             alert(`[ TEST SAVED ]\nTest ID: ${record.test_id}\nScore: ${record.score_percentage}%`);
         });
