@@ -212,6 +212,37 @@ function markUnsavedChanges() {
 }
 
 // ==========================================
+// WORKSTATION RAM & CACHE HARD RESET ENGINE
+// ==========================================
+function hardResetWorkstation() {
+    if (confirm("Reset local workstation memory, clear session cache, and cycle app runtime?")) {
+        try {
+            // 1. Clear application storage on this domain
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // 2. Dereference heap structures for GC
+            rawMasterBuckets = null;
+            activeBuckets = null;
+
+            // 3. Clear slate DOM nodes directly
+            const slateCanvas = document.getElementById('copy-slate-canvas');
+            if (slateCanvas) {
+                while (slateCanvas.firstChild) {
+                    slateCanvas.removeChild(slateCanvas.firstChild);
+                }
+            }
+
+            // 4. Force reload fresh assets bypassing browser cache
+            window.location.reload(true);
+        } catch (e) {
+            console.error("Hard reset failed:", e);
+            window.location.reload();
+        }
+    }
+}
+
+// ==========================================
 // AUTOFIT TEXT ENGINE & VIEWPORT NORMALIZATION
 // ==========================================
 function autofitViewportText() {
@@ -775,6 +806,7 @@ function showGlobalModal({ title, body, buttons, isActionModal = false }) {
     }
 
     modal.style.display = 'flex';
+    modal.classList.add('active-modal');
 }
 
 function getOpenGroupIndices() {
@@ -924,7 +956,12 @@ function switchStudyTab(evt, targetBin) {
 function initCopySlate() {
     const canvas = document.getElementById('copy-slate-canvas');
     if (!canvas) return;
-    canvas.innerHTML = '';
+    
+    // Clean DOM removal to free tab memory
+    while (canvas.firstChild) {
+        canvas.removeChild(canvas.firstChild);
+    }
+
     currentLineNum = 1;
     currentStep = 0;
     createNewSlateLine();
@@ -1183,6 +1220,10 @@ function performSlateClear() {
 function processAndDistributePayload(data) {
     console.log("--> [PAYLOAD INGEST] Distributing manifest into comparator bins...", data);
 
+    // Dereference old buckets to trigger Garbage Collection
+    rawMasterBuckets = null;
+    activeBuckets = null;
+
     const buckets = {
         '00_SUMMARY': [],
         '01_WHAT': [],
@@ -1329,7 +1370,7 @@ async function populateCloudProjectsDropdown() {
             return;
         }
 
-        // Strictly queries columns present in sst_database_master_v1.sql
+        // Query study_materials directly
         const { data: items, error } = await supa
             .from('study_materials') 
             .select('id, title, created_at, page_range')
@@ -1429,6 +1470,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- WORKSTATION HARD RESET TRIGGER ---
+    const btnHardReset = document.getElementById('btn-hard-reset-workstation');
+    if (btnHardReset) {
+        btnHardReset.addEventListener('click', (e) => {
+            e.preventDefault();
+            hardResetWorkstation();
+        });
+    }
+
     // --- SHUTTER HEADER & DRAWER ARCHITECTURE ---
     const shutterHeader = document.getElementById('workstation-shutter-header');
     const workspaceCore = document.querySelector('.workspace-core');
@@ -1519,7 +1569,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
     });
 
-    // Stop inside-clicks on open drawers from closing themselves prematurely
     document.querySelectorAll('.nav-links-drawer').forEach(drawer => {
         drawer.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1549,7 +1598,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Explicit Cancel Handlers for All Known Dialogs
     const btnCloseSource = document.getElementById('btn-close-source-modal');
     const sourceModal = document.getElementById('sst-source-modal');
     if (btnCloseSource && sourceModal) {
@@ -2084,7 +2132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+            if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
             } else {
