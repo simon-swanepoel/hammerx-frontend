@@ -1,5 +1,6 @@
 // ==========================================
 // SST-HAMMER ENGINE (MODULE 5)
+// File: SST-comparator_hammer_engine.js
 // ==========================================
 
 let slateMode = 'NOUN';
@@ -352,8 +353,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCheck = document.getElementById('btn-check-comparator');
     if (btnCheck) {
         btnCheck.addEventListener('click', () => {
-            if (checkEngineMode === 'VERBATUM') runVerbatimCheck();
-            else alert("[ AI CHECK ] Dispatching active slate & open group study lines to Gemini comparator engine.");
+            const displayCopy = document.getElementById('display-copy-slate');
+            const btnCopy = document.getElementById('btn-nav-slate');
+            if (typeof window.switchConsoleView === 'function') {
+                window.switchConsoleView(displayCopy, btnCopy);
+            }
+            if (checkEngineMode === 'VERBATUM') {
+                runVerbatimCheck();
+            } else {
+                alert("[ AI CHECK ] Dispatching active slate & open group study lines to Gemini comparator engine.");
+            }
         });
     }
 });
