@@ -104,7 +104,7 @@ body.is-editing-locked .action-button-large {
     z-index: 1;
 }
 
-/* WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE (FORMATH CLIPPED SPEC) */
+/* WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE (CLIPPING REMOVED FOR MENUS) */
 .workstation-header {
     position: absolute !important;
     top: 0 !important;
@@ -114,13 +114,13 @@ body.is-editing-locked .action-button-large {
     max-height: 16vh !important;
     background-color: var(--shutter-bg);
     border-bottom: 3px solid #b29c6d;
-    z-index: 20 !important;
+    z-index: 100 !important;
     display: flex !important;          
     flex-direction: column !important;   
     justify-content: center !important; 
     align-items: center !important;     
     box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.15);
-    overflow: hidden !important; /* CRITICAL: Clips children so 12vh logo cannot block 5vh collapse */
+    overflow: visible !important; /* CRITICAL: Allows ☰ and ⋮ dropdowns to project below the 16vh bar */
     transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -128,6 +128,7 @@ body.is-editing-locked .action-button-large {
     height: 5vh !important;
     max-height: 5vh !important;
     cursor: pointer !important;
+    overflow: hidden !important;
 }
 
 .workstation-header.shutter-collapsed .logo-wrapper,
@@ -246,7 +247,7 @@ body.is-editing-locked .action-button-large {
     border-radius: 0 0 4px 4px;
     box-shadow: 0px 8px 16px rgba(0,0,0,0.5);
     pointer-events: none;
-    z-index: 1000 !important;
+    z-index: 10000 !important;
 }
 
 .menu-left .nav-links-drawer { left: 0; }
@@ -259,6 +260,7 @@ body.is-editing-locked .action-button-large {
     max-height: 350px !important; 
     padding: 15px 20px !important;
     pointer-events: auto !important;
+    visibility: visible !important;
 }
 
 .sst-nav-link {
@@ -269,6 +271,8 @@ body.is-editing-locked .action-button-large {
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: color 0.2s ease, transform 0.2s ease;
+    cursor: pointer !important;
+    pointer-events: auto !important;
 }
 .sst-nav-link:hover { color: #00f0ff; transform: translateX(4px); }
 .menu-right .sst-nav-link:hover { transform: translateX(-4px); }
@@ -532,12 +536,11 @@ body.is-editing-locked .action-button-large {
     align-items: center;
 }
 
-/* CONSOLE BUTTON ACTIVE STATE (GOLD / ACCENT MATCH, NOT NEON GREEN) */
+/* CONSOLE BUTTON ACTIVE STATE */
 .viewport-button-corner.active-toggle,
 .viewport-button-center.active-toggle {
-    border-color: var(--btn-border-color) !important;
-    box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(178, 156, 109, 0.6) !important;
-    filter: brightness(1.15);
+    border-color: #00ff66 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.6), inset 0 0 4px rgba(0, 255, 102, 0.4) !important;
 }
 
 .viewport-display {
@@ -548,12 +551,6 @@ body.is-editing-locked .action-button-large {
 }
 
 .viewport-display.active { display: block; }
-
-.viewport-button-corner.active-toggle,
-.viewport-button-center.active-toggle {
-    border-color: #00ff66 !important;
-    box-shadow: 0 0 10px rgba(0, 255, 102, 0.6), inset 0 0 4px rgba(0, 255, 102, 0.4) !important;
-}
 
 /* SETTINGS PANEL ENGINE */
 .settings-heading {
@@ -1342,39 +1339,27 @@ body.is-editing-locked .action-button-large {
     caret-color: #ffffff;
 }
 
-/* MODAL SYSTEM (PROTECTED FROM ACCIDENTAL HIT CAPTURE) */
+/* ========================================================
+   MODAL OVERLAY SYSTEM (FULLY UNLOCKED CLICKS & PROPER STACKING)
+   ======================================================== */
 .comparator-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(3px);
-    z-index: 2000;
-    display: flex;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(3px) !important;
+    z-index: 999999 !important;
+    display: none;
+    pointer-events: none;
     justify-content: center;
     align-items: center;
     animation: modalFadeIn 0.2s ease-out;
 }
 
-/* ALL MODALS ARE HIDDEN BY DEFAULT WITHOUT INLINE STYLES */
-.comparator-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(3px);
-    z-index: 99999 !important;
-    display: none;                /* Base hidden state */
-    pointer-events: none;         /* Cannot intercept clicks when closed */
-    justify-content: center;
-    align-items: center;
-}
-
-/* OPEN STATE (TOGGLED BY JAVASCRIPT) */
+/* OPEN MODAL STATE (WORKS VIA DISPLAY: FLEX OR .ACTIVE-MODAL) */
+.comparator-modal-overlay[style*="display: flex"],
 .comparator-modal-overlay.active-modal {
     display: flex !important;
     pointer-events: auto !important;
@@ -1392,6 +1377,7 @@ body.is-editing-locked .action-button-large {
     flex-direction: column;
     gap: 14px;
     font-family: monospace;
+    pointer-events: auto !important;
 }
 
 .account-settings-box {
@@ -1406,6 +1392,7 @@ body.is-editing-locked .action-button-large {
     flex-direction: column;
     gap: 16px;
     font-family: monospace;
+    pointer-events: auto !important;
 }
 
 .account-settings-body {
@@ -1465,7 +1452,8 @@ body.is-editing-locked .action-button-large {
     font-size: 0.75rem;
     font-weight: bold;
     padding: 6px 14px;
-    cursor: pointer;
+    cursor: pointer !important;
+    pointer-events: auto !important;
     border-radius: 3px;
     transition: all 0.2s ease;
     text-transform: uppercase;
