@@ -1,3 +1,8 @@
+/* ===================================================
+   SST-COMPARATOR CONSOLE & WORKSTATION MASTER STYLESHEET
+   File: SST-comparator.css
+   =================================================== */
+
 /* CSS DYNAMIC THEME ENGINE (DEFAULT: BLACK BOARD) */
 :root {
     --board-bg: #0d0f12;
@@ -10,9 +15,14 @@
     --grid-line-color: transparent;
     --margin-line-color: transparent;
 
-    /* CONSOLE FRAME BORDER ENGINE */
+    /* CONSOLE FRAME BORDER & BUTTON ENGINE */
     --console-frame-bg: url('wood.png');
     --console-frame-border: url('wood.png');
+    --btn-frame-bg: url('wood.png');
+    --btn-text-color: #000000;
+    --btn-border-color: rgba(0, 0, 0, 0.65);
+    --btn-text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.4);
+    --btn-box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0px 4px 8px rgba(0, 0, 0, 0.5);
 
     /* DEFAULT LINE TOKEN COLOR MATRIX */
     --color-part-tag: #b29c6d;
@@ -359,6 +369,18 @@ body.is-editing-locked .action-button-large {
     flex: 1;
 }
 
+.workstation-console.wood-frame {
+    background-image: url('wood.png') !important; 
+    background-size: cover;
+    background-position: center;
+    border: 14px solid transparent !important; 
+    border-image: url('wood.png') 30 stretch !important; 
+    box-shadow: 
+        inset 0 1px 2px rgba(255, 255, 255, 0.4), 
+        inset 0 -2px 6px rgba(0, 0, 0, 0.8),         
+        0px 14px 40px rgba(0, 0, 0, 0.9) !important;
+}
+
 .workstation-console.titanium-frame {
     border: 14px solid transparent !important;
     border-image: linear-gradient(135deg, #2c2d30 0%, #e2e4e9 25%, #8a8d97 50%, #b29c6d 75%, #111317 100%) 30 stretch !important;
@@ -368,7 +390,8 @@ body.is-editing-locked .action-button-large {
         0px 12px 35px rgba(0, 0, 0, 0.95);
 }
 
-.workstation-console.blackglass-frame {
+.workstation-console.blackglass-frame,
+.workstation-console.glass-frame {
     background-image: none !important;
     background: radial-gradient(circle at 50% 10%, #1e2029 0%, #0c0d12 55%, #020305 100%) !important;
     border: 14px solid transparent !important;
@@ -379,6 +402,48 @@ body.is-editing-locked .action-button-large {
         0 14px 45px rgba(0, 0, 0, 0.98),
         0 0 30px rgba(0, 240, 255, 0.25),
         0 0 10px rgba(192, 132, 252, 0.3) !important;
+}
+
+.workstation-console.glass-frame.neon-glow-on {
+    box-shadow: 
+        inset 0 1px 2px rgba(255, 255, 255, 0.4),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.95),
+        0 14px 45px rgba(0, 0, 0, 0.98),
+        0 0 35px rgba(0, 240, 255, 0.3),
+        0 0 12px rgba(192, 132, 252, 0.35) !important;
+}
+
+.workstation-console.concrete-frame {
+    background-image: none !important;
+    background: linear-gradient(180deg, #2d3036 0%, #1e2024 50%, #16171a 100%) !important;
+    border: 14px solid #222429 !important;
+    border-image: linear-gradient(180deg, #3a3e47 0%, #131417 100%) 30 stretch !important;
+    box-shadow: 
+        inset 0 1px 1px rgba(255, 255, 255, 0.16), 
+        inset 0 -3px 8px rgba(0, 0, 0, 0.85), 
+        0 16px 45px rgba(0, 0, 0, 0.96) !important;
+}
+
+.workstation-console.graphite-frame {
+    background-image: none !important;
+    background: linear-gradient(180deg, #17191e 0%, #0c0d10 100%) !important;
+    border: 14px solid #131519 !important;
+    border-image: linear-gradient(180deg, #292d36 0%, #08090b 100%) 30 stretch !important;
+    box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.1), 
+        inset 0 -1px 3px rgba(0, 0, 0, 0.9), 
+        0 14px 40px rgba(0, 0, 0, 0.98) !important;
+}
+
+.workstation-console.gunmetal-frame {
+    background-image: none !important;
+    background: linear-gradient(180deg, #292c34 0%, #1b1c21 55%, #131417 100%) !important;
+    border: 14px solid #212328 !important;
+    border-image: linear-gradient(180deg, #424652 0%, #1f2126 40%, #141518 100%) 30 stretch !important;
+    box-shadow: 
+        inset 0 1px 2px rgba(255, 255, 255, 0.3), 
+        inset 0 -2px 6px rgba(0, 0, 0, 0.85), 
+        0 14px 35px rgba(0, 0, 0, 0.9) !important;
 }
 
 .viewport-wrapper {
@@ -397,91 +462,45 @@ body.is-editing-locked .action-button-large {
     align-items: center;
 }
 
-.viewport-button-corner {
-    width: clamp(120px, 14vw, 220px);
-    height: 4.5vh;
-    background-image: var(--console-frame-bg);
+.viewport-button-corner,
+.viewport-button-center,
+.action-button-large {
+    background-image: var(--btn-frame-bg);
     background-size: cover;
     background-position: center;
-    border: 1px solid rgba(0, 0, 0, 0.5);
+    border: 1.5px solid var(--btn-border-color);
     border-radius: 4px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: monospace;
-    font-size: clamp(0.65rem, 2.6vh, 1.05rem);
     line-height: 1;
     font-weight: 900;
-    color: #000000;
+    color: var(--btn-text-color);
     text-transform: uppercase;
-    text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.4);
-    box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0px 3px 6px rgba(0, 0, 0, 0.4);
+    text-shadow: var(--btn-text-shadow);
+    box-shadow: var(--btn-box-shadow);
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;
+}
+
+.viewport-button-corner {
+    width: clamp(120px, 14vw, 220px);
+    height: 4.5vh;
+    font-size: clamp(0.65rem, 2.6vh, 1.05rem);
 }
 
 .viewport-button-center {
     width: clamp(60px, 7vw, 110px);
     height: 4.5vh;
-    background-image: var(--console-frame-bg);
-    background-size: cover;
-    background-position: center;
-    border: 1px solid rgba(0, 0, 0, 0.5);
-    border-radius: 4px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: monospace;
     font-size: clamp(0.9rem, 2.7vh, 1.35rem);
-    line-height: 1;
-    font-weight: 900;
-    color: #000000;
-    text-transform: uppercase;
-    text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.4);
-    box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0px 3px 6px rgba(0, 0, 0, 0.4);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
 }
 
 .action-button-large {
     width: clamp(120px, 14vw, 220px);
     height: 4.5vh;
-    background-image: var(--console-frame-bg);
-    background-size: cover;
-    background-position: center;
-    border: 1px solid rgba(0, 0, 0, 0.5);
-    border-radius: 4px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: monospace;
     font-size: clamp(0.7rem, 2.6vh, 1.05rem);
-    line-height: 1;
-    font-weight: 900;
-    color: #000000;
-    text-transform: uppercase;
-    text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.4);
-    box-shadow: inset -1px -1px 2px rgba(0, 0, 0, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.5), 0px 4px 8px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
-}
-
-.workstation-console.blackglass-frame .viewport-button-corner,
-.workstation-console.blackglass-frame .viewport-button-center,
-.workstation-console.blackglass-frame .action-button-large {
-    background-image: none !important;
-    background: linear-gradient(180deg, #181a24 0%, #0d0e14 60%, #050608 100%) !important;
-    border: 1.5px solid #00f0ff !important;
-    color: #00f0ff !important;
-    text-shadow: 0 0 6px #00f0ff, 0 0 14px rgba(0, 240, 255, 0.6) !important;
-    box-shadow: 
-        inset 0 1px 2px rgba(255, 255, 255, 0.3),
-        inset 0 -1px 3px rgba(0, 0, 0, 0.9),
-        0 0 10px rgba(0, 240, 255, 0.5),
-        0 4px 10px rgba(0, 0, 0, 0.8) !important;
 }
 
 .console-viewport {
@@ -528,10 +547,8 @@ body.is-editing-locked .action-button-large {
 
 .viewport-button-corner.active-toggle,
 .viewport-button-center.active-toggle {
-    border-color: #b29c6d;
-    box-shadow: 
-        inset 1px 1px 3px rgba(0, 0, 0, 0.8),
-        0px 0px 8px rgba(178, 156, 109, 0.6);
+    border-color: #00ff66 !important;
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.6), inset 0 0 4px rgba(0, 255, 102, 0.4) !important;
 }
 
 /* SETTINGS PANEL ENGINE */
@@ -647,26 +664,11 @@ body.is-editing-locked .action-button-large {
 .card-whiteboard { background: #f8f9fa; color: #111827; }
 .card-paper { background: #f5eedc; color: #1a1d20; }
 
-.card-border-wood {
-    background-image: url('wood.png');
-    background-size: cover;
-    background-position: center;
-    color: #000000;
-    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.6);
-}
-
-.card-border-titanium {
-    background: linear-gradient(135deg, #2c2d30 0%, #e2e4e9 25%, #8a8d97 50%, #b29c6d 75%, #111317 100%);
-    color: #000000;
-    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.6);
-}
-
-.card-border-blackglass {
-    background: radial-gradient(circle at 50% 0%, #23242c 0%, #0c0d11 60%, #000000 100%);
-    color: #00f0ff;
-    text-shadow: 0 0 8px #00f0ff;
-    border-color: rgba(0, 240, 255, 0.4);
-}
+.card-border-wood-frame { background-image: url('wood.png'); color: #000; }
+.card-border-glass-frame { background: #181a24; color: #00f0ff; }
+.card-border-concrete-frame { background: #2d3036; color: #e2e4e9; }
+.card-border-graphite-frame { background: #101215; color: #00ff66; }
+.card-border-gunmetal-frame { background: #212328; color: #ffd700; }
 
 .card-color-picker-row {
     background: rgba(255, 255, 255, 0.04);
