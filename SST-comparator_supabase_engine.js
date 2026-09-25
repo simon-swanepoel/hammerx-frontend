@@ -1,252 +1,427 @@
 // ==========================================
-// SST-SUPABASE ENGINE (MODULE 3)
-// File: SST-comparator_supabase_engine.js
+// SST-COMPARATOR UI & SHUTTER ENGINE
+// File: SST-comparator_supabase.js
 // ==========================================
 
-const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
+// Global Viewport Scaler
+function autofitViewportText() {
+    const activePane = document.querySelector('.study-tab-pane.active');
+    if (!activePane) return;
 
-const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        storageKey: 'sst_auth_token',
-        storage: window.localStorage,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-    }
-}) : null;
-
-let currentUserSession = null;
-let activeUserId = null;
-let authMode = "LOGIN";
-
-function updateAuthUi(session) {
-    currentUserSession = session;
-    const userDisplaySpan = document.querySelector('.user-display-name');
-    const profileDrawer = document.getElementById('comparator-profile-drawer');
-    const authModal = document.getElementById('sst-auth-modal');
-    const accountModal = document.getElementById('account-settings-modal');
-
-    if (session && session.user) {
-        activeUserId = session.user.id;
-        if (userDisplaySpan) {
-            userDisplaySpan.textContent = session.user.email.split('@')[0];
-        }
-        if (profileDrawer) {
-            profileDrawer.innerHTML = `
-                <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings" data-i18n="nav_account_settings">Account Settings</a>
-                <a href="javascript:void(0)" class="sst-nav-link" id="btn-auth-signout" style="color: #ff3344;" data-i18n="nav_signout">Sign Out</a>
-            `;
-            if (typeof applyLanguage === 'function') applyLanguage(currentLanguage);
-
-            const btnSignOut = document.getElementById('btn-auth-signout');
-            if (btnSignOut) {
-                btnSignOut.addEventListener('click', async () => {
-                    await supa.auth.signOut();
-                });
-            }
-            const btnAcc = document.getElementById('btn-open-account-settings');
-            if (btnAcc && accountModal) {
-                btnAcc.addEventListener('click', () => {
-                    accountModal.style.display = 'flex';
-                });
-            }
-        }
+    const containerWidth = activePane.clientWidth;
+    if (containerWidth > 1200) {
+        activePane.style.fontSize = '0.9rem';
+    } else if (containerWidth > 800) {
+        activePane.style.fontSize = '0.8rem';
     } else {
-        activeUserId = null;
-        if (userDisplaySpan) {
-            userDisplaySpan.textContent = "SIGN IN";
-        }
-        if (profileDrawer) {
-            profileDrawer.innerHTML = `
-                <a href="javascript:void(0)" class="sst-nav-link" id="btn-trigger-login">Sign In / Register</a>
-                <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings" data-i18n="nav_account_settings">Account Settings</a>
-            `;
-            if (typeof applyLanguage === 'function') applyLanguage(currentLanguage);
-
-            const btnLogin = document.getElementById('btn-trigger-login');
-            if (btnLogin && authModal) {
-                btnLogin.addEventListener('click', () => {
-                    authModal.style.display = 'flex';
-                });
-            }
-            const btnAcc = document.getElementById('btn-open-account-settings');
-            if (btnAcc && accountModal) {
-                btnAcc.addEventListener('click', () => {
-                    accountModal.style.display = 'flex';
-                });
-            }
-        }
+        activePane.style.fontSize = '0.72rem';
     }
 }
 
-async function populateCloudProjectsDropdown() {
-    const dropdown = document.getElementById('select-cloud-projects') || document.getElementById('cloud-projects-dropdown');
-    if (!dropdown || !supa) return;
+// Appearance & Board Theme Presets
+function applyViewportAppearance() {
+    if (typeof BOARD_THEMES === 'undefined' || !BOARD_THEMES[currentThemeKey]) return;
+    const theme = BOARD_THEMES[currentThemeKey];
 
-    dropdown.innerHTML = '<option value="">Scanning cloud projects...</option>';
+    const root = document.documentElement;
+    root.style.setProperty('--board-bg', theme['--board-bg']);
+    root.style.setProperty('--board-ink', theme['--board-ink']);
+    root.style.setProperty('--header-text', theme['--header-text']);
+    root.style.setProperty('--number-color', theme['number-color'] || theme['--number-color']);
+    root.style.setProperty('--divider-color', theme['--divider-color']);
+    root.style.setProperty('--grid-line-color', activeRuledLineColor);
+    root.style.setProperty('--margin-line-color', activeMarginColor);
 
-    try {
-        const { data: { session } } = await supa.auth.getSession();
-        const user = session?.user;
-        if (!user) {
-            dropdown.innerHTML = '<option value="">Please sign in to view projects</option>';
-            return;
+    document.querySelectorAll('.theme-preset-card[data-theme]').forEach(card => {
+        card.classList.toggle('active-theme', card.getAttribute('data-theme') === currentThemeKey);
+    });
+}
+
+function updateTextOptionButtonStates() {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const weightVal = rootStyle.getPropertyValue(`--font-weight-${activeTextTarget}`).trim();
+    const styleVal = rootStyle.getPropertyValue(`--font-style-${activeTextTarget}`).trim();
+    const familyVal = rootStyle.getPropertyValue(`--font-family-${activeTextTarget}`).trim();
+
+    const btnBold = document.getElementById('btn-text-bold');
+    const btnItalic = document.getElementById('btn-text-italic');
+    const selectFont = document.getElementById('select-token-font');
+
+    if (btnBold) btnBold.classList.toggle('active-format', weightVal === 'bold' || weightVal === '700' || weightVal === '900');
+    if (btnItalic) btnItalic.classList.toggle('active-format', styleVal === 'italic');
+    if (selectFont) selectFont.value = familyVal || "'Fira Code', monospace";
+}
+
+// Global Dialog Modal Engine
+function showGlobalModal({ title, body, buttons, isActionModal = false }) {
+    const modal = document.getElementById('sst-global-modal');
+    const titleEl = document.getElementById('global-modal-title');
+    const bodyEl = document.getElementById('global-modal-body');
+    const actionsEl = document.getElementById('global-modal-actions');
+
+    if (!modal || !titleEl || !bodyEl || !actionsEl) return;
+
+    titleEl.textContent = title;
+    bodyEl.innerHTML = body;
+    actionsEl.innerHTML = '';
+
+    if (isActionModal && buttons.length === 3) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = `modal-btn ${buttons[0].className || ''}`;
+        deleteBtn.textContent = buttons[0].text;
+        deleteBtn.onclick = () => { modal.style.display = 'none'; buttons[0].onClick(); };
+        actionsEl.appendChild(deleteBtn);
+
+        const rightGroup = document.createElement('div');
+        rightGroup.className = 'modal-actions-right';
+
+        for (let i = 1; i < buttons.length; i++) {
+            const btn = document.createElement('button');
+            btn.className = `modal-btn ${buttons[i].className || ''}`;
+            btn.textContent = buttons[i].text;
+            const bClick = buttons[i].onClick;
+            btn.onclick = () => { modal.style.display = 'none'; if (bClick) bClick(); };
+            rightGroup.appendChild(btn);
         }
-
-        const { data: items, error } = await supa
-            .from('study_materials')
-            .select('id, title, created_at, page_range')
-            .eq('owner_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        dropdown.innerHTML = '';
-        if (!items || items.length === 0) {
-            dropdown.innerHTML = '<option value="">No projects found in database</option>';
-            return;
-        }
-
-        items.forEach(proj => {
-            const opt = document.createElement('option');
-            opt.value = proj.id;
-            const dateStr = new Date(proj.created_at).toLocaleDateString();
-            const rangeStr = proj.page_range ? ` (${proj.page_range})` : '';
-            opt.textContent = `${proj.title || 'Untitled'}${rangeStr} [${dateStr}]`;
-            dropdown.appendChild(opt);
+        actionsEl.appendChild(rightGroup);
+    } else {
+        buttons.forEach(b => {
+            const btn = document.createElement('button');
+            btn.className = `modal-btn ${b.className || ''}`;
+            btn.textContent = b.text;
+            btn.onclick = () => {
+                modal.style.display = 'none';
+                if (b.onClick) b.onClick();
+            };
+            actionsEl.appendChild(btn);
         });
-
-    } catch (err) {
-        console.error("[SST Supabase] Error listing projects:", err);
-        dropdown.innerHTML = '<option value="">Error listing projects</option>';
     }
+
+    modal.style.display = 'flex';
 }
 
-async function loadCloudNouns(projectId) {
-    if (!supa || !projectId) return;
-
-    try {
-        const { data: row, error } = await supa
-            .from('study_materials')
-            .select('*')
-            .eq('id', projectId)
-            .single();
-
-        if (error) throw error;
-        if (!row || !row.payload) {
-            alert("Empty payload for selected project.");
-            return;
-        }
-
-        let payload = row.payload;
-        if (typeof payload === 'string') {
-            try {
-                payload = JSON.parse(payload);
-            } catch (e) {
-                console.warn("[SST Supabase] Payload secondary parse warning:", e);
-            }
-        }
-
-        if (!payload.title && row.title) payload.title = row.title;
-        if (typeof processAndDistributePayload === 'function') {
-            processAndDistributePayload(payload);
-        }
-
-        const btnStudy = document.getElementById('btn-nav-study');
-        if (btnStudy) btnStudy.click();
-
-    } catch (err) {
-        alert(`Cloud Load Error: ${err.message}`);
-        console.error("[SST Supabase] Cloud load error:", err);
-    }
-}
-
+// DOM Setup & UI Bindings
 document.addEventListener('DOMContentLoaded', () => {
-    const authModal = document.getElementById('sst-auth-modal');
-    const authTitle = document.getElementById('auth-modal-title');
-    const inputEmail = document.getElementById('auth-input-email');
-    const inputPass = document.getElementById('auth-input-password');
-    const authError = document.getElementById('auth-error-msg');
-    const btnAuthToggle = document.getElementById('btn-auth-toggle-mode');
-    const btnAuthSubmit = document.getElementById('btn-auth-submit');
-    const btnAuthCancel = document.getElementById('btn-auth-cancel');
-    const userProfileTrigger = document.getElementById('comparator-user-profile-trigger');
 
-    if (supa) {
-        supa.auth.getSession().then(({ data: { session } }) => {
-            updateAuthUi(session);
-        });
+    document.body.classList.remove('is-editing-locked');
 
-        supa.auth.onAuthStateChange((_event, session) => {
-            updateAuthUi(session);
+    // --- 1. SYSTEM LANGUAGE SELECTOR ---
+    const savedLang = localStorage.getItem('sst_selected_language') || 'en';
+    const langSelect = document.getElementById('system-language-select');
+    if (langSelect) {
+        langSelect.value = savedLang;
+        langSelect.addEventListener('change', (e) => {
+            if (typeof applyLanguage === 'function') applyLanguage(e.target.value);
         });
     }
+    if (typeof applyLanguage === 'function') applyLanguage(savedLang);
 
-    if (btnAuthToggle) {
-        btnAuthToggle.addEventListener('click', () => {
-            if (authMode === "LOGIN") {
-                authMode = "SIGNUP";
-                if (authTitle) authTitle.textContent = "CREATE NEW ACCOUNT";
-                if (btnAuthSubmit) btnAuthSubmit.textContent = "REGISTER";
-                btnAuthToggle.textContent = "Already have an account? Sign In";
-            } else {
-                authMode = "LOGIN";
-                if (authTitle) authTitle.textContent = "ACCOUNT SIGN IN";
-                if (btnAuthSubmit) btnAuthSubmit.textContent = "LOGIN";
-                btnAuthToggle.textContent = "Need an account? Sign Up";
+    // Initial Appearance Setup
+    applyViewportAppearance();
+    window.addEventListener('resize', autofitViewportText);
+
+    // Unsaved Changes Prompt
+    window.addEventListener('beforeunload', (e) => {
+        if (typeof hasUnsavedChanges !== 'undefined' && hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes in your study project. Save before leaving?';
+            return e.returnValue;
+        }
+    });
+
+    // --- 2. WORKSTATION SHUTTER HEADER ---
+    const shutterHeader = document.getElementById("workstation-shutter-header");
+    const workspaceCore = document.querySelector(".workspace-core");
+    let shutterTimer = null;
+
+    function collapseShutter() {
+        if (shutterHeader && workspaceCore) {
+            shutterHeader.classList.add("shutter-collapsed");
+            workspaceCore.classList.add("workspace-expanded");
+            if (typeof autofitViewportText === 'function') {
+                setTimeout(autofitViewportText, 450);
             }
-            if (authError) authError.textContent = "";
-        });
+        }
     }
 
-    if (btnAuthCancel && authModal) {
-        btnAuthCancel.addEventListener('click', () => {
-            authModal.style.display = 'none';
-            if (authError) authError.textContent = "";
-        });
-    }
-
-    if (btnAuthSubmit) {
-        btnAuthSubmit.addEventListener('click', async () => {
-            const email = inputEmail.value.trim().toLowerCase();
-            const pass = inputPass.value.trim();
-            if (authError) authError.textContent = "";
-
-            if (!email || !pass) {
-                if (authError) authError.textContent = "Please fill in all fields.";
-                return;
+    function expandShutter() {
+        if (shutterHeader && workspaceCore) {
+            shutterHeader.classList.remove("shutter-collapsed");
+            workspaceCore.classList.remove("workspace-expanded");
+            if (typeof autofitViewportText === 'function') {
+                setTimeout(autofitViewportText, 450);
             }
+        }
+    }
 
-            btnAuthSubmit.textContent = "WAIT...";
-            try {
-                if (authMode === "LOGIN") {
-                    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
-                    if (error) throw error;
-                    updateAuthUi(data.session);
-                } else {
-                    const { data, error } = await supa.auth.signUp({ email, password: pass });
-                    if (error) throw error;
-                    updateAuthUi(data.session);
-                    alert("Account registered successfully! You are now signed in.");
+    if (shutterHeader) {
+        shutterHeader.addEventListener("mouseenter", () => {
+            clearTimeout(shutterTimer);
+            expandShutter();
+        });
+
+        shutterHeader.addEventListener("mouseleave", () => {
+            clearTimeout(shutterTimer);
+            shutterTimer = setTimeout(collapseShutter, 2000);
+        });
+
+        shutterHeader.addEventListener("click", () => {
+            if (shutterHeader.classList.contains("shutter-collapsed")) {
+                expandShutter();
+            }
+        });
+
+        clearTimeout(shutterTimer);
+        shutterTimer = setTimeout(collapseShutter, 2000);
+    }
+
+    // --- 3. WORKSTATION VIEW SWITCHING ---
+    const btnStudy = document.getElementById('btn-nav-study');
+    const btnGear  = document.getElementById('btn-nav-gear');
+    const btnCopy  = document.getElementById('btn-nav-slate');
+
+    const displayStudy    = document.getElementById('display-study-material');
+    const displayCopy     = document.getElementById('display-copy-slate');
+    const displaySettings = document.getElementById('display-settings');
+
+    const allButtons = [btnStudy, btnGear, btnCopy];
+    const allDisplays = [displayStudy, displayCopy, displaySettings];
+
+    function switchView(activeDisplay, activeButton) {
+        document.body.classList.remove('is-editing-locked');
+        if (typeof releaseEditLock === 'function') {
+            try { releaseEditLock(); } catch(e) {}
+        }
+        allDisplays.forEach(disp => disp && disp.classList.remove('active'));
+        allButtons.forEach(btn => btn && btn.classList.remove('active-toggle'));
+        if (activeDisplay) activeDisplay.classList.add('active');
+        if (activeButton) activeButton.classList.add('active-toggle');
+        if (typeof updateActiveGroupsIndicator === 'function') updateActiveGroupsIndicator();
+        autofitViewportText();
+    }
+
+    window.switchConsoleView = switchView;
+
+    if (displayStudy && btnStudy) switchView(displayStudy, btnStudy);
+
+    if (btnStudy) {
+        btnStudy.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView(displayStudy, btnStudy);
+        });
+    }
+
+    if (btnGear) {
+        btnGear.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView(displaySettings, btnGear);
+        });
+    }
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView(displayCopy, btnCopy);
+        });
+    }
+
+    // --- 4. ACCOUNT SETTINGS MODAL ---
+    const btnOpenAccountSettings = document.getElementById('btn-open-account-settings');
+    const accountModal = document.getElementById('account-settings-modal');
+    const btnCloseAccountSettings = document.getElementById('btn-close-account-settings');
+
+    if (btnOpenAccountSettings && accountModal) {
+        btnOpenAccountSettings.addEventListener('click', () => {
+            accountModal.style.display = 'flex';
+        });
+    }
+
+    if (btnCloseAccountSettings && accountModal) {
+        btnCloseAccountSettings.addEventListener('click', () => {
+            accountModal.style.display = 'none';
+        });
+    }
+
+    if (accountModal) {
+        accountModal.addEventListener('click', (e) => {
+            if (e.target === accountModal) {
+                accountModal.style.display = 'none';
+            }
+        });
+    }
+
+    // --- 5. SETTINGS PANEL INTERFACES ---
+    const displayGroupSize = document.getElementById('group-size-display');
+    const editContainer = document.getElementById('group-size-edit-container');
+    const inputGroupSize = document.getElementById('input-group-size');
+    const btnSaveGroupSize = document.getElementById('btn-save-group-size');
+
+    const groupBreaksControl = document.getElementById('group-breaks-control');
+    const viewportAppearanceControl = document.getElementById('viewport-appearance-control');
+    const colorsControl = document.getElementById('colors-control');
+    const textControl = document.getElementById('text-control');
+
+    if (displayGroupSize && editContainer && inputGroupSize && btnSaveGroupSize) {
+        displayGroupSize.addEventListener('click', () => {
+            inputGroupSize.value = GROUP_SIZE;
+            editContainer.style.display = 'inline-flex';
+            inputGroupSize.focus();
+        });
+
+        btnSaveGroupSize.addEventListener('click', () => {
+            const val = parseInt(inputGroupSize.value, 10);
+            if (!isNaN(val) && val >= 2 && val <= 50) {
+                GROUP_SIZE = val;
+                displayGroupSize.textContent = GROUP_SIZE;
+                editContainer.style.display = 'none';
+
+                if (typeof activeBuckets !== 'undefined' && activeBuckets && typeof renderGroupedText === 'function') {
+                    for (const [binKey, content] of Object.entries(activeBuckets)) {
+                        renderGroupedText(binKey, content);
+                    }
                 }
-                if (authModal) authModal.style.display = 'none';
-                inputEmail.value = "";
-                inputPass.value = "";
-            } catch (err) {
-                if (authError) authError.textContent = err.message;
-            } finally {
-                btnAuthSubmit.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
             }
         });
     }
 
-    if (userProfileTrigger && authModal) {
-        userProfileTrigger.addEventListener('click', (e) => {
-            if (!currentUserSession) {
-                e.stopPropagation();
-                authModal.style.display = 'flex';
+    const settingsItems = document.querySelectorAll('.settings-list .settings-item');
+    const subMenuTitle = document.getElementById('sub-menu-title');
+
+    settingsItems.forEach(item => {
+        item.addEventListener('click', () => {
+            settingsItems.forEach(i => i.classList.remove('active-category'));
+            item.classList.add('active-category');
+            const categoryName = item.getAttribute('data-category');
+            if (subMenuTitle) subMenuTitle.textContent = `[ ${categoryName} Options ]`;
+
+            if (groupBreaksControl) groupBreaksControl.style.display = categoryName === 'GROUP BREAKS' ? 'block' : 'none';
+            if (viewportAppearanceControl) viewportAppearanceControl.style.display = categoryName === 'VIEWPORT APPEARANCE' ? 'block' : 'none';
+            if (colorsControl) colorsControl.style.display = categoryName === 'COLORS' ? 'block' : 'none';
+            if (textControl) textControl.style.display = categoryName === 'TEXT' ? 'block' : 'none';
+
+            if (categoryName === 'TEXT') updateTextOptionButtonStates();
+        });
+    });
+
+    // Ruled Lines Palette
+    const ruledDots = document.querySelectorAll('#palette-ruled-lines .palette-dot');
+    ruledDots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ruledDots.forEach(d => d.classList.remove('active-dot'));
+            dot.classList.add('active-dot');
+            activeRuledLineColor = dot.getAttribute('data-color');
+            applyViewportAppearance();
+        });
+    });
+
+    // Margin Palette
+    const marginDots = document.querySelectorAll('#palette-margin .palette-dot');
+    marginDots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            marginDots.forEach(d => d.classList.remove('active-dot'));
+            dot.classList.add('active-dot');
+            activeMarginColor = dot.getAttribute('data-color');
+            applyViewportAppearance();
+        });
+    });
+
+    // 18 Essential Swatches & Direct Hex
+    const swatchDots = document.querySelectorAll('.swatch-dot');
+    const nativeColorWell = document.getElementById('native-color-picker');
+    const inputHex = document.getElementById('input-hex-code');
+    const btnApplyHex = document.getElementById('btn-apply-hex');
+
+    swatchDots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const colorHex = dot.getAttribute('data-color');
+            document.documentElement.style.setProperty(activeColorTargetVar, colorHex);
+            if (nativeColorWell) nativeColorWell.value = colorHex;
+            if (inputHex) inputHex.value = colorHex.toUpperCase();
+        });
+    });
+
+    if (nativeColorWell) {
+        nativeColorWell.addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.documentElement.style.setProperty(activeColorTargetVar, val);
+            if (inputHex) inputHex.value = val.toUpperCase();
+        });
+    }
+
+    if (btnApplyHex && inputHex) {
+        btnApplyHex.addEventListener('click', () => {
+            let val = inputHex.value.trim();
+            if (!val.startsWith('#') && val.length === 6) val = '#' + val;
+            const isFullHex = /^#[0-9A-F]{6}$/i.test(val);
+            const isShortHex = /^#[0-9A-F]{3}$/i.test(val);
+            if (isFullHex || isShortHex) {
+                document.documentElement.style.setProperty(activeColorTargetVar, val);
+                if (nativeColorWell) nativeColorWell.value = val;
+            } else {
+                alert("Please enter a valid HEX color code (e.g., #00FF66 or #B29C6D)");
             }
         });
     }
+
+    // Color Targets Matrix
+    document.querySelectorAll('.color-target-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-target-btn').forEach(b => b.classList.remove('active-target'));
+            btn.classList.add('active-target');
+            activeColorTargetVar = btn.getAttribute('data-target');
+        });
+    });
+
+    // Text Targets Matrix
+    document.querySelectorAll('.text-target-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.text-target-btn').forEach(b => b.classList.remove('active-target'));
+            btn.classList.add('active-target');
+            activeTextTarget = btn.getAttribute('data-target');
+            updateTextOptionButtonStates();
+        });
+    });
+
+    // Text Styling Toggles
+    const btnTextBold = document.getElementById('btn-text-bold');
+    if (btnTextBold) {
+        btnTextBold.addEventListener('click', () => {
+            const root = document.documentElement;
+            const currentWeight = getComputedStyle(root).getPropertyValue(`--font-weight-${activeTextTarget}`).trim();
+            const newWeight = (currentWeight === 'bold' || currentWeight === '700' || currentWeight === '900') ? 'normal' : 'bold';
+            root.style.setProperty(`--font-weight-${activeTextTarget}`, newWeight);
+            updateTextOptionButtonStates();
+        });
+    }
+
+    const btnTextItalic = document.getElementById('btn-text-italic');
+    if (btnTextItalic) {
+        btnTextItalic.addEventListener('click', () => {
+            const root = document.documentElement;
+            const currentStyle = getComputedStyle(root).getPropertyValue(`--font-style-${activeTextTarget}`).trim();
+            const newStyle = (currentStyle === 'italic') ? 'normal' : 'italic';
+            root.style.setProperty(`--font-style-${activeTextTarget}`, newStyle);
+            updateTextOptionButtonStates();
+        });
+    }
+
+    // 16-Font Dropdown Listener
+    const selectTokenFont = document.getElementById('select-token-font');
+    if (selectTokenFont) {
+        selectTokenFont.addEventListener('change', (e) => {
+            document.documentElement.style.setProperty(`--font-family-${activeTextTarget}`, e.target.value);
+        });
+    }
+
+    // Board Theme Cards
+    document.querySelectorAll('.theme-preset-card[data-theme]').forEach(card => {
+        card.addEventListener('click', () => {
+            currentThemeKey = card.getAttribute('data-theme');
+            localStorage.setItem('sst_theme_board', currentThemeKey);
+            applyViewportAppearance();
+        });
+    });
 });
