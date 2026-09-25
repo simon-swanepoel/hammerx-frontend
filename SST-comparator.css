@@ -1469,11 +1469,12 @@ body.is-editing-locked .action-button-large {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* FOOTER CLEARANCE LAYER */
+/* GUARANTEE FAT FOOTER VISIBILITY & SCROLL REACH */
 sst-footer {
-    display: block;
-    position: relative;
-    width: 100vw;
-    z-index: 10;
-    clear: both;
+    display: block !important;
+    position: relative !important;
+    width: 100vw !important;
+    min-height: 350px !important;
+    z-index: 100 !important;
+    clear: both !important;
 }
