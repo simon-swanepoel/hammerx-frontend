@@ -4,14 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SST-comparator / Hammer-X Workstation</title>
+
+    <!-- Cache-Control Directives: Prevents stale HTML caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <!-- Google Fonts Suite: 16 Curated Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400..700&family=Cinzel:wght@400..900&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400..700&family=Inter:wght@300..800&family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Merriweather:ital,wght@0,300..900;1,300..900&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,300..900;1,300..900&family=Roboto+Mono:ital,wght@0,300..700;1,300..700&family=Roboto:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="SST-comparator.css">
+    
+    <!-- Versioned CSS to avoid stale client styles -->
+    <link rel="stylesheet" href="SST-comparator.css?v=2.6.2">
 
     <!-- Universal Mega-Footer Web Component -->
-    <script src="SST-footer.js"></script>
+    <script src="SST-footer.js?v=2.6.2"></script>
     <link rel="icon" type="image/png" href="SSTlogo.png">
 </head>
 <body>
@@ -38,10 +46,10 @@
     <!-- Layer 1: Universal Backdrop Canvas -->
     <div class="nebula-canvas"></div>
 
-    <!-- 100vh ISOLATION WRAPPER: Enforces strict viewport bounds on the shutter & console -->
+    <!-- 100vh ISOLATION WRAPPER -->
     <div class="comparator-stage-wrapper">
 
-        <!-- Consolidated Top Navigation Header Bar (White & Gold Theme) -->
+        <!-- Consolidated Top Navigation Header Bar -->
         <div class="workstation-header" id="workstation-shutter-header">
             
             <!-- Top-Left Menu Container -->
@@ -86,14 +94,14 @@
         <!-- The Primary Active Workspace Core -->
         <div class="workspace-core">
             
-            <!-- LEFT GOOGLE AD TEST ZONE (150px Flank Slot) -->
+            <!-- LEFT GOOGLE AD TEST ZONE -->
             <div class="ad-zone-side">
                 <div class="google-test-ad-banner">
                     <span class="ad-label">Google Ad Test<br>120 x 600</span>
                 </div>
             </div>
             
-            <!-- The Central Focused Workstation Console (calc(100vw - 300px) Full Fit) -->
+            <!-- Central Focused Workstation Console -->
             <div class="workstation-console" id="main-workstation-console">
                 
                 <div class="viewport-wrapper">
@@ -140,7 +148,7 @@
                                     <div id="09_WHY" class="study-tab-pane"></div>
                                 </div>
                                 
-                                <!-- STREAMLINED FOOTER STRIP -->
+                                <!-- FOOTER STRIP -->
                                 <div class="study-footer-strip">
                                     <div class="footer-left-group">
                                         <button id="btn-study-hide" class="study-footer-button" data-i18n="btn_hide">HIDE</button>
@@ -290,7 +298,7 @@
                                                 <!-- Dynamic Presets built by SST-comparator_frames.js -->
                                             </div>
 
-                                            <!-- NITE-LIT OPTIONAL ACCENT (Auto-managed for Glass) -->
+                                            <!-- NITE-LIT OPTIONAL ACCENT -->
                                             <div id="glass-neon-toggle-row" style="display: none; margin-top: 10px; padding: 6px 10px; background: rgba(0,240,255,0.06); border: 1px dashed rgba(0,240,255,0.3); border-radius: 4px;">
                                                 <label style="color: #00f0ff; font-family: monospace; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                                                     <input type="checkbox" id="chk-glass-neon"> [ x ] AMBIENT NITE-LIT GLOW
@@ -299,7 +307,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- CATEGORY 3: STREAMLINED ESSENTIAL COLORS & DIRECT INPUT -->
+                                    <!-- CATEGORY 3: COLORS & DIRECT INPUT -->
                                     <div id="colors-control" style="display: none;">
                                         <div class="color-section-selector">
                                             <span class="color-target-btn active-target" data-target="--color-part-tag">[ TAG ]</span>
@@ -358,7 +366,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- CATEGORY 4: TEXT OPTIONS (16-FONT GOOGLE SUITE) -->
+                                    <!-- CATEGORY 4: TEXT OPTIONS -->
                                     <div id="text-control" style="display: none;">
                                         <div class="color-section-selector">
                                             <span class="text-target-btn active-target" data-target="tag">[ TAG ]</span>
@@ -434,7 +442,7 @@
 
             </div>
 
-            <!-- RIGHT GOOGLE AD TEST ZONE (150px Flank Slot) -->
+            <!-- RIGHT GOOGLE AD TEST ZONE -->
             <div class="ad-zone-side">
                 <div class="google-test-ad-banner">
                     <span class="ad-label">Google Ad Test<br>120 x 600</span>
@@ -470,7 +478,7 @@
         </div>
     </div>
 
-    <!-- ACCOUNT SETTINGS MODAL VIEWPORT -->
+    <!-- ACCOUNT SETTINGS MODAL VIEWPORT WITH EMERGENCY WORKSTATION RESET -->
     <div class="comparator-modal-overlay" id="account-settings-modal">
         <div class="account-settings-box">
             <div class="modal-title" data-i18n="account_settings_title">ACCOUNT SETTINGS</div>
@@ -485,6 +493,16 @@
                         <option value="fr">Français</option>
                     </select>
                 </div>
+
+                <!-- Client-Side RAM / Cache Hard Reset Control -->
+                <div class="settings-sub-divider" style="margin: 8px 0;"></div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span class="settings-modal-label" style="font-size: 0.8rem; color: #b29c6d;">WORKSTATION MAINTENANCE</span>
+                    <p style="font-size: 0.7rem; color: var(--number-color); line-height: 1.3;">Clear local session cache, cycle tab RAM, and refresh client runtime.</p>
+                    <button type="button" id="btn-hard-reset-workstation" class="modal-btn btn-modal-danger" style="margin-top: 4px; padding: 6px 10px; width: 100%;">
+                        ⟲ HARD RESET WORKSTATION CACHE
+                    </button>
+                </div>
             </div>
             <div class="modal-button-group" style="justify-content: flex-end; margin-top: 15px;">
                 <button class="modal-btn btn-modal-save" id="btn-close-account-settings" data-i18n="btn_ok">OK</button>
@@ -498,8 +516,8 @@
     <!-- Supabase CDN (Must execute first) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Core Engine & Frame Styles -->
-    <script src="SST-comparator.js"></script>
-    <script src="SST-comparator_frames.js"></script>
+    <!-- Version-Controlled Local Workstation Scripts -->
+    <script src="SST-comparator.js?v=2.6.2"></script>
+    <script src="SST-comparator_frames.js?v=2.6.2"></script>
 </body>
 </html>
