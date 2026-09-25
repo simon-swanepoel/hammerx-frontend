@@ -217,15 +217,12 @@ function markUnsavedChanges() {
 function hardResetWorkstation() {
     if (confirm("Reset local workstation memory, clear session cache, and cycle app runtime?")) {
         try {
-            // 1. Clear application storage on this domain
             localStorage.clear();
             sessionStorage.clear();
 
-            // 2. Dereference heap structures for GC
             rawMasterBuckets = null;
             activeBuckets = null;
 
-            // 3. Clear slate DOM nodes directly
             const slateCanvas = document.getElementById('copy-slate-canvas');
             if (slateCanvas) {
                 while (slateCanvas.firstChild) {
@@ -233,7 +230,6 @@ function hardResetWorkstation() {
                 }
             }
 
-            // 4. Force reload fresh assets bypassing browser cache
             window.location.reload(true);
         } catch (e) {
             console.error("Hard reset failed:", e);
@@ -957,7 +953,6 @@ function initCopySlate() {
     const canvas = document.getElementById('copy-slate-canvas');
     if (!canvas) return;
     
-    // Clean DOM removal to free tab memory
     while (canvas.firstChild) {
         canvas.removeChild(canvas.firstChild);
     }
@@ -1220,7 +1215,6 @@ function performSlateClear() {
 function processAndDistributePayload(data) {
     console.log("--> [PAYLOAD INGEST] Distributing manifest into comparator bins...", data);
 
-    // Dereference old buckets to trigger Garbage Collection
     rawMasterBuckets = null;
     activeBuckets = null;
 
@@ -1370,7 +1364,6 @@ async function populateCloudProjectsDropdown() {
             return;
         }
 
-        // Query study_materials directly
         const { data: items, error } = await supa
             .from('study_materials') 
             .select('id, title, created_at, page_range')
