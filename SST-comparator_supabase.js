@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. WORKSTATION SHUTTER HEADER ---
+// --- 2. WORKSTATION SHUTTER HEADER ---
     const shutterHeader = document.getElementById("workstation-shutter-header");
     const workspaceCore = document.querySelector(".workspace-core");
     let shutterTimer = null;
@@ -143,6 +143,72 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    function expandShutter() {
+        if (shutterHeader && workspaceCore) {
+            shutterHeader.classList.remove("shutter-collapsed");
+            workspaceCore.classList.remove("workspace-expanded");
+            if (typeof autofitViewportText === 'function') {
+                setTimeout(autofitViewportText, 450);
+            }
+        }
+    }
+
+    if (shutterHeader) {
+        // Expand immediately on mouse enter
+        shutterHeader.addEventListener("mouseenter", () => {
+            clearTimeout(shutterTimer);
+            expandShutter();
+        });
+
+        // Start 2-second collapse timer on mouse leave
+        shutterHeader.addEventListener("mouseleave", () => {
+            clearTimeout(shutterTimer);
+            shutterTimer = setTimeout(collapseShutter, 2000);
+        });
+
+        // Clicking collapsed bar restores it
+        shutterHeader.addEventListener("click", () => {
+            if (shutterHeader.classList.contains("shutter-collapsed")) {
+                expandShutter();
+            }
+        });
+
+        // Initial launch countdown: collapse after 2 seconds
+        clearTimeout(shutterTimer);
+        shutterTimer = setTimeout(collapseShutter, 2000);
+    }
+
+    // --- ☰ BURGER & ⋮ PROFILE DRAWER CLICK HANDLERS ---
+    const leftDrawerWrapper = document.querySelector('.menu-left .drawer-wrapper');
+    const rightDrawerWrapper = document.querySelector('.menu-right .drawer-wrapper');
+    const menuTriggerLeft = document.querySelector('.menu-left .menu-trigger');
+    const menuTriggerRight = document.getElementById('comparator-user-profile-trigger');
+
+    if (menuTriggerLeft && leftDrawerWrapper) {
+        menuTriggerLeft.addEventListener('click', (e) => {
+            e.stopPropagation();
+            leftDrawerWrapper.classList.toggle('drawer-open');
+            if (rightDrawerWrapper) rightDrawerWrapper.classList.remove('drawer-open');
+        });
+    }
+
+    if (menuTriggerRight && rightDrawerWrapper) {
+        menuTriggerRight.addEventListener('click', (e) => {
+            e.stopPropagation();
+            rightDrawerWrapper.classList.toggle('drawer-open');
+            if (leftDrawerWrapper) leftDrawerWrapper.classList.remove('drawer-open');
+        });
+    }
+
+    // Close drawers when clicking anywhere else on the workstation
+    document.addEventListener('click', () => {
+        if (leftDrawerWrapper) leftDrawerWrapper.classList.remove('drawer-open');
+        if (rightDrawerWrapper) rightDrawerWrapper.classList.remove('drawer-open');
+    });
+
+    // --- 3. WORKSTATION VIEW SWITCHING ---
+    const btnStudy = document.getElementById('btn-nav-study');
 
     function expandShutter() {
         if (shutterHeader && workspaceCore) {
