@@ -16,8 +16,8 @@
 </head>
 <body>
 
-    <!-- AUTHENTICATION (SIGN IN / SIGN UP) MODAL -->
-    <div class="comparator-modal-overlay" id="sst-auth-modal" style="display: none;">
+        <!-- AUTHENTICATION MODAL -->
+    <div class="comparator-modal-overlay" id="sst-auth-modal">
         <div class="comparator-modal-box" style="max-width: 380px;">
             <div class="modal-title" id="auth-modal-title" data-i18n="auth_title">ACCOUNT SIGN IN</div>
             <form id="sst-auth-form" onsubmit="event.preventDefault();" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
@@ -153,7 +153,8 @@
                             </div>
 
                             <!-- WARNING MODAL ANCHORED INSIDE STUDY VIEWPORT -->
-                            <div class="comparator-modal-overlay" id="sst-global-modal" style="display: none;">
+                            <!-- GLOBAL MODAL -->
+                            <div class="comparator-modal-overlay" id="sst-global-modal">
                                 <div class="comparator-modal-box">
                                     <div class="modal-title" id="global-modal-title">REQUIRED FIELDS MISSING</div>
                                     <p class="modal-text" id="global-modal-body">Confirmation required.</p>
@@ -193,7 +194,7 @@
                             </div>
 
                             <!-- Modal Confirmation Dialog for Slate -->
-                            <div class="comparator-modal-overlay" id="slate-clear-modal" style="display: none;">
+                            <div class="comparator-modal-overlay" id="slate-clear-modal">
                                 <div class="comparator-modal-box">
                                     <div class="modal-title" data-i18n="modal_save_test_title">SAVE TEST RESULTS?</div>
                                     <p class="modal-text" data-i18n="modal_save_test_body">Would you like to log your test score and attempt data before clearing the slate?</p>
@@ -446,7 +447,7 @@
     </div> <!-- /comparator-stage-wrapper -->
 
     <!-- DATA SOURCE SELECTION MODAL -->
-    <div class="comparator-modal-overlay" id="sst-source-modal" style="display: none;">
+    <div class="comparator-modal-overlay" id="sst-source-modal">
         <div class="comparator-modal-box" style="max-width: 440px;">
             <div class="modal-title" data-i18n="modal_data_source_title">SELECT DATA SOURCE</div>
             <div style="display: flex; flex-direction: column; gap: 14px; margin: 10px 0;">
@@ -471,7 +472,7 @@
     </div>
 
     <!-- ACCOUNT SETTINGS MODAL VIEWPORT -->
-    <div class="comparator-modal-overlay" id="account-settings-modal" style="display: none;">
+    <div class="comparator-modal-overlay" id="account-settings-modal">
         <div class="account-settings-box">
             <div class="modal-title" data-i18n="account_settings_title">ACCOUNT SETTINGS</div>
             <div class="account-settings-body">
