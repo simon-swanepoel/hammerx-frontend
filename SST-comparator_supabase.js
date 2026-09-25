@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. WORKSTATION SHUTTER HEADER (FORMATH PATTERN) ---
+    // --- 2. WORKSTATION SHUTTER HEADER (AUTO COLLAPSE AFTER 2 SECONDS) ---
     const shutterHeader = document.getElementById("workstation-shutter-header");
     const workspaceCore = document.querySelector(".workspace-core");
     let shutterTimer = null;
@@ -179,23 +179,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (shutterHeader) {
-        // Expand immediately on mouse enter
+        // Expand on mouse enter
         shutterHeader.addEventListener("mouseenter", () => {
             clearTimeout(shutterTimer);
             expandShutter();
         });
 
-        // Start 2-second collapse timer on mouse leave
+        // 2-second collapse timer on mouse leave
         shutterHeader.addEventListener("mouseleave", () => {
             clearTimeout(shutterTimer);
             shutterTimer = setTimeout(collapseShutter, 2000);
+        });
+
+        // Click on collapsed bar restores it
+        shutterHeader.addEventListener("click", () => {
+            if (shutterHeader.classList.contains("shutter-collapsed")) {
+                expandShutter();
+            }
         });
 
         // Initial launch countdown: collapse after 2 seconds
         shutterTimer = setTimeout(collapseShutter, 2000);
     }
 
-    // --- 3. WORKSTATION VIEW SWITCHING ---
+    // --- 3. WORKSTATION VIEW SWITCHING (COURSEWARE, SETTINGS, HAMMER) ---
     const btnStudy = document.getElementById('btn-nav-study');
     const btnGear  = document.getElementById('btn-nav-gear');
     const btnCopy  = document.getElementById('btn-nav-slate');
@@ -217,11 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
         autofitViewportText();
     }
 
+    // Set initial view to study/courseware
     if (displayStudy && btnStudy) switchView(displayStudy, btnStudy);
 
     if (btnStudy) btnStudy.addEventListener('click', () => switchView(displayStudy, btnStudy));
-    if (btnGear)  btnGear.addEventListener('click', () => switchView(displaySettings, btnGear));
-    if (btnCopy)  btnCopy.addEventListener('click', () => switchView(displayCopy, btnCopy));
+    if (btnGear)  btnGear.addEventListener('click',  () => switchView(displaySettings, btnGear));
+    if (btnCopy)  btnCopy.addEventListener('click',  () => switchView(displayCopy, btnCopy));
 
     // --- 4. ACCOUNT SETTINGS MODAL ---
     const btnOpenAccountSettings = document.getElementById('btn-open-account-settings');
@@ -259,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const colorsControl = document.getElementById('colors-control');
     const textControl = document.getElementById('text-control');
 
-    if (displayGroupSize && editContainer && inputGroupSize) {
+    if (displayGroupSize && editContainer && inputGroupSize && btnSaveGroupSize) {
         displayGroupSize.addEventListener('click', () => {
             inputGroupSize.value = GROUP_SIZE;
             editContainer.style.display = 'inline-flex';
@@ -353,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
+            // Clean standard JavaScript OR operator
             if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
