@@ -1,85 +1,119 @@
-// ==========================================
-// SST-SUPABASE ENGINE (MODULE 3)
-// File: SST-comparator_supabase_engine.js
-// ==========================================
+// =========================================================================
+// FILE: SST-comparator_supabase_engine.js
+// DESCRIPTION: Supabase Client, Auth Handlers, Profile Drawer & Data Sync
+// =========================================================================
 
 const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
 
-const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        storageKey: 'sst_auth_token',
-        storage: window.localStorage,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-    }
-}) : null;
+// Global Supabase client instance
+window.supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 let currentUserSession = null;
 let activeUserId = null;
-let authMode = "LOGIN";
+let authMode = "LOGIN"; // or "SIGNUP"
 
+// --- MODAL UTILITIES ---
+function openAuthModal() {
+    const authModal = document.getElementById('sst-auth-modal');
+    if (!authModal) return;
+    authModal.classList.add('active-modal');
+}
+
+function closeAuthModal() {
+    const authModal = document.getElementById('sst-auth-modal');
+    if (!authModal) return;
+    authModal.classList.remove('active-modal');
+    const authError = document.getElementById('auth-error-msg');
+    if (authError) authError.textContent = "";
+}
+
+// --- UPDATE UI ON AUTH STATE CHANGE ---
 function updateAuthUi(session) {
     currentUserSession = session;
     const userDisplaySpan = document.querySelector('.user-display-name');
     const profileDrawer = document.getElementById('comparator-profile-drawer');
-    const authModal = document.getElementById('sst-auth-modal');
-    const accountModal = document.getElementById('account-settings-modal');
+    const rightDrawerWrapper = document.querySelector('.menu-right .drawer-wrapper');
 
     if (session && session.user) {
         activeUserId = session.user.id;
+
+        // Update ribbon display
         if (userDisplaySpan) {
-            userDisplaySpan.textContent = session.user.email.split('@')[0];
+            userDisplaySpan.textContent = session.user.email.split('@')[0].toUpperCase();
         }
+
+        // Render drawer for logged-in user
         if (profileDrawer) {
             profileDrawer.innerHTML = `
                 <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings" data-i18n="nav_account_settings">Account Settings</a>
-                <a href="javascript:void(0)" class="sst-nav-link" id="btn-auth-signout" style="color: #ff3344;" data-i18n="nav_signout">Sign Out</a>
+                <a href="javascript:void(0)" class="sst-nav-link" id="btn-auth-signout" style="color: #ff3344; font-weight: bold;" data-i18n="nav_signout">Sign Out</a>
             `;
-            if (typeof applyLanguage === 'function') applyLanguage(currentLanguage);
 
+            // Wire Sign Out directly
             const btnSignOut = document.getElementById('btn-auth-signout');
             if (btnSignOut) {
-                btnSignOut.addEventListener('click', async () => {
-                    await supa.auth.signOut();
-                });
+                btnSignOut.onclick = async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (rightDrawerWrapper) rightDrawerWrapper.classList.remove('drawer-open');
+                    
+                    try {
+                        const { error } = await supa.auth.signOut();
+                        if (error) throw error;
+                    } catch (err) {
+                        alert("Sign out error: " + err.message);
+                    }
+                };
             }
+
+            // Wire Account Settings modal
             const btnAcc = document.getElementById('btn-open-account-settings');
-            if (btnAcc && accountModal) {
-                btnAcc.addEventListener('click', () => {
-                    accountModal.style.display = 'flex';
-                });
+            if (btnAcc) {
+                btnAcc.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (rightDrawerWrapper) rightDrawerWrapper.classList.remove('drawer-open');
+                    const accModal = document.getElementById('account-settings-modal');
+                    if (accModal) accModal.classList.add('active-modal');
+                };
             }
         }
+
     } else {
         activeUserId = null;
+
+        // Reset ribbon display
         if (userDisplaySpan) {
             userDisplaySpan.textContent = "SIGN IN";
         }
+
+        // Render drawer for public / unauthenticated visitor
         if (profileDrawer) {
             profileDrawer.innerHTML = `
                 <a href="javascript:void(0)" class="sst-nav-link" id="btn-trigger-login">Sign In / Register</a>
                 <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings" data-i18n="nav_account_settings">Account Settings</a>
             `;
-            if (typeof applyLanguage === 'function') applyLanguage(currentLanguage);
 
             const btnLogin = document.getElementById('btn-trigger-login');
-            if (btnLogin && authModal) {
-                btnLogin.addEventListener('click', () => {
-                    authModal.style.display = 'flex';
-                });
-            }
-            const btnAcc = document.getElementById('btn-open-account-settings');
-            if (btnAcc && accountModal) {
-                btnAcc.addEventListener('click', () => {
-                    accountModal.style.display = 'flex';
-                });
+            if (btnLogin) {
+                btnLogin.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (rightDrawerWrapper) rightDrawerWrapper.classList.remove('drawer-open');
+                    openAuthModal();
+                };
             }
         }
     }
+
+    // Refresh projects dropdown based on active session
+    if (typeof populateCloudProjectsDropdown === 'function') {
+        populateCloudProjectsDropdown();
+    }
 }
 
+// --- POPULATE CLOUD PROJECTS (STRICT SQL SCHEMA MATCH) ---
 async function populateCloudProjectsDropdown() {
     const dropdown = document.getElementById('select-cloud-projects') || document.getElementById('cloud-projects-dropdown');
     if (!dropdown || !supa) return;
@@ -90,13 +124,12 @@ async function populateCloudProjectsDropdown() {
         const { data: { session } } = await supa.auth.getSession();
         const user = session?.user;
 
-        // If not logged in, RLS blocks selecting private rows, so show a clear prompt
         if (!user) {
-            dropdown.innerHTML = '<option value="">Please sign in to view cloud projects</option>';
+            dropdown.innerHTML = '<option value="">Sign in to access cloud projects</option>';
             return;
         }
 
-        // Exact match to your sst_database_master_v1.sql columns
+        // Strictly queries columns present in sst_database_master_v1.sql
         const { data: items, error } = await supa
             .from('study_materials')
             .select('id, title, created_at, page_range')
@@ -104,7 +137,7 @@ async function populateCloudProjectsDropdown() {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error("[SST Supabase] Query failed:", error.message);
+            console.error("[SST Supabase] Query error:", error.message);
             dropdown.innerHTML = '<option value="">Error reading projects</option>';
             return;
         }
@@ -134,56 +167,10 @@ async function populateCloudProjectsDropdown() {
         dropdown.innerHTML = '<option value="">Error listing projects</option>';
     }
 }
-async function loadCloudNouns(projectId) {
-    if (!supa || !projectId) return;
 
-    try {
-        const { data: row, error } = await supa
-            .from('study_materials')
-            .select('*')
-            .eq('id', projectId)
-            .single();
-
-        if (error) throw error;
-        if (!row || !row.payload) {
-            alert("Empty payload for selected project.");
-            return;
-        }
-
-        let payload = row.payload;
-        if (typeof payload === 'string') {
-            try {
-                payload = JSON.parse(payload);
-            } catch (e) {
-                console.warn("[SST Supabase] Payload secondary parse warning:", e);
-            }
-        }
-
-        if (!payload.title && row.title) payload.title = row.title;
-        if (typeof processAndDistributePayload === 'function') {
-            processAndDistributePayload(payload);
-        }
-
-        const btnStudy = document.getElementById('btn-nav-study');
-        if (btnStudy) btnStudy.click();
-
-    } catch (err) {
-        alert(`Cloud Load Error: ${err.message}`);
-        console.error("[SST Supabase] Cloud load error:", err);
-    }
-}
-
+// --- INITIALIZE LISTENERS ON DOM LOAD ---
 document.addEventListener('DOMContentLoaded', () => {
-    const authModal = document.getElementById('sst-auth-modal');
-    const authTitle = document.getElementById('auth-modal-title');
-    const inputEmail = document.getElementById('auth-input-email');
-    const inputPass = document.getElementById('auth-input-password');
-    const authError = document.getElementById('auth-error-msg');
-    const btnAuthToggle = document.getElementById('btn-auth-toggle-mode');
-    const btnAuthSubmit = document.getElementById('btn-auth-submit');
-    const btnAuthCancel = document.getElementById('btn-auth-cancel');
-    const userProfileTrigger = document.getElementById('comparator-user-profile-trigger');
-
+    // 1. Hook auth listener
     if (supa) {
         supa.auth.getSession().then(({ data: { session } }) => {
             updateAuthUi(session);
@@ -194,77 +181,90 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Auto-load sample from URL query param if provided (e.g. ?sample=uuid)
-    const urlParams = new URLSearchParams(window.location.search);
-    const sampleId = urlParams.get('sample');
-    if (sampleId) {
-        loadCloudNouns(sampleId);
+    // 2. Profile Trigger (Top Ribbon Button)
+    const userProfileTrigger = document.getElementById('comparator-user-profile-trigger');
+    const rightDrawerWrapper = document.querySelector('.menu-right .drawer-wrapper');
+    const leftDrawerWrapper = document.querySelector('.menu-left .drawer-wrapper');
+
+    if (userProfileTrigger && rightDrawerWrapper) {
+        userProfileTrigger.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!currentUserSession) {
+                openAuthModal();
+                return;
+            }
+
+            rightDrawerWrapper.classList.toggle('drawer-open');
+            if (leftDrawerWrapper) leftDrawerWrapper.classList.remove('drawer-open');
+        };
     }
 
-    if (btnAuthToggle) {
-        btnAuthToggle.addEventListener('click', () => {
+    // 3. Modal Controls & Form Submissions
+    const btnAuthCancel = document.getElementById('btn-auth-cancel');
+    if (btnAuthCancel) {
+        btnAuthCancel.onclick = (e) => {
+            e.preventDefault();
+            closeAuthModal();
+        };
+    }
+
+    const btnAuthToggle = document.getElementById('btn-auth-toggle-mode');
+    const authModalTitle = document.getElementById('auth-modal-title');
+    const btnAuthSubmit = document.getElementById('btn-auth-submit');
+
+    if (btnAuthToggle && authModalTitle && btnAuthSubmit) {
+        btnAuthToggle.onclick = (e) => {
+            e.preventDefault();
             if (authMode === "LOGIN") {
                 authMode = "SIGNUP";
-                if (authTitle) authTitle.textContent = "CREATE NEW ACCOUNT";
-                if (btnAuthSubmit) btnAuthSubmit.textContent = "REGISTER";
+                authModalTitle.textContent = "CREATE NEW ACCOUNT";
+                btnAuthSubmit.textContent = "SIGN UP";
                 btnAuthToggle.textContent = "Already have an account? Sign In";
             } else {
                 authMode = "LOGIN";
-                if (authTitle) authTitle.textContent = "ACCOUNT SIGN IN";
-                if (btnAuthSubmit) btnAuthSubmit.textContent = "LOGIN";
+                authModalTitle.textContent = "ACCOUNT SIGN IN";
+                btnAuthSubmit.textContent = "LOGIN";
                 btnAuthToggle.textContent = "Need an account? Sign Up";
             }
-            if (authError) authError.textContent = "";
-        });
-    }
-
-    if (btnAuthCancel && authModal) {
-        btnAuthCancel.addEventListener('click', () => {
-            authModal.style.display = 'none';
-            if (authError) authError.textContent = "";
-        });
+        };
     }
 
     if (btnAuthSubmit) {
-        btnAuthSubmit.addEventListener('click', async () => {
-            const email = inputEmail.value.trim().toLowerCase();
-            const pass = inputPass.value.trim();
-            if (authError) authError.textContent = "";
+        btnAuthSubmit.onclick = async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('auth-input-email');
+            const passInput = document.getElementById('auth-input-password');
+            const errorMsg = document.getElementById('auth-error-msg');
+
+            const email = emailInput?.value.trim();
+            const pass = passInput?.value.trim();
 
             if (!email || !pass) {
-                if (authError) authError.textContent = "Please fill in all fields.";
+                if (errorMsg) errorMsg.textContent = "Please enter both email and password.";
                 return;
             }
 
             btnAuthSubmit.textContent = "WAIT...";
+            if (errorMsg) errorMsg.textContent = "";
+
             try {
                 if (authMode === "LOGIN") {
                     const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
                     if (error) throw error;
-                    updateAuthUi(data.session);
+                    closeAuthModal();
                 } else {
                     const { data, error } = await supa.auth.signUp({ email, password: pass });
                     if (error) throw error;
-                    updateAuthUi(data.session);
                     alert("Account registered successfully! You are now signed in.");
+                    closeAuthModal();
                 }
-                if (authModal) authModal.style.display = 'none';
-                inputEmail.value = "";
-                inputPass.value = "";
             } catch (err) {
-                if (authError) authError.textContent = err.message;
+                if (errorMsg) errorMsg.textContent = err.message;
             } finally {
-                btnAuthSubmit.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
+                btnAuthSubmit.textContent = (authMode === "LOGIN") ? "LOGIN" : "SIGN UP";
             }
-        });
-    }
-
-    if (userProfileTrigger && authModal) {
-        userProfileTrigger.addEventListener('click', (e) => {
-            if (!currentUserSession) {
-                e.stopPropagation();
-                authModal.style.display = 'flex';
-            }
-        });
+        };
     }
 });
