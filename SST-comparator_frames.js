@@ -16,20 +16,22 @@
             cardClass: 'card-border-wood-frame',
             consoleClass: 'wood-frame',
             properties: {
-                '--console-frame-bg': "url('wood.wp2')",
-                '--console-frame-border': "url('wood.wp2')",
-                '--btn-frame-bg': "url('wood.wp2')",
-                '--btn-text-color': '#000000',
-                '--btn-text-shadow': '-1px -1px 1px rgba(0,0,0,0.8), 1px 1px 1px rgba(255,255,255,0.4)',
-                '--btn-box-shadow': 'inset -1px -1px 2px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.5), 0px 4px 8px rgba(0,0,0,0.5)',
-                '--btn-border-color': 'rgba(0,0,0,0.65)'
+                '--console-frame-bg': "url('wood.webp')",
+                '--console-frame-border': "url('wood.webp')",
+                '--btn-frame-bg': "url('wood.webp')",
+                '--btn-text-color': '#111111',
+                '--btn-text-shadow': '0 1px 1px rgba(255, 255, 255, 0.4), 0 -1px 1px rgba(0, 0, 0, 0.7)',
+                '--btn-box-shadow': 'inset 1px 1px 2px rgba(255, 255, 255, 0.4), inset -1px -1px 3px rgba(0, 0, 0, 0.6), 0px 4px 8px rgba(0, 0, 0, 0.5)',
+                '--btn-border-color': 'rgba(60, 36, 18, 0.75)'
             },
             rules: `
                 .workstation-console.wood-frame {
-                    background-image: url('wood.wp2') !important;
+                    background-color: #2b1810 !important;
+                    background-image: url('wood.webp') !important;
                     background-repeat: repeat !important;
-                    border: 14px solid transparent !important;
-                    border-image: url('wood.wp2') 30 stretch !important;
+                    background-size: auto !important;
+                    border: 14px solid #2b1810 !important;
+                    border-image: url('wood.webp') 30 stretch !important;
                     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), inset 0 -2px 5px rgba(0,0,0,0.8), 0 12px 35px rgba(0,0,0,0.85) !important;
                 }
             `
