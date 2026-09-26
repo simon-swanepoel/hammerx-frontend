@@ -5,7 +5,7 @@
 
 // --- I18N LOCALIZATION DICTIONARY REGISTRY ---
 const TRANSLATIONS = {
-    en: {
+    en: { 
         brand_title: "Swanepoel Study Tools",
         brand_sub: "HAMMERX COMPARATOR",
         nav_home: "HOME",
