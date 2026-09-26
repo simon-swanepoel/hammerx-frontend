@@ -1,8 +1,19 @@
 // =========================================================================
 // SST MATH & FORMULA HAMMER WORKSTATION ENGINE
 // Master File: SST-FORMATH_comparator.js
-// Features: 3-State Viewport, Dimensioning Tags, Slate Engine & Auto-Save
+// Features: 3-State Viewport, KaTeX/LaTeX, Dimensioning Tags, Slate & Auto-Save
 // =========================================================================
+
+// -------------------------------------------------------------------------
+// 0. GLOBAL EXPORTS & FOUNDATIONAL STATE (Binds immediately to window)
+// -------------------------------------------------------------------------
+window.switchStudyTab = function(evt, tabId) {
+  document.querySelectorAll('.study-tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.study-tab-button').forEach(b => b.classList.remove('active-study-tab'));
+  const targetPane = document.getElementById(tabId);
+  if (targetPane) targetPane.classList.add('active');
+  if (evt && evt.currentTarget) evt.currentTarget.classList.add('active-study-tab');
+};
 
 let masterDataset = [];
 let activeFormulaDataset = [];
@@ -21,7 +32,7 @@ const CW_MODES = [
 ];
 let currentCwModeIndex = 0;
 
-// 3. DIMENSIONING QUESTION REPLACEMENT MAPPING
+// 3. DIMENSIONING QUESTION EXPANSION LOOKUP
 const DIMENSION_QUESTION_MAP = [
   { match: "[what]", text: "[what is/are?]" },
   { match: "[purpose]", text: "[what is the purpose of ____ to?]" },
@@ -32,7 +43,7 @@ const DIMENSION_QUESTION_MAP = [
   { match: "[id]", text: "[how or what identifies?]" }
 ];
 
-// THEMES & VIEWPORT APPEARANCE ENGINE
+// THEMES & VIEWPORT ENGINE VARIABLES
 let currentThemeKey = 'BLACK_BOARD';
 let activeFrameBorder = 'WOOD';
 let isSettingsModified = false;
@@ -117,9 +128,9 @@ function applyViewportAppearance() {
   });
 }
 
-// =========================================================================
-// 1 & 2. 3-STATE TOGGLE LOGIC & VIEWPORT MODE HANDLER
-// =========================================================================
+// -------------------------------------------------------------------------
+// 1 & 2. 3-STATE COURSEWARE TOGGLE & AUTO-HIDE [WHAT]
+// -------------------------------------------------------------------------
 function cycleCoursewareMode() {
   currentCwModeIndex = (currentCwModeIndex + 1) % CW_MODES.length;
   const activeMode = CW_MODES[currentCwModeIndex];
@@ -137,7 +148,7 @@ function cycleCoursewareMode() {
   }
 }
 
-// 3. DIMENSIONING TAG PARSER & EXPANDER
+// 3. DIMENSIONING QUESTION EXPANDER HELPER
 function formatDimensionTagText(rawTag) {
   if (!rawTag) return "";
   const cleaned = rawTag.trim().toLowerCase();
@@ -145,7 +156,9 @@ function formatDimensionTagText(rawTag) {
   return entry ? entry.text : rawTag;
 }
 
-// SUPABASE AUTH & REPOSITORY ENGINE
+// -------------------------------------------------------------------------
+// SUPABASE CLIENT & AUTH BRIDGE
+// -------------------------------------------------------------------------
 const SUPABASE_URL = "https://lsjswxsrskaxyzvgqezu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzanN3eHNyc2theHl6dmdxZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MzgxMTQsImV4cCI6MjA5OTIxNDExNH0._D99dnmEsQPULWcCBQcp1ThOYyzfRV4zEyMBxAPbYD8";
 const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -154,9 +167,7 @@ let currentUserSession = null;
 let activeUserId = null;
 let authMode = "LOGIN";
 
-// =========================================================================
-// 4. AUTOSAVE USER PREFERENCES TO SUPABASE ON SETTINGS EXIT
-// =========================================================================
+// 4. AUTOSAVE USER PREFERENCES TO SUPABASE UPON EXITING SETTINGS
 async function autoSavePreferencesOnSettingsExit() {
   if (!supa || !activeUserId || !isSettingsModified) return;
 
@@ -181,10 +192,10 @@ async function autoSavePreferencesOnSettingsExit() {
       .upsert(currentPreferences, { onConflict: 'user_id' });
 
     if (error) {
-      console.warn("Autosave preferences failure:", error.message);
+      console.warn("Autosave preferences error:", error.message);
     } else {
       isSettingsModified = false;
-      console.log("User preferences synchronized to Supabase.");
+      console.log("Settings automatically synced to cloud profile.");
     }
   } catch (err) {
     console.error("Autosave runtime exception:", err);
@@ -220,7 +231,7 @@ async function loadUserPreferencesFromCloud(userId) {
       applyViewportAppearance();
     }
   } catch (err) {
-    console.warn("Could not load cloud user preferences:", err.message);
+    console.warn("Could not load user preferences:", err.message);
   }
 }
 
@@ -291,7 +302,9 @@ async function loadCloudProject(projectId) {
   }
 }
 
-// STENO COMPILER
+// -------------------------------------------------------------------------
+// LATEX / KATEX COMPILATION & COMPARISON ENGINE
+// -------------------------------------------------------------------------
 const REPLACEMENTS = [
   { p: /≤/g, l: " \\leq " }, { p: /≥/g, l: " \\geq " }, { p: /≠/g, l: " \\neq " },
   { p: /≈/g, l: " \\approx " }, { p: /±/g, l: " \\pm " }, { p: /∠/g, l: " \\angle " },
@@ -309,7 +322,7 @@ const REPLACEMENTS = [
 
 function compileLatex(raw) {
   if (!raw) return "";
-  let l = raw;
+  let l = String(raw);
   l = l.replace(/\|_\{([^}]*)\}\^\{([^}]*)\}/g, "\\Big|_{$1}^{$2}");
   l = l.replace(/\|_\{([^}]*)\}/g, "\\Big|_{$1}");
   l = l.replace(/(\d+)√\[([^\]]*)\]/g, "\\sqrt[$1]{$2}");
@@ -322,6 +335,26 @@ function compileLatex(raw) {
   const ob = (l.match(/\{/g) || []).length, cb = (l.match(/\}/g) || []).length;
   if (ob > cb) l += "}".repeat(ob - cb);
   return l;
+}
+
+function renderMathOrText(targetEl, rawString) {
+  if (!rawString) {
+    targetEl.textContent = "";
+    return;
+  }
+  const hasLatex = /[\\_{}^∫∑√±≠≈≤≥α-ω]/.test(rawString) || rawString.includes('$');
+  const compiled = compileLatex(rawString);
+
+  if (window.katex && (hasLatex || compiled !== rawString)) {
+    try {
+      katex.render(compiled, targetEl, { throwOnError: false, displayMode: false });
+      return;
+    } catch (e) {
+      targetEl.textContent = rawString;
+      return;
+    }
+  }
+  targetEl.textContent = rawString;
 }
 
 function normalizeMathForComparison(str) {
@@ -350,6 +383,9 @@ function applyActiveFilter() {
   renderMathReferencePane();
 }
 
+// -------------------------------------------------------------------------
+// COURSEWARE PANE RENDERER (Supports 3-State Toggle & Tag Visibility)
+// -------------------------------------------------------------------------
 function renderMathReferencePane() {
   const refContainer = document.getElementById("00_SUMMARY");
   if (!refContainer) return;
@@ -404,9 +440,10 @@ function renderMathReferencePane() {
       const lineText = document.createElement("div");
       lineText.className = "line-text";
 
-      // 3. Apply Tag Conversion
-      const displayTag = formatDimensionTagText(item.rawTag || "[WHAT]");
-      const isWhatTag = (item.rawTag || "").toLowerCase() === "[what]";
+      // 3. Apply Tag Format & Check for [what]
+      const rawTagStr = item.rawTag || "[WHAT]";
+      const displayTag = formatDimensionTagText(rawTagStr);
+      const isWhatTag = rawTagStr.trim().toLowerCase() === "[what]";
 
       const tagSpan = document.createElement("span");
       tagSpan.className = `line-part-tag ${isWhatTag ? 'tag-what' : ''} dim-expanded-tag`;
@@ -423,7 +460,7 @@ function renderMathReferencePane() {
 
       const descSpan = document.createElement("span");
       descSpan.className = "line-part-desc";
-      descSpan.textContent = item.description || (item.latex || "");
+      renderMathOrText(descSpan, item.description || (item.latex || ""));
 
       const whereDivider = document.createElement("span");
       whereDivider.className = "where-divider";
@@ -510,9 +547,9 @@ function parseAndLoadManifest(jsonData) {
   }
 }
 
-// =========================================================================
-// 1. HAMMER COMPARATOR EVALUATION (EXCLUDES HIDDEN TOKENS)
-// =========================================================================
+// -------------------------------------------------------------------------
+// 1. HAMMER COMPARATOR ENGINE (Respects 3-State Scope)
+// -------------------------------------------------------------------------
 function evaluateMathComparator() {
   const inputs = document.querySelectorAll(".math-steno-in");
   const scoreDisplay = document.getElementById("slate-score-display");
@@ -521,7 +558,6 @@ function evaluateMathComparator() {
     return;
   }
 
-  // Read the active 3-state toggle mode
   const activeMode = document.getElementById("btn-courseware-toggle")?.dataset.mode || "NOUN";
 
   let correctCount = 0;
@@ -534,13 +570,10 @@ function evaluateMathComparator() {
 
     let targetStringToMatch = "";
     if (activeMode === "NOUN") {
-      // Only verify the Noun
       targetStringToMatch = targetItem.name;
     } else if (activeMode === "NOUN_DESC") {
-      // Verify Noun + Description
       targetStringToMatch = `${targetItem.name} ${targetItem.description || targetItem.latex || ""}`;
     } else {
-      // NOUN_DESC_APP: Verify Full Line
       targetStringToMatch = `${targetItem.name} ${targetItem.description || targetItem.latex || ""} ${targetItem.where || ""}`;
     }
 
@@ -565,7 +598,6 @@ function evaluateMathComparator() {
   }
 }
 
-// SLATE ROW GENERATOR
 function appendNewSlateRow() {
   const slateContainer = document.getElementById("copy-slate-canvas");
   if (!slateContainer) return;
@@ -620,7 +652,9 @@ function initSingleLineSlate() {
   }
 }
 
-// AUTH SYSTEM INITIALIZER
+// -------------------------------------------------------------------------
+// AUTH MODAL & PROFILE DRAWER LOGIC
+// -------------------------------------------------------------------------
 function initAuthSystem() {
   const authModal = document.getElementById('sst-auth-modal');
   const authTitle = document.getElementById('auth-modal-title');
@@ -671,7 +705,7 @@ function initAuthSystem() {
     supa.auth.onAuthStateChange((_event, session) => updateAuthUi(session));
   }
 
-  if (btnAuthToggle) {
+  if (btnAuthToggle && authTitle && btnAuthSubmit) {
     btnAuthToggle.addEventListener('click', () => {
       if (authMode === "LOGIN") {
         authMode = "SIGNUP";
@@ -684,24 +718,24 @@ function initAuthSystem() {
         btnAuthSubmit.textContent = "LOGIN";
         btnAuthToggle.textContent = "Need an account? Sign Up";
       }
-      authError.textContent = "";
+      if (authError) authError.textContent = "";
     });
   }
 
   if (btnAuthCancel && authModal) {
     btnAuthCancel.addEventListener('click', () => {
       authModal.style.display = 'none';
-      authError.textContent = "";
+      if (authError) authError.textContent = "";
     });
   }
 
-  if (btnAuthSubmit) {
+  if (btnAuthSubmit && inputEmail && inputPass) {
     btnAuthSubmit.addEventListener('click', async () => {
       const email = inputEmail.value.trim().toLowerCase();
       const pass = inputPass.value.trim();
-      authError.textContent = "";
+      if (authError) authError.textContent = "";
       if (!email || !pass) {
-        authError.textContent = "Please fill in all fields.";
+        if (authError) authError.textContent = "Please fill in all fields.";
         return;
       }
       btnAuthSubmit.textContent = "WAIT...";
@@ -715,11 +749,11 @@ function initAuthSystem() {
           if (error) throw error;
           updateAuthUi(data.session);
         }
-        authModal.style.display = 'none';
+        if (authModal) authModal.style.display = 'none';
         inputEmail.value = "";
         inputPass.value = "";
       } catch (err) {
-        authError.textContent = err.message;
+        if (authError) authError.textContent = err.message;
       } finally {
         btnAuthSubmit.textContent = authMode === "LOGIN" ? "LOGIN" : "REGISTER";
       }
@@ -736,19 +770,9 @@ function initAuthSystem() {
   }
 }
 
-// SWITCH STUDY TABS
-function switchStudyTab(evt, tabId) {
-  document.querySelectorAll('.study-tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.study-tab-button').forEach(b => b.classList.remove('active-study-tab'));
-  const targetPane = document.getElementById(tabId);
-  if (targetPane) targetPane.classList.add('active');
-  if (evt && evt.currentTarget) evt.currentTarget.classList.add('active-study-tab');
-}
-window.switchStudyTab = switchStudyTab;
-
-// =========================================================================
-// DOM INITIALIZATION
-// =========================================================================
+// -------------------------------------------------------------------------
+// DOM INITIALIZATION & SAFE LISTENER HOOKS
+// -------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   initSingleLineSlate();
   renderMathReferencePane();
@@ -770,7 +794,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Navigation: Courseware vs Hammer
+  // Navigation: Courseware vs Hammer Viewports
   const btnNavStudy = document.getElementById("btn-nav-study");
   const btnNavSlate = document.getElementById("btn-nav-slate");
   const displayStudy = document.getElementById("display-study-material");
@@ -779,23 +803,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnNavStudy && btnNavSlate) {
     btnNavStudy.addEventListener("click", () => {
-      if (displaySettings.style.display === "flex") {
+      if (displaySettings && displaySettings.style.display === "flex") {
         autoSavePreferencesOnSettingsExit();
         displaySettings.style.display = "none";
       }
-      displayStudy.style.display = "block";
-      displaySlate.style.display = "none";
+      if (displayStudy) displayStudy.style.display = "block";
+      if (displaySlate) displaySlate.style.display = "none";
       btnNavStudy.classList.add("active-toggle");
       btnNavSlate.classList.remove("active-toggle");
     });
 
     btnNavSlate.addEventListener("click", () => {
-      if (displaySettings.style.display === "flex") {
+      if (displaySettings && displaySettings.style.display === "flex") {
         autoSavePreferencesOnSettingsExit();
         displaySettings.style.display = "none";
       }
-      displayStudy.style.display = "none";
-      displaySlate.style.display = "block";
+      if (displayStudy) displayStudy.style.display = "none";
+      if (displaySlate) displaySlate.style.display = "block";
       btnNavSlate.classList.add("active-toggle");
       btnNavStudy.classList.remove("active-toggle");
     });
@@ -858,39 +882,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 4. SETTINGS PANEL NAVIGATION & AUTOSAVE CONTROLLER
+  // 4. SETTINGS NAVIGATION & SAFE AUTOSAVE TRIGGER (Eliminates null crash)
   const btnGear = document.getElementById("btn-nav-gear");
 
   if (btnGear && displaySettings) {
     btnGear.addEventListener("click", () => {
       const isSettingsOpen = displaySettings.style.display === "flex";
       if (isSettingsOpen) {
-        // Exiting Settings -> Autosave to user_preferences
         autoSavePreferencesOnSettingsExit();
-
         displaySettings.style.display = "none";
-        displayStudy.style.display = "block";
+        if (displayStudy) displayStudy.style.display = "block";
         btnGear.classList.remove("active-toggle");
       } else {
-        displayStudy.style.display = "none";
-        displaySlate.style.display = "none";
+        if (displayStudy) displayStudy.style.display = "none";
+        if (displaySlate) displaySlate.style.display = "none";
         displaySettings.style.display = "flex";
         btnGear.classList.add("active-toggle");
       }
     });
   }
 
-  // Mark Settings as Dirty on Any Change
   if (displaySettings) {
-    displaySettings.addEventListener("input", () => { isSettingsModified = true; });
+    displaySettings.addEventListener("input", () => { 
+      isSettingsModified = true; 
+    });
     displaySettings.addEventListener("click", (e) => {
-      if (e.target.closest(".theme-preset-card, .palette-dot, .swatch-dot, .text-format-btn, #btn-apply-hex")) {
+      if (e.target && e.target.closest && e.target.closest(".theme-preset-card, .palette-dot, .swatch-dot, .text-format-btn, #btn-apply-hex")) {
         isSettingsModified = true;
       }
     });
   }
 
-  // Settings Sub-Tabs
+  // Settings Subcategory Tabs
   const settingsItems = document.querySelectorAll(".settings-list .settings-item");
   const subMenuTitle = document.getElementById("sub-menu-title");
   const groupBreaksControl = document.getElementById("group-breaks-control");
@@ -912,13 +935,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Group Breaks Slider
+  // Group Breaks Edit Field
   const displayGroupSize = document.getElementById("group-size-display");
   const editContainer = document.getElementById("group-size-edit-container");
   const inputGroupSize = document.getElementById("input-group-size");
   const btnSaveGroupSize = document.getElementById("btn-save-group-size");
 
-  if (displayGroupSize && editContainer && inputGroupSize) {
+  if (displayGroupSize && editContainer && inputGroupSize && btnSaveGroupSize) {
     displayGroupSize.addEventListener("click", () => {
       inputGroupSize.value = GROUP_SIZE;
       editContainer.style.display = "inline-flex";
@@ -946,7 +969,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Top Shutter Bar
+  // Shutter Bar Hover & Auto-Collapse
   const shutterHeader = document.getElementById("workstation-shutter-header");
   const workspaceCore = document.querySelector(".workspace-core");
   let shutterTimer = null;
@@ -971,7 +994,7 @@ document.addEventListener("DOMContentLoaded", () => {
     shutterTimer = setTimeout(collapseShutter, 2000);
   }
 
-  // File Loading & Data Modal Hooks
+  // Data Loading Modals
   const btnLoad = document.getElementById("btn-load-file");
   const sourceModal = document.getElementById("sst-source-modal");
   const btnCloseSource = document.getElementById("btn-close-source-modal");
@@ -991,7 +1014,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (btnChoiceLocal && fileInput) {
     btnChoiceLocal.addEventListener("click", () => {
-      sourceModal.style.display = "none";
+      if (sourceModal) sourceModal.style.display = "none";
       fileInput.click();
     });
   }
