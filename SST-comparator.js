@@ -31,7 +31,7 @@ window.switchStudyTab = function(evt, tabId) {
 
 
 let activeDataset = [];
-let GROUP_SIZE = 10;
+
 let checkEngineMode = "VERBATUM";
 let currentSlateMode = "NOUN"; // "NOUN", "NOUN_DESC", "NOUN_DESC_WHERE"
 
