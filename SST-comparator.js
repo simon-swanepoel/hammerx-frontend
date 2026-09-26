@@ -136,7 +136,7 @@ let currentProjectMetadata = {
 let hasUnsavedChanges = false;
 let isSettingsModified = false;
 
-// Courseware Structure Toggle & Dimension Mapping
+// 1. Courseware Structure Toggle
 const CW_MODES = [
     { id: "NOUN", label: "[ NOUN ]" },
     { id: "NOUN_DESC", label: "[ NOUN + DESCRIPTION ]" },
@@ -144,6 +144,7 @@ const CW_MODES = [
 ];
 let currentCwModeIndex = 0;
 
+// 3. Dimensioning Question Expansions
 const DIMENSION_QUESTION_MAP = [
     { match: "[what]", text: "[what is/are?]" },
     { match: "[purpose]", text: "[what is the purpose of ____ to?]" },
@@ -171,7 +172,7 @@ let REQUIRED_PASS_PERCENTAGE = 80;
 let draggedRowElement = null;
 let activeEditingRow = null;
 
-// Telemetry & View Transitions
+// Telemetry Flip Tracking
 let viewFlipCount = 0;
 let lastActiveDisplayId = 'display-study-material';
 
@@ -235,7 +236,7 @@ function markUnsavedChanges() {
     hasUnsavedChanges = true;
 }
 
-// Courseware Structure Cycling & Dynamic Token Filtering
+// Pure White Writing Structure Cycle
 function cycleCoursewareMode() {
     currentCwModeIndex = (currentCwModeIndex + 1) % CW_MODES.length;
     const activeMode = CW_MODES[currentCwModeIndex];
@@ -262,9 +263,10 @@ function formatDimensionTagText(rawTag) {
 }
 
 // ==========================================
-// PREFERENCES & USER PROFILE RESET
+// PREFERENCES & TOTAL SIGNOUT FACTORY RESET
 // ==========================================
 function resetToFactoryDefaults() {
+    // 1. Reset theme and viewport variables
     currentThemeKey = 'BLACK_BOARD';
     activeFrameBorder = 'WOOD';
     GROUP_SIZE = 10;
@@ -282,10 +284,43 @@ function resetToFactoryDefaults() {
 
     applyViewportAppearance();
 
-    if (activeBuckets) {
-        for (const [binKey, content] of Object.entries(activeBuckets)) {
-            renderGroupedText(binKey, content);
-        }
+    // 2. Clear courseware memory buckets
+    rawMasterBuckets = null;
+    activeBuckets = null;
+    currentProjectMetadata = {
+        source_file: "untitled_project.json",
+        timestamp: new Date().toISOString(),
+        pages_milled: "N/A",
+        engine_version: "SST_HammerX_V2.6"
+    };
+
+    // 3. Purge all 10 courseware pane DOM nodes
+    const studyBins = ['01_WHAT', '02_PURPOSE', '03_RULE', '04_FORMULA', '05_ID', '06_RELATED', '07_OBJECTIVE', '08_SOURCE', '09_WHY'];
+    studyBins.forEach(binId => {
+        const pane = document.getElementById(binId);
+        if (pane) pane.innerHTML = '';
+    });
+
+    const summaryPane = document.getElementById('00_SUMMARY');
+    if (summaryPane) {
+        summaryPane.textContent = "[*] Click LOAD to select a local JSON file or pull from Supabase Cloud.";
+    }
+
+    // 4. Return to SUMMARY tab and re-initialize slate
+    window.switchStudyTab(null, '00_SUMMARY');
+    initCopySlate();
+
+    // 5. Reset Structure Mode back to default [ NOUN ]
+    currentCwModeIndex = 0;
+    const btnCwToggle = document.getElementById("btn-courseware-toggle");
+    const displayContainer = document.getElementById("display-study-material");
+    if (btnCwToggle) {
+        btnCwToggle.textContent = "[ NOUN ]";
+        btnCwToggle.dataset.mode = "NOUN";
+    }
+    if (displayContainer) {
+        displayContainer.classList.remove("viewport-mode-NOUN_DESC", "viewport-mode-NOUN_DESC_APP");
+        displayContainer.classList.add("viewport-mode-NOUN");
     }
 }
 
@@ -314,7 +349,7 @@ async function autoSavePreferencesOnSettingsExit() {
 
         if (!error) {
             isSettingsModified = false;
-            console.log("[SST] User preferences successfully synced to cloud.");
+            console.log("[SST] User preferences synced to Supabase.");
         }
     } catch (err) {
         console.error("Autosave preferences error:", err);
@@ -1789,10 +1824,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.stopPropagation();
                         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
                         try {
-                            const { error } = await supa.auth.signOut();
-                            if (error) throw error;
+                            if (supa) await supa.auth.signOut({ scope: 'local' });
                         } catch (err) {
-                            alert("Sign out error: " + err.message);
+                            console.warn("Sign out catch:", err);
+                        } finally {
+                            localStorage.removeItem('sst_auth_token');
+                            updateAuthUi(null);
                         }
                     };
                 }
@@ -2282,7 +2319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+            if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
                 isSettingsModified = true;
