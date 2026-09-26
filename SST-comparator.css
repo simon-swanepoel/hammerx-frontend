@@ -95,7 +95,7 @@ body.is-editing-locked .action-button-large {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-image: url('BG1.webp.png');
+    background-image: url('BG1.webp');
     background-size: cover;
     background-position: center;
     z-index: 1;
