@@ -16,9 +16,9 @@
     --margin-line-color: transparent;
 
     /* CONSOLE FRAME BORDER & BUTTON ENGINE */
-    --console-frame-bg: url('wood.png');
-    --console-frame-border: url('wood.png');
-    --btn-frame-bg: url('wood.png');
+    --console-frame-bg: url('wood.wp2');
+    --console-frame-border: url('wood.wp2');
+    --btn-frame-bg: url('wood.wp2');
     --btn-text-color: #000000;
     --btn-border-color: rgba(0, 0, 0, 0.65);
     --btn-text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.8), 1px 1px 1px rgba(255, 255, 255, 0.4);
@@ -367,11 +367,11 @@ body.is-editing-locked .action-button-large {
 }
 
 .workstation-console.wood-frame {
-    background-image: url('wood.png') !important; 
+    background-image: url('wood.wp2') !important; 
     background-size: cover;
     background-position: center;
     border: 14px solid transparent !important; 
-    border-image: url('wood.png') 30 stretch !important; 
+    border-image: url('wood.wp2') 30 stretch !important; 
     box-shadow: 
         inset 0 1px 2px rgba(255, 255, 255, 0.4), 
         inset 0 -2px 6px rgba(0, 0, 0, 0.8),         
