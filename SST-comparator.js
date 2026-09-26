@@ -274,14 +274,27 @@ function resetToFactoryDefaults() {
     activeMarginColor = 'transparent';
 
     const root = document.documentElement;
+    // Reset line token colors
     root.style.setProperty('--color-part-tag', '#b29c6d');
     root.style.setProperty('--color-part-name', '#ffffff');
     root.style.setProperty('--color-part-desc', '#8a8d97');
     root.style.setProperty('--color-part-where', '#00ff66');
 
+    // Reset frame and button backgrounds
+    root.style.setProperty('--console-frame-bg', "url('wood.png')");
+    root.style.setProperty('--console-frame-border', "url('wood.png')");
+    root.style.setProperty('--btn-frame-bg', "url('wood.png')");
+
+    // Clean console classes
+    const consoleEl = document.getElementById('main-workstation-console');
+    if (consoleEl) {
+        consoleEl.className = 'workstation-console wood-frame';
+    }
+
     const disp = document.getElementById("group-size-display");
     if (disp) disp.textContent = GROUP_SIZE;
 
+    // Apply baseline theme styles to viewport
     applyViewportAppearance();
 
     // 2. Clear courseware memory buckets
@@ -1086,7 +1099,7 @@ function toggleGroup(paneId, groupIndex) {
     }
 }
 
-// Window export for inline tab switching
+// Global scope export for inline onclick
 window.switchStudyTab = function(evt, targetBin) {
     releaseEditLock();
     document.querySelectorAll('.study-tab-pane').forEach(pane => pane.classList.remove('active'));
