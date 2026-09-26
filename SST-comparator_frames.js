@@ -7,7 +7,147 @@ const DEFAULT_FRAME_KEY = 'WOOD';
 
 const FRAME_PRESETS = {
     'WOOD': {
-        name: 'Oiled Wood',
+        name: 'Oiled Wood',// ==========================================
+// SST-COMPARATOR BEZEL MATERIAL ENGINE
+// Master Script: SST-comparator_frames.js
+// ==========================================
+
+const MATERIAL_PRESETS = [
+    {
+        id: 'WOOD',
+        label: 'WOOD BORDER',
+        cardClass: 'card-border-wood-frame',
+        btnText: '#000000',
+        btnShadow: '-1px -1px 1px rgba(0,0,0,0.8), 1px 1px 1px rgba(255,255,255,0.4)',
+        btnBox: 'inset -1px -1px 2px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.5), 0px 4px 8px rgba(0,0,0,0.5)',
+        btnBorder: 'rgba(0,0,0,0.65)',
+        btnBg: "url('wood.png')",
+        frameBg: "url('wood.png')",
+        consoleClass: 'wood-frame'
+    },
+    {
+        id: 'TITANIUM',
+        label: 'TITANIUM BORDER',
+        cardClass: 'card-border-titanium-frame',
+        btnText: '#ffffff',
+        btnShadow: '0 1px 2px rgba(0,0,0,0.8)',
+        btnBox: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 3px 6px rgba(0,0,0,0.6)',
+        btnBorder: 'rgba(255,255,255,0.25)',
+        btnBg: 'linear-gradient(180deg, #484c56 0%, #2f323a 100%)',
+        frameBg: 'linear-gradient(135deg, #2c2d30 0%, #e2e4e9 25%, #8a8d97 50%, #b29c6d 75%, #111317 100%)',
+        consoleClass: 'titanium-frame'
+    },
+    {
+        id: 'BLACK_GLASS',
+        label: 'NITE-LIT (BLACK GLASS)',
+        cardClass: 'card-border-glass-frame',
+        btnText: '#00f0ff',
+        btnShadow: '0 0 6px rgba(0,240,255,0.6)',
+        btnBox: 'inset 0 0 8px rgba(0,240,255,0.2), 0 4px 10px rgba(0,0,0,0.8)',
+        btnBorder: 'rgba(0,240,255,0.4)',
+        btnBg: 'radial-gradient(circle at 50% 10%, #1e2029 0%, #0c0d12 70%)',
+        frameBg: 'none',
+        consoleClass: 'blackglass-frame'
+    },
+    {
+        id: 'CONCRETE',
+        label: 'ARCHITECTURAL CONCRETE',
+        cardClass: 'card-border-concrete-frame',
+        btnText: '#e2e4e9',
+        btnShadow: '0 1px 2px rgba(0,0,0,0.9)',
+        btnBox: 'inset 0 1px 1px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.7), 0 3px 6px rgba(0,0,0,0.6)',
+        btnBorder: 'rgba(58,62,71,0.8)',
+        btnBg: 'linear-gradient(180deg, #3a3e47 0%, #24272c 100%)',
+        frameBg: 'none',
+        consoleClass: 'concrete-frame'
+    },
+    {
+        id: 'GRAPHITE',
+        label: 'BRUSHED GRAPHITE',
+        cardClass: 'card-border-graphite-frame',
+        btnText: '#00ff66',
+        btnShadow: '0 0 4px rgba(0,255,102,0.4)',
+        btnBox: 'inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 3px rgba(0,0,0,0.9), 0 3px 6px rgba(0,0,0,0.7)',
+        btnBorder: 'rgba(41,45,54,0.9)',
+        btnBg: 'linear-gradient(180deg, #22262d 0%, #111317 100%)',
+        frameBg: 'none',
+        consoleClass: 'graphite-frame'
+    },
+    {
+        id: 'GUNMETAL',
+        label: 'INDUSTRIAL GUNMETAL',
+        cardClass: 'card-border-gunmetal-frame',
+        btnText: '#ffd700',
+        btnShadow: '0 1px 2px rgba(0,0,0,0.8)',
+        btnBox: 'inset 0 1px 2px rgba(255,255,255,0.25), inset 0 -2px 5px rgba(0,0,0,0.85), 0 3px 6px rgba(0,0,0,0.65)',
+        btnBorder: 'rgba(66,70,82,0.85)',
+        btnBg: 'linear-gradient(180deg, #343741 0%, #1b1c21 100%)',
+        frameBg: 'none',
+        consoleClass: 'gunmetal-frame'
+    }
+];
+
+function applyMaterialPreset(preset) {
+    if (!preset) return;
+
+    activeFrameBorder = preset.id;
+    isSettingsModified = true;
+
+    const root = document.documentElement;
+    root.style.setProperty('--console-frame-bg', preset.frameBg);
+    root.style.setProperty('--btn-frame-bg', preset.btnBg);
+    root.style.setProperty('--btn-text-color', preset.btnText);
+    root.style.setProperty('--btn-text-shadow', preset.btnShadow);
+    root.style.setProperty('--btn-box-shadow', preset.btnBox);
+    root.style.setProperty('--btn-border-color', preset.btnBorder);
+
+    const consoleEl = document.getElementById('main-workstation-console');
+    if (consoleEl) {
+        consoleEl.classList.remove(
+            'wood-frame',
+            'titanium-frame',
+            'blackglass-frame',
+            'glass-frame',
+            'concrete-frame',
+            'graphite-frame',
+            'gunmetal-frame'
+        );
+        consoleEl.classList.add(preset.consoleClass);
+    }
+
+    document.querySelectorAll('.theme-preset-card[data-frame]').forEach(card => {
+        card.classList.toggle('active-theme', card.getAttribute('data-frame') === preset.id);
+    });
+}
+
+function initMaterialPresets() {
+    const container = document.getElementById('material-presets-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    MATERIAL_PRESETS.forEach(preset => {
+        const card = document.createElement('div');
+        card.className = `theme-preset-card ${preset.cardClass}`;
+        card.setAttribute('data-frame', preset.id);
+        card.innerHTML = `<span>${preset.label}</span>`;
+
+        if (activeFrameBorder === preset.id) {
+            card.classList.add('active-theme');
+        }
+
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            applyMaterialPreset(preset);
+        });
+
+        container.appendChild(card);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMaterialPresets();
+});
         cssClass: 'wood-frame',
         hasNeonToggle: false,
         vars: {
