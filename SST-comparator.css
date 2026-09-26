@@ -47,7 +47,7 @@
     --font-style-where: italic;
     --font-family-where: inherit;
 
-    /* PERMANENT CLEAN TOP SHUTTER THEME (WHITE & GOLD) */
+    /* PERMANENT TOP SHUTTER THEME */
     --shutter-bg: rgba(255, 255, 255, 0.98);
     --shutter-title-color: #0b2545;
     --shutter-divider-color: #0b2545;
@@ -61,7 +61,6 @@
     box-sizing: border-box;
 }
 
-/* NATURAL VERTICAL FLOW ALLOWING SCROLL DOWN TO FAT FOOTER */
 body, html {
     width: 100%;
     min-height: 100%;
@@ -73,7 +72,6 @@ body, html {
     scroll-behavior: smooth;
 }
 
-/* 100vh STAGE: Keeps shutter and console locked in their original coordinates */
 .comparator-stage-wrapper {
     position: relative;
     width: 100vw;
@@ -83,7 +81,6 @@ body, html {
     z-index: 5;
 }
 
-/* EDITING LOCK STATE */
 body.is-editing-locked .button-bar-top button,
 body.is-editing-locked .study-tab-strip button,
 body.is-editing-locked .action-button-large {
@@ -104,7 +101,6 @@ body.is-editing-locked .action-button-large {
     z-index: 1;
 }
 
-/* WORKSTATION TOP SHUTTER HEADER & AUTO-COLLAPSE (CLIPPING REMOVED FOR MENUS) */
 .workstation-header {
     position: absolute !important;
     top: 0 !important;
@@ -120,7 +116,7 @@ body.is-editing-locked .action-button-large {
     justify-content: center !important; 
     align-items: center !important;     
     box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.15);
-    overflow: visible !important; /* CRITICAL: Allows ☰ and ⋮ dropdowns to project below the 16vh bar */
+    overflow: visible !important;
     transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -222,7 +218,6 @@ body.is-editing-locked .action-button-large {
 }
 .menu-trigger:hover { color: #b29c6d; transform: scale(1.1); }
 
-/* DRAWER MENUS (LEFT ☰ & RIGHT ⋮) */
 .drawer-wrapper {
     position: relative;
     display: flex;
@@ -253,7 +248,6 @@ body.is-editing-locked .action-button-large {
 .menu-left .nav-links-drawer { left: 0; }
 .menu-right .nav-links-drawer { right: 0; align-items: flex-end; }
 
-/* Open on hover OR open on click (.drawer-open class) */
 .drawer-wrapper:hover .nav-links-drawer,
 .drawer-wrapper.drawer-open .nav-links-drawer {
     opacity: 1 !important;
@@ -296,7 +290,6 @@ body.is-editing-locked .action-button-large {
 }
 .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
 
-/* WORKSPACE CORE */
 .workspace-core {
     position: absolute !important;
     top: 16vh !important;
@@ -350,25 +343,20 @@ body.is-editing-locked .action-button-large {
     font-family: sans-serif;
 }
 
-/* WORKSTATION CONSOLE FRAME */
 .workstation-console {
     width: calc(100vw - 300px);             
     height: 100%;            
     z-index: 6;
     transition: all 0.3s ease; 
-    
     background-image: var(--console-frame-bg); 
     background-size: cover;
     background-position: center;
-
     border: 14px solid transparent; 
     border-image: var(--console-frame-border) 30 stretch; 
-
     box-shadow: 
         inset -2px -2px 4px rgba(255, 255, 255, 0.4), 
         inset 3px 3px 6px rgba(0, 0, 0, 0.7),         
         0px 12px 35px rgba(0, 0, 0, 0.85);           
-
     padding: 1.5vh 20px; 
     display: flex;
     justify-content: center;
@@ -411,48 +399,6 @@ body.is-editing-locked .action-button-large {
         0 14px 45px rgba(0, 0, 0, 0.98),
         0 0 30px rgba(0, 240, 255, 0.25),
         0 0 10px rgba(192, 132, 252, 0.3) !important;
-}
-
-.workstation-console.glass-frame.neon-glow-on {
-    box-shadow: 
-        inset 0 1px 2px rgba(255, 255, 255, 0.4),
-        inset 0 -2px 6px rgba(0, 0, 0, 0.95),
-        0 14px 45px rgba(0, 0, 0, 0.98),
-        0 0 35px rgba(0, 240, 255, 0.3),
-        0 0 12px rgba(192, 132, 252, 0.35) !important;
-}
-
-.workstation-console.concrete-frame {
-    background-image: none !important;
-    background: linear-gradient(180deg, #2d3036 0%, #1e2024 50%, #16171a 100%) !important;
-    border: 14px solid #222429 !important;
-    border-image: linear-gradient(180deg, #3a3e47 0%, #131417 100%) 30 stretch !important;
-    box-shadow: 
-        inset 0 1px 1px rgba(255, 255, 255, 0.16), 
-        inset 0 -3px 8px rgba(0, 0, 0, 0.85), 
-        0 16px 45px rgba(0, 0, 0, 0.96) !important;
-}
-
-.workstation-console.graphite-frame {
-    background-image: none !important;
-    background: linear-gradient(180deg, #17191e 0%, #0c0d10 100%) !important;
-    border: 14px solid #131519 !important;
-    border-image: linear-gradient(180deg, #292d36 0%, #08090b 100%) 30 stretch !important;
-    box-shadow: 
-        inset 0 1px 0 rgba(255, 255, 255, 0.1), 
-        inset 0 -1px 3px rgba(0, 0, 0, 0.9), 
-        0 14px 40px rgba(0, 0, 0, 0.98) !important;
-}
-
-.workstation-console.gunmetal-frame {
-    background-image: none !important;
-    background: linear-gradient(180deg, #292c34 0%, #1b1c21 55%, #131417 100%) !important;
-    border: 14px solid #212328 !important;
-    border-image: linear-gradient(180deg, #424652 0%, #1f2126 40%, #141518 100%) 30 stretch !important;
-    box-shadow: 
-        inset 0 1px 2px rgba(255, 255, 255, 0.3), 
-        inset 0 -2px 6px rgba(0, 0, 0, 0.85), 
-        0 14px 35px rgba(0, 0, 0, 0.9) !important;
 }
 
 .viewport-wrapper {
@@ -536,7 +482,6 @@ body.is-editing-locked .action-button-large {
     align-items: center;
 }
 
-/* CONSOLE BUTTON ACTIVE STATE */
 .viewport-button-corner.active-toggle,
 .viewport-button-center.active-toggle {
     border-color: #00ff66 !important;
@@ -552,7 +497,6 @@ body.is-editing-locked .action-button-large {
 
 .viewport-display.active { display: block; }
 
-/* SETTINGS PANEL ENGINE */
 .settings-heading {
     font-family: "Cinzel", "Didot", serif;
     font-size: 2.2rem;
@@ -664,12 +608,6 @@ body.is-editing-locked .action-button-large {
 .card-red-board { background: #2b0e14; color: #f7f0f1; }
 .card-whiteboard { background: #f8f9fa; color: #111827; }
 .card-paper { background: #f5eedc; color: #1a1d20; }
-
-.card-border-wood-frame { background-image: url('wood.png'); color: #000; }
-.card-border-glass-frame { background: #181a24; color: #00f0ff; }
-.card-border-concrete-frame { background: #2d3036; color: #e2e4e9; }
-.card-border-graphite-frame { background: #101215; color: #00ff66; }
-.card-border-gunmetal-frame { background: #212328; color: #ffd700; }
 
 .card-color-picker-row {
     background: rgba(255, 255, 255, 0.04);
@@ -1092,6 +1030,41 @@ body.is-editing-locked .action-button-large {
 
 .study-footer-button:active { transform: translateY(1px); }
 
+/* PURE WHITE TEXT TOGGLE: NO BORDER, NO BLOCK, NO OUTLINE */
+.study-footer-button.btn-toggle-plain {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+    padding: 0 4px !important;
+    margin-left: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1.5px !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+}
+
+.study-footer-button.btn-toggle-plain:hover {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+/* COURSEWARE 3-STATE DYNAMIC VISIBILITY RULES */
+.viewport-mode-NOUN .line-part-desc,
+.viewport-mode-NOUN .desc-divider,
+.viewport-mode-NOUN .line-part-where,
+.viewport-mode-NOUN .where-divider,
+.viewport-mode-NOUN .tag-what {
+    display: none !important;
+}
+
+.viewport-mode-NOUN_DESC .line-part-where,
+.viewport-mode-NOUN_DESC .where-divider {
+    display: none !important;
+}
+
 .grouped-wrapper {
     display: flex;
     flex-direction: column;
@@ -1198,7 +1171,6 @@ body.is-editing-locked .action-button-large {
     border-bottom: 2px solid #b29c6d !important;
 }
 
-/* HAMMER COPY-SLATE & VERBATIM TESTING */
 .copy-slate-layout {
     display: flex;
     flex-direction: column;
@@ -1339,9 +1311,6 @@ body.is-editing-locked .action-button-large {
     caret-color: #ffffff;
 }
 
-/* ========================================================
-   MODAL OVERLAY SYSTEM (FULLY UNLOCKED CLICKS & PROPER STACKING)
-   ======================================================== */
 .comparator-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -1358,7 +1327,6 @@ body.is-editing-locked .action-button-large {
     animation: modalFadeIn 0.2s ease-out;
 }
 
-/* OPEN MODAL STATE (WORKS VIA DISPLAY: FLEX OR .ACTIVE-MODAL) */
 .comparator-modal-overlay[style*="display: flex"],
 .comparator-modal-overlay.active-modal {
     display: flex !important;
@@ -1474,7 +1442,6 @@ body.is-editing-locked .action-button-large {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* GUARANTEE FAT FOOTER VISIBILITY & SCROLL REACH */
 sst-footer {
     display: block !important;
     position: relative !important;
