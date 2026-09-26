@@ -280,8 +280,8 @@ function resetToFactoryDefaults() {
     root.style.setProperty('--color-part-where', '#00ff66');
 
     // Reset frame & button visual styles
-    root.style.setProperty('--console-frame-bg', "url('wood.png')");
-    root.style.setProperty('--btn-frame-bg', "url('wood.png')");
+    root.style.setProperty('--console-frame-bg', "url('wood.wp2')");
+    root.style.setProperty('--btn-frame-bg', "url('wood.wp2')");
     root.style.setProperty('--btn-text-color', '#000000');
     root.style.setProperty('--btn-text-shadow', '-1px -1px 1px rgba(0,0,0,0.8), 1px 1px 1px rgba(255,255,255,0.4)');
     root.style.setProperty('--btn-box-shadow', 'inset -1px -1px 2px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.5), 0px 4px 8px rgba(0,0,0,0.5)');
@@ -513,7 +513,7 @@ function applyViewportAppearance() {
     } else if (frameKey === 'GUNMETAL') {
         if (consoleEl) consoleEl.classList.add('gunmetal-frame');
     } else {
-        root.style.setProperty('--console-frame-bg', "url('wood.png')");
+        root.style.setProperty('--console-frame-bg', "url('wood.wp2')");
         if (consoleEl) consoleEl.classList.add('wood-frame');
     }
 
