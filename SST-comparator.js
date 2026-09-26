@@ -32,7 +32,7 @@ window.switchStudyTab = function(evt, tabId) {
 
 let activeDataset = [];
 
-let checkEngineMode = "VERBATUM";
+
 let currentSlateMode = "NOUN"; // "NOUN", "NOUN_DESC", "NOUN_DESC_WHERE"
 
 // 1. COURSEWARE 3-STATE STRUCTURE TOGGLE MODES
