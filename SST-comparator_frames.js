@@ -16,9 +16,9 @@
             cardClass: 'card-border-wood-frame',
             consoleClass: 'wood-frame',
             properties: {
-                '--console-frame-bg': "url('wood.png')",
-                '--console-frame-border': "url('wood.png')",
-                '--btn-frame-bg': "url('wood.png')",
+                '--console-frame-bg': "url('wood.wp2')",
+                '--console-frame-border': "url('wood.wp2')",
+                '--btn-frame-bg': "url('wood.wp2')",
                 '--btn-text-color': '#000000',
                 '--btn-text-shadow': '-1px -1px 1px rgba(0,0,0,0.8), 1px 1px 1px rgba(255,255,255,0.4)',
                 '--btn-box-shadow': 'inset -1px -1px 2px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.5), 0px 4px 8px rgba(0,0,0,0.5)',
@@ -26,10 +26,10 @@
             },
             rules: `
                 .workstation-console.wood-frame {
-                    background-image: url('wood.png') !important;
+                    background-image: url('wood.wp2') !important;
                     background-repeat: repeat !important;
                     border: 14px solid transparent !important;
-                    border-image: url('wood.png') 30 stretch !important;
+                    border-image: url('wood.wp2') 30 stretch !important;
                     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), inset 0 -2px 5px rgba(0,0,0,0.8), 0 12px 35px rgba(0,0,0,0.85) !important;
                 }
             `
