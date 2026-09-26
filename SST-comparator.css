@@ -316,19 +316,6 @@ body.is-editing-locked .action-button-large {
     height: 95vh !important;
 }
 
-/* 94% EXPANDED VIEWPORT FOR PAID TIERS */
-.workspace-core.is-paid {
-    width: 94vw !important;
-    left: 3vw !important;
-}
-.workspace-core.is-paid .ad-zone-side {
-    display: none !important;
-}
-.workspace-core.is-paid .workstation-console {
-    width: 100% !important;
-    max-width: 100% !important;
-}
-
 .ad-zone-side {
     width: 150px;
     min-width: 150px;
@@ -548,6 +535,7 @@ body.is-editing-locked .action-button-large {
     align-items: center;
 }
 
+/* CONSOLE BUTTON ACTIVE STATE */
 .viewport-button-corner.active-toggle,
 .viewport-button-center.active-toggle {
     border-color: #00ff66 !important;
@@ -562,6 +550,47 @@ body.is-editing-locked .action-button-large {
 }
 
 .viewport-display.active { display: block; }
+
+/* ========================================================
+   COURSEWARE 3-STATE STRUCTURE TOGGLE & DIMENSIONING TAGS
+   ======================================================== */
+.btn-toggle-structure {
+    color: #ffd700 !important;
+    border: 1px solid rgba(255, 215, 0, 0.4) !important;
+    border-radius: 3px;
+    padding: 3px 10px !important;
+    background: rgba(255, 215, 0, 0.08) !important;
+    transition: all 0.2s ease;
+}
+.btn-toggle-structure:hover {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
+    background: rgba(255, 215, 0, 0.18) !important;
+}
+
+/* STATE 1: NOUN ONLY */
+.viewport-mode-NOUN .line-part-desc,
+.viewport-mode-NOUN .line-part-where,
+.viewport-mode-NOUN .desc-divider,
+.viewport-mode-NOUN .where-divider,
+.viewport-mode-NOUN .tag-what {
+    display: none !important;
+}
+
+/* STATE 2: NOUN + DESCRIPTION */
+.viewport-mode-NOUN_DESC .line-part-where,
+.viewport-mode-NOUN_DESC .where-divider {
+    display: none !important;
+}
+
+/* STATE 3: FULL DISPLAY (NOUN + DESC + APP) -> All elements visible */
+
+/* Dimensioning Tags Formatting */
+.dim-expanded-tag {
+    color: #f59e0b !important;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
 
 /* SETTINGS PANEL ENGINE */
 .settings-heading {
@@ -1071,7 +1100,7 @@ body.is-editing-locked .action-button-large {
 .footer-left-group {
     display: flex;
     align-items: center;
-    gap: 12px;                      
+    gap: 16px;                      
 }
 
 .study-footer-button {
@@ -1102,47 +1131,6 @@ body.is-editing-locked .action-button-large {
 }
 
 .study-footer-button:active { transform: translateY(1px); }
-
-/* ========================================================
-   COURSEWARE 3-STATE STRUCTURE TOGGLE & DIMENSIONING TAGS
-   ======================================================== */
-.btn-toggle-structure {
-    color: #ffd700 !important;
-    border: 1px solid rgba(255, 215, 0, 0.4) !important;
-    border-radius: 3px;
-    padding: 3px 10px !important;
-    background: rgba(255, 215, 0, 0.08) !important;
-    transition: all 0.2s ease;
-}
-.btn-toggle-structure:hover {
-    border-color: #ffd700 !important;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
-    background: rgba(255, 215, 0, 0.18) !important;
-}
-
-/* STATE 1: NOUN ONLY */
-.viewport-mode-NOUN .line-part-desc,
-.viewport-mode-NOUN .line-part-where,
-.viewport-mode-NOUN .desc-divider,
-.viewport-mode-NOUN .where-divider,
-.viewport-mode-NOUN .tag-what {
-    display: none !important;
-}
-
-/* STATE 2: NOUN + DESCRIPTION */
-.viewport-mode-NOUN_DESC .line-part-where,
-.viewport-mode-NOUN_DESC .where-divider {
-    display: none !important;
-}
-
-/* STATE 3: FULL DISPLAY (NOUN + DESC + APP) -> All elements visible */
-
-/* Dimensioning Tags Formatting */
-.dim-expanded-tag {
-    color: #f59e0b !important;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-}
 
 .grouped-wrapper {
     display: flex;
@@ -1391,7 +1379,9 @@ body.is-editing-locked .action-button-large {
     caret-color: #ffffff;
 }
 
-/* MODAL OVERLAYS */
+/* ========================================================
+   MODAL OVERLAY SYSTEM (FULLY UNLOCKED CLICKS & PROPER STACKING)
+   ======================================================== */
 .comparator-modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -1408,6 +1398,7 @@ body.is-editing-locked .action-button-large {
     animation: modalFadeIn 0.2s ease-out;
 }
 
+/* OPEN MODAL STATE (WORKS VIA DISPLAY: FLEX OR .ACTIVE-MODAL) */
 .comparator-modal-overlay[style*="display: flex"],
 .comparator-modal-overlay.active-modal {
     display: flex !important;
@@ -1488,6 +1479,11 @@ body.is-editing-locked .action-button-large {
     margin-top: 6px;
 }
 
+.modal-actions-right {
+    display: flex;
+    gap: 8px;
+}
+
 .modal-btn {
     background: transparent;
     border: 1px solid var(--divider-color);
@@ -1518,7 +1514,7 @@ body.is-editing-locked .action-button-large {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* UNIVERSAL FOOTER AT BOTTOM OF VIEWPORT SCROLL */
+/* GUARANTEE FAT FOOTER VISIBILITY & SCROLL REACH */
 sst-footer {
     display: block !important;
     position: relative !important;
