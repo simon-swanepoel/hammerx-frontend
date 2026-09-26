@@ -274,18 +274,19 @@ function resetToFactoryDefaults() {
     activeMarginColor = 'transparent';
 
     const root = document.documentElement;
-    // Reset line token colors
     root.style.setProperty('--color-part-tag', '#b29c6d');
     root.style.setProperty('--color-part-name', '#ffffff');
     root.style.setProperty('--color-part-desc', '#8a8d97');
     root.style.setProperty('--color-part-where', '#00ff66');
 
-    // Reset frame and button backgrounds
+    // Reset frame & button visual styles
     root.style.setProperty('--console-frame-bg', "url('wood.png')");
-    root.style.setProperty('--console-frame-border', "url('wood.png')");
     root.style.setProperty('--btn-frame-bg', "url('wood.png')");
+    root.style.setProperty('--btn-text-color', '#000000');
+    root.style.setProperty('--btn-text-shadow', '-1px -1px 1px rgba(0,0,0,0.8), 1px 1px 1px rgba(255,255,255,0.4)');
+    root.style.setProperty('--btn-box-shadow', 'inset -1px -1px 2px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.5), 0px 4px 8px rgba(0,0,0,0.5)');
+    root.style.setProperty('--btn-border-color', 'rgba(0,0,0,0.65)');
 
-    // Clean console classes
     const consoleEl = document.getElementById('main-workstation-console');
     if (consoleEl) {
         consoleEl.className = 'workstation-console wood-frame';
@@ -294,7 +295,6 @@ function resetToFactoryDefaults() {
     const disp = document.getElementById("group-size-display");
     if (disp) disp.textContent = GROUP_SIZE;
 
-    // Apply baseline theme styles to viewport
     applyViewportAppearance();
 
     // 2. Clear courseware memory buckets
@@ -338,7 +338,7 @@ function resetToFactoryDefaults() {
 }
 
 async function autoSavePreferencesOnSettingsExit() {
-    if (!supa || !activeUserId || !isSettingsModified) return;
+    if (!supa || !activeUserId) return;
 
     const rootStyle = getComputedStyle(document.documentElement);
     const prefs = {
@@ -396,7 +396,18 @@ async function loadUserPreferencesFromCloud(userId) {
                 if (prefs.custom_colors.part_where) root.style.setProperty('--color-part-where', prefs.custom_colors.part_where);
             }
 
-            applyViewportAppearance();
+            // Sync visual bezel styling across the preset registry
+            if (window.MATERIAL_PRESETS) {
+                const matchedPreset = window.MATERIAL_PRESETS.find(p => p.id === activeFrameBorder);
+                if (matchedPreset && typeof applyMaterialPreset === 'function') {
+                    applyMaterialPreset(matchedPreset);
+                } else {
+                    applyViewportAppearance();
+                }
+            } else {
+                applyViewportAppearance();
+            }
+
             if (activeBuckets) {
                 for (const [binKey, content] of Object.entries(activeBuckets)) {
                     renderGroupedText(binKey, content);
@@ -475,33 +486,43 @@ function applyViewportAppearance() {
     root.style.setProperty('--margin-line-color', activeMarginColor);
 
     const consoleEl = document.getElementById('main-workstation-console');
-    const btnWood = document.getElementById('btn-border-wood');
-    const btnTitanium = document.getElementById('btn-border-titanium');
-    const btnBlackGlass = document.getElementById('btn-border-blackglass');
-
     if (consoleEl) {
-        consoleEl.classList.remove('titanium-frame', 'blackglass-frame');
+        consoleEl.classList.remove(
+            'wood-frame',
+            'titanium-frame',
+            'blackglass-frame',
+            'glass-frame',
+            'concrete-frame',
+            'graphite-frame',
+            'gunmetal-frame'
+        );
     }
 
-    [btnWood, btnTitanium, btnBlackGlass].forEach(btn => {
-        if (btn) btn.classList.remove('active-theme');
-    });
+    const frameKey = (activeFrameBorder || 'WOOD').toUpperCase();
 
-    if (activeFrameBorder === 'BLACK_GLASS') {
+    if (frameKey === 'BLACK_GLASS' || frameKey === 'GLASS') {
         root.style.setProperty('--console-frame-bg', 'none');
         if (consoleEl) consoleEl.classList.add('blackglass-frame');
-        if (btnBlackGlass) btnBlackGlass.classList.add('active-theme');
-    } else if (activeFrameBorder === 'TITANIUM') {
+    } else if (frameKey === 'TITANIUM') {
         root.style.setProperty('--console-frame-bg', 'linear-gradient(135deg, #2c2d30 0%, #e2e4e9 25%, #8a8d97 50%, #b29c6d 75%, #111317 100%)');
         if (consoleEl) consoleEl.classList.add('titanium-frame');
-        if (btnTitanium) btnTitanium.classList.add('active-theme');
+    } else if (frameKey === 'CONCRETE') {
+        if (consoleEl) consoleEl.classList.add('concrete-frame');
+    } else if (frameKey === 'GRAPHITE') {
+        if (consoleEl) consoleEl.classList.add('graphite-frame');
+    } else if (frameKey === 'GUNMETAL') {
+        if (consoleEl) consoleEl.classList.add('gunmetal-frame');
     } else {
         root.style.setProperty('--console-frame-bg', "url('wood.png')");
-        if (btnWood) btnWood.classList.add('active-theme');
+        if (consoleEl) consoleEl.classList.add('wood-frame');
     }
 
     document.querySelectorAll('.theme-preset-card[data-theme]').forEach(card => {
         card.classList.toggle('active-theme', card.getAttribute('data-theme') === currentThemeKey);
+    });
+
+    document.querySelectorAll('.theme-preset-card[data-frame]').forEach(card => {
+        card.classList.toggle('active-theme', card.getAttribute('data-frame') === frameKey);
     });
 }
 
@@ -1814,14 +1835,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const profileDrawer = document.getElementById('comparator-profile-drawer');
     const accountModal = document.getElementById('account-settings-modal');
 
-    function updateAuthUi(session) {
+    async function updateAuthUi(session) {
         currentUserSession = session;
         if (session && session.user) {
             activeUserId = session.user.id;
             if (userDisplaySpan) {
                 userDisplaySpan.textContent = session.user.email.split('@')[0].toUpperCase();
             }
-            loadUserPreferencesFromCloud(activeUserId);
+            await loadUserPreferencesFromCloud(activeUserId);
 
             if (profileDrawer) {
                 profileDrawer.innerHTML = `
@@ -1842,7 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             console.warn("Sign out catch:", err);
                         } finally {
                             localStorage.removeItem('sst_auth_token');
-                            updateAuthUi(null);
+                            await updateAuthUi(null);
                         }
                     };
                 }
@@ -1942,11 +1963,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (authMode === "LOGIN") {
                     const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
                     if (error) throw error;
-                    updateAuthUi(data.session);
+                    await updateAuthUi(data.session);
                 } else {
                     const { data, error } = await supa.auth.signUp({ email, password: pass });
                     if (error) throw error;
-                    updateAuthUi(data.session);
+                    await updateAuthUi(data.session);
                     alert("Account registered successfully! You are now signed in.");
                 }
                 closeModalSafely(authModal);
@@ -2331,7 +2352,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnApplyHex && inputHex) {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
-            if (!val.startsWith('#') && val.length === 6) val = '#' + val;
+            if (!val.startsWith('#') && val.length === 6) val = '#' + val;            
             if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
