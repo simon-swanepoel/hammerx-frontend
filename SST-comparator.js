@@ -1,5 +1,6 @@
 // ==========================================
 // SST-COMPARATOR ENGINE (UNIFIED V2.6 CORE)
+// Master Script: SST-comparator.js
 // ==========================================
 
 // --- I18N LOCALIZATION DICTIONARY REGISTRY ---
@@ -133,6 +134,26 @@ let currentProjectMetadata = {
     engine_version: "SST_HammerX_V2.6"
 };
 let hasUnsavedChanges = false;
+let isSettingsModified = false;
+
+// 1. COURSEWARE 3-STATE STRUCTURE TOGGLE
+const CW_MODES = [
+    { id: "NOUN", label: "[ NOUN ]" },
+    { id: "NOUN_DESC", label: "[ NOUN + DESCRIPTION ]" },
+    { id: "NOUN_DESC_APP", label: "[ NOUN + DESCRIPTION + APPLICATION ]" }
+];
+let currentCwModeIndex = 0;
+
+// 3. DIMENSIONING QUESTION EXPANSIONS
+const DIMENSION_QUESTION_MAP = [
+    { match: "[what]", text: "[what is/are?]" },
+    { match: "[purpose]", text: "[what is the purpose of ____ to?]" },
+    { match: "[objective]", text: "[what is the objective of/for/by?]" },
+    { match: "[why]", text: "[why is/are ____ necessary/needed?]" },
+    { match: "[use]", text: "[why do we need/use/implement?]" },
+    { match: "[related]", text: "[additional related rule or principles]" },
+    { match: "[id]", text: "[how or what identifies?]" }
+];
 
 let currentThemeKey = 'BLACK_BOARD';
 let activeRuledLineColor = 'transparent';
@@ -211,29 +232,116 @@ function markUnsavedChanges() {
     hasUnsavedChanges = true;
 }
 
+// 1 & 2. Pure White Writing Courseware Toggle & Auto-hide [what]
+function cycleCoursewareMode() {
+    currentCwModeIndex = (currentCwModeIndex + 1) % CW_MODES.length;
+    const activeMode = CW_MODES[currentCwModeIndex];
+
+    const btn = document.getElementById("btn-courseware-toggle");
+    const displayContainer = document.getElementById("display-study-material");
+
+    if (btn) {
+        btn.textContent = activeMode.label;
+        btn.dataset.mode = activeMode.id;
+    }
+
+    if (displayContainer) {
+        displayContainer.classList.remove("viewport-mode-NOUN", "viewport-mode-NOUN_DESC", "viewport-mode-NOUN_DESC_APP");
+        displayContainer.classList.add(`viewport-mode-${activeMode.id}`);
+    }
+}
+
+// 3. Expand Dimensioning Tags
+function formatDimensionTagText(rawTag) {
+    if (!rawTag) return "";
+    const cleaned = rawTag.trim().toLowerCase();
+    const entry = DIMENSION_QUESTION_MAP.find(item => item.match === cleaned);
+    return entry ? entry.text : rawTag;
+}
+
+// 4. Autosave User Preferences on Settings Exit
+async function autoSavePreferencesOnSettingsExit() {
+    if (!supa || !activeUserId || !isSettingsModified) return;
+
+    const rootStyle = getComputedStyle(document.documentElement);
+    const prefs = {
+        user_id: activeUserId,
+        board_theme: currentThemeKey,
+        console_frame: activeFrameBorder,
+        group_size: GROUP_SIZE,
+        custom_colors: {
+            part_tag: rootStyle.getPropertyValue('--color-part-tag').trim(),
+            part_name: rootStyle.getPropertyValue('--color-part-name').trim(),
+            part_desc: rootStyle.getPropertyValue('--color-part-desc').trim(),
+            part_where: rootStyle.getPropertyValue('--color-part-where').trim()
+        },
+        updated_at: new Date().toISOString()
+    };
+
+    try {
+        const { error } = await supa
+            .from('user_preferences')
+            .upsert(prefs, { onConflict: 'user_id' });
+
+        if (!error) {
+            isSettingsModified = false;
+            console.log("[SST] User settings autosaved to Supabase cloud.");
+        }
+    } catch (err) {
+        console.error("Autosave settings error:", err);
+    }
+}
+
+async function loadUserPreferencesFromCloud(userId) {
+    if (!supa || !userId) return;
+
+    try {
+        const { data: prefs, error } = await supa
+            .from('user_preferences')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) throw error;
+        if (prefs) {
+            if (prefs.board_theme) currentThemeKey = prefs.board_theme;
+            if (prefs.console_frame) activeFrameBorder = prefs.console_frame;
+            if (prefs.group_size) {
+                GROUP_SIZE = prefs.group_size;
+                const disp = document.getElementById("group-size-display");
+                if (disp) disp.textContent = GROUP_SIZE;
+            }
+            if (prefs.custom_colors) {
+                const root = document.documentElement;
+                if (prefs.custom_colors.part_tag) root.style.setProperty('--color-part-tag', prefs.custom_colors.part_tag);
+                if (prefs.custom_colors.part_name) root.style.setProperty('--color-part-name', prefs.custom_colors.part_name);
+                if (prefs.custom_colors.part_desc) root.style.setProperty('--color-part-desc', prefs.custom_colors.part_desc);
+                if (prefs.custom_colors.part_where) root.style.setProperty('--color-part-where', prefs.custom_colors.part_where);
+            }
+            applyViewportAppearance();
+        }
+    } catch (err) {
+        console.warn("[SST] Could not load user cloud preferences:", err.message);
+    }
+}
+
 // ==========================================
 // WORKSTATION RAM & CACHE HARD RESET ENGINE
 // ==========================================
 function hardResetWorkstation() {
     if (confirm("Reset local workstation memory, clear session cache, and cycle app runtime?")) {
         try {
-            // 1. Clear application storage on this domain
             localStorage.clear();
             sessionStorage.clear();
-
-            // 2. Dereference heap structures for GC
             rawMasterBuckets = null;
             activeBuckets = null;
 
-            // 3. Clear slate DOM nodes directly
             const slateCanvas = document.getElementById('copy-slate-canvas');
             if (slateCanvas) {
                 while (slateCanvas.firstChild) {
                     slateCanvas.removeChild(slateCanvas.firstChild);
                 }
             }
-
-            // 4. Force reload fresh assets bypassing browser cache
             window.location.reload(true);
         } catch (e) {
             console.error("Hard reset failed:", e);
@@ -260,36 +368,11 @@ function autofitViewportText() {
 }
 
 // ==========================================
-// FORMULA & LATEX NORMALIZATION ENGINE
+// PLAIN TEXT VERBATIM NORMALIZATION ENGINE
 // ==========================================
-function isLatexFormula(str) {
-    if (!str) return false;
-    const latexPattern = /(\$\$?[\s\S]*?\$\$?|\\frac|\\cdot|\\times|\\approx|\\sum|\\int|\\[a-zA-Z]+|\^\{?[0-9a-zA-Z]+\}?|_\{?[0-9a-zA-Z]+\}?)/;
-    return latexPattern.test(str);
-}
-
-function normalizeFormulaForComparison(formulaStr) {
-    if (!formulaStr) return "";
-    let clean = String(formulaStr).trim();
-
-    clean = clean.replace(/^\$\$?/, '').replace(/\$\$?$/, '').trim();
-
-    clean = clean
-        .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1 / $2)')
-        .replace(/\\cdot|\\times/g, '*')
-        .replace(/\\approx/g, '≈')
-        .replace(/\\left|\\right/g, '')
-        .replace(/[{}]/g, '');
-
-    clean = clean
-        .replace(/\s*=\s*/g, ' = ')
-        .replace(/\s*\/\s*/g, ' / ')
-        .replace(/\s*\*\s*/g, ' * ')
-        .replace(/\s*\+\s*/g, ' + ')
-        .replace(/\s*-\s*/g, ' - ')
-        .replace(/\s+/g, ' ');
-
-    return clean.toLowerCase();
+function normalizeFormulaForComparison(str) {
+    if (!str) return "";
+    return str.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 // ==========================================
@@ -360,11 +443,16 @@ function parseLineToTokens(rawText) {
         name = parts[0] || '';
     }
 
+    const displayTag = formatDimensionTagText(tag);
+    const isWhatTag = tag.trim().toLowerCase() === "[what]";
+
     let tokenHtml = '';
-    if (tag) tokenHtml += `<span class="line-part-tag" data-field="tag">${tag}</span> `;
+    if (tag) {
+        tokenHtml += `<span class="line-part-tag ${isWhatTag ? 'tag-what' : ''}" data-field="tag">${displayTag}</span> `;
+    }
     tokenHtml += `<span class="line-part-name" data-field="name" contenteditable="true" spellcheck="false">${name}</span>`;
-    if (desc) tokenHtml += ` <span style="color: var(--number-color);">|</span> <span class="line-part-desc" data-field="desc" contenteditable="true" spellcheck="false">${desc}</span>`;
-    if (where) tokenHtml += ` <span style="color: var(--number-color);">|</span> <span class="line-part-where" data-field="where" contenteditable="true" spellcheck="false">${where}</span>`;
+    if (desc) tokenHtml += ` <span class="desc-divider" style="color: var(--number-color);">|</span> <span class="line-part-desc" data-field="desc" contenteditable="true" spellcheck="false">${desc}</span>`;
+    if (where) tokenHtml += ` <span class="where-divider" style="color: var(--number-color);">|</span> <span class="line-part-where" data-field="where" contenteditable="true" spellcheck="false">${where}</span>`;
 
     return tokenHtml;
 }
@@ -928,7 +1016,8 @@ function toggleGroup(paneId, groupIndex) {
     }
 }
 
-function switchStudyTab(evt, targetBin) {
+// Global scope export for inline onclick
+window.switchStudyTab = function(evt, targetBin) {
     releaseEditLock();
     document.querySelectorAll('.study-tab-pane').forEach(pane => pane.classList.remove('active'));
     document.querySelectorAll('.study-tab-button').forEach(btn => btn.classList.remove('active-study-tab'));
@@ -948,7 +1037,7 @@ function switchStudyTab(evt, targetBin) {
     }
     updateActiveGroupsIndicator();
     autofitViewportText();
-}
+};
 
 // ==========================================
 // HAMMER SLATE & VERBATIM ENGINE
@@ -957,7 +1046,6 @@ function initCopySlate() {
     const canvas = document.getElementById('copy-slate-canvas');
     if (!canvas) return;
     
-    // Clean DOM removal to free tab memory
     while (canvas.firstChild) {
         canvas.removeChild(canvas.firstChild);
     }
@@ -1129,12 +1217,7 @@ function runVerbatimCheck() {
         const typed = slateLines[i];
         const target = openStudyLines[i] || "";
 
-        let isMatch = false;
-        if (isLatexFormula(typed) || isLatexFormula(target)) {
-            isMatch = (normalizeFormulaForComparison(typed) === normalizeFormulaForComparison(target));
-        } else {
-            isMatch = (typed.trim().toLowerCase() === target.trim().toLowerCase());
-        }
+        let isMatch = (normalizeFormulaForComparison(typed) === normalizeFormulaForComparison(target));
 
         const feedbackSpan = document.getElementById(`slate-feedback-${lineIdx}`);
         if (feedbackSpan) {
@@ -1170,13 +1253,7 @@ function compileTestResultRecord() {
     for (let i = 0; i < slateLines.length; i++) {
         const typed = slateLines[i];
         const target = studyLines[i] || "";
-
-        let isMatch = false;
-        if (isLatexFormula(typed) || isLatexFormula(target)) {
-            isMatch = (normalizeFormulaForComparison(typed) === normalizeFormulaForComparison(target));
-        } else {
-            isMatch = (typed.trim().toLowerCase() === target.trim().toLowerCase());
-        }
+        let isMatch = (normalizeFormulaForComparison(typed) === normalizeFormulaForComparison(target));
         if (isMatch) passedCount++;
 
         records.push({
@@ -1220,7 +1297,6 @@ function performSlateClear() {
 function processAndDistributePayload(data) {
     console.log("--> [PAYLOAD INGEST] Distributing manifest into comparator bins...", data);
 
-    // Dereference old buckets to trigger Garbage Collection
     rawMasterBuckets = null;
     activeBuckets = null;
 
@@ -1294,7 +1370,7 @@ function processAndDistributePayload(data) {
                 const content = tagMatch[3].trim();
                 let targetBin = tagMap[tagKey] || '01_WHAT';
 
-                if (tagKey === 'RULE' && (content.includes('=') || content.includes('/') || content.includes('+') || content.includes('\\frac') || content.includes('*'))) {
+                if (tagKey === 'RULE' && (content.includes('=') || content.includes('/') || content.includes('+') || content.includes('*'))) {
                     targetBin = '04_FORMULA';
                 }
 
@@ -1332,12 +1408,9 @@ function processAndDistributePayload(data) {
     }
 
     hasUnsavedChanges = false;
-    switchStudyTab(null, '01_WHAT');
+    window.switchStudyTab(null, '01_WHAT');
 }
 
-// ==========================================
-// AUTO-LOAD HANDOFF FROM HAMTAB (LOCAL/SESSION)
-// ==========================================
 function checkSessionHandoff() {
     const stagedData = sessionStorage.getItem('staged_manifest_payload');
     if (stagedData) {
@@ -1353,9 +1426,6 @@ function checkSessionHandoff() {
     return false;
 }
 
-// ==========================================
-// CLOUD STORAGE & DATABASE INGESTION
-// ==========================================
 async function populateCloudProjectsDropdown() {
     const dropdown = document.getElementById('select-cloud-projects');
     if (!dropdown || !supa) return;
@@ -1370,7 +1440,6 @@ async function populateCloudProjectsDropdown() {
             return;
         }
 
-        // Query study_materials directly
         const { data: items, error } = await supa
             .from('study_materials') 
             .select('id, title, created_at, page_range')
@@ -1460,6 +1529,12 @@ document.addEventListener('DOMContentLoaded', () => {
     applyViewportAppearance();
     initCopySlate();
 
+    // 1. Hook the 3-State Structure Toggler
+    const btnCwToggle = document.getElementById("btn-courseware-toggle");
+    if (btnCwToggle) {
+        btnCwToggle.addEventListener("click", cycleCoursewareMode);
+    }
+
     window.addEventListener('resize', autofitViewportText);
 
     window.addEventListener('beforeunload', (e) => {
@@ -1470,7 +1545,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- WORKSTATION HARD RESET TRIGGER ---
     const btnHardReset = document.getElementById('btn-hard-reset-workstation');
     if (btnHardReset) {
         btnHardReset.addEventListener('click', (e) => {
@@ -1479,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- SHUTTER HEADER & DRAWER ARCHITECTURE ---
+    // Shutter ribbon
     const shutterHeader = document.getElementById('workstation-shutter-header');
     const workspaceCore = document.querySelector('.workspace-core');
     let shutterIdleTimer = null;
@@ -1530,7 +1604,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetShutterIdleTimer();
     }
 
-    // --- DRAWER CONTROLS (☰ LEFT & ⋮ RIGHT) ---
+    // Drawers
     const leftDrawer = document.querySelector('.menu-left .drawer-wrapper');
     const rightDrawer = document.querySelector('.menu-right .drawer-wrapper');
     const burgerTrigger = document.querySelector('.menu-left .menu-trigger');
@@ -1575,7 +1649,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- UNIVERSAL MODAL CLOSE & ESCAPE CONTROLLER ---
     function closeModalSafely(modal) {
         if (!modal) return;
         modal.style.display = 'none';
@@ -1619,7 +1692,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- SUPABASE AUTHENTICATION ENGINE ---
+    // Auth Engine
     const authTitle = document.getElementById('auth-modal-title');
     const inputEmail = document.getElementById('auth-input-email');
     const inputPass = document.getElementById('auth-input-password');
@@ -1637,6 +1710,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userDisplaySpan) {
                 userDisplaySpan.textContent = session.user.email.split('@')[0].toUpperCase();
             }
+            loadUserPreferencesFromCloud(activeUserId);
             if (profileDrawer) {
                 profileDrawer.innerHTML = `
                     <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings" data-i18n="nav_account_settings">Account Settings</a>
@@ -1770,19 +1844,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ACCOUNT SETTINGS MODAL
     const btnCloseAccountSettings = document.getElementById('btn-close-account-settings');
-
     if (btnCloseAccountSettings && accountModal) {
         btnCloseAccountSettings.addEventListener('click', () => {
             closeModalSafely(accountModal);
         });
     }
 
-    // WORKSTATION VIEW SWITCHING
-    const btnStudy = document.getElementById('btn-nav-study') || document.querySelectorAll('.viewport-button-corner')[0];
-    const btnGear  = document.getElementById('btn-nav-gear') || document.querySelector('.viewport-button-center');
-    const btnCopy  = document.getElementById('btn-nav-slate') || document.querySelectorAll('.viewport-button-corner')[1];
+    // View Switching & 4. Autosave on Settings Exit
+    const btnStudy = document.getElementById('btn-nav-study');
+    const btnGear  = document.getElementById('btn-nav-gear');
+    const btnCopy  = document.getElementById('btn-nav-slate');
 
     const displayStudy    = document.getElementById('display-study-material');
     const displayCopy     = document.getElementById('display-copy-slate');
@@ -1793,6 +1865,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function switchView(activeDisplay, activeButton) {
         releaseEditLock();
+        if (displaySettings && displaySettings.classList.contains('active') && activeDisplay !== displaySettings) {
+            autoSavePreferencesOnSettingsExit();
+        }
+
         allDisplays.forEach(disp => disp && disp.classList.remove('active'));
         allButtons.forEach(btn => btn && btn.classList.remove('active-toggle'));
         if (activeDisplay) activeDisplay.classList.add('active');
@@ -1807,7 +1883,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnGear)  btnGear.addEventListener('click', () => switchView(displaySettings, btnGear));
     if (btnCopy)  btnCopy.addEventListener('click', () => switchView(displayCopy, btnCopy));
 
-    // HIDE, UNHIDE & DELETE ACTIONS
+    // Hide / Unhide / Delete
     const btnHide = document.getElementById('btn-study-hide');
     if (btnHide) {
         btnHide.addEventListener('click', () => {
@@ -1900,7 +1976,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // FILE & CLOUD LOADING
+    // File loading
     const btnLoadFile = document.getElementById('btn-load-file');
     const jsonFileInput = document.getElementById('json-file-input');
     const btnChoiceLocal = document.getElementById('btn-choice-local');
@@ -2001,7 +2077,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // DRAG & DROP JSON
+    // Drag-Drop JSON
     window.addEventListener('dragover', (e) => e.preventDefault());
     window.addEventListener('drop', (e) => {
         if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -2027,7 +2103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // SETTINGS GROUP SIZE
+    // Settings Controls
     const displayGroupSize = document.getElementById('group-size-display');
     const editContainer = document.getElementById('group-size-edit-container');
     const inputGroupSize = document.getElementById('input-group-size');
@@ -2038,7 +2114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const colorsControl = document.getElementById('colors-control');
     const textControl = document.getElementById('text-control');
 
-    if (displayGroupSize && editContainer && inputGroupSize) {
+    if (displayGroupSize && editContainer && inputGroupSize && btnSaveGroupSize) {
         displayGroupSize.addEventListener('click', () => {
             inputGroupSize.value = GROUP_SIZE;
             editContainer.style.display = 'inline-flex';
@@ -2051,6 +2127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 GROUP_SIZE = val;
                 displayGroupSize.textContent = GROUP_SIZE;
                 editContainer.style.display = 'none';
+                isSettingsModified = true;
 
                 if (activeBuckets) {
                     for (const [binKey, content] of Object.entries(activeBuckets)) {
@@ -2080,7 +2157,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // RULED LINES PALETTE
     const ruledDots = document.querySelectorAll('#palette-ruled-lines .palette-dot');
     ruledDots.forEach(dot => {
         dot.addEventListener('click', (e) => {
@@ -2088,11 +2164,11 @@ document.addEventListener('DOMContentLoaded', () => {
             ruledDots.forEach(d => d.classList.remove('active-dot'));
             dot.classList.add('active-dot');
             activeRuledLineColor = dot.getAttribute('data-color');
+            isSettingsModified = true;
             applyViewportAppearance();
         });
     });
 
-    // MARGIN PALETTE
     const marginDots = document.querySelectorAll('#palette-margin .palette-dot');
     marginDots.forEach(dot => {
         dot.addEventListener('click', (e) => {
@@ -2100,11 +2176,11 @@ document.addEventListener('DOMContentLoaded', () => {
             marginDots.forEach(d => d.classList.remove('active-dot'));
             dot.classList.add('active-dot');
             activeMarginColor = dot.getAttribute('data-color');
+            isSettingsModified = true;
             applyViewportAppearance();
         });
     });
 
-    // 18 ESSENTIAL SWATCHES + DIRECT HEX INPUT
     const swatchDots = document.querySelectorAll('.swatch-dot');
     const nativeColorWell = document.getElementById('native-color-picker');
     const inputHex = document.getElementById('input-hex-code');
@@ -2117,6 +2193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.style.setProperty(activeColorTargetVar, colorHex);
             if (nativeColorWell) nativeColorWell.value = colorHex;
             if (inputHex) inputHex.value = colorHex.toUpperCase();
+            isSettingsModified = true;
         });
     });
 
@@ -2125,6 +2202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const val = e.target.value;
             document.documentElement.style.setProperty(activeColorTargetVar, val);
             if (inputHex) inputHex.value = val.toUpperCase();
+            isSettingsModified = true;
         });
     }
 
@@ -2132,16 +2210,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+            if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
+                isSettingsModified = true;
             } else {
                 alert("Please enter a valid HEX color code (e.g., #00FF66 or #B29C6D)");
             }
         });
     }
 
-    // BORDER MATERIALS
     const btnWood = document.getElementById('btn-border-wood');
     const btnTitanium = document.getElementById('btn-border-titanium');
     const btnBlackGlass = document.getElementById('btn-border-blackglass');
@@ -2149,25 +2227,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnWood) {
         btnWood.addEventListener('click', () => {
             activeFrameBorder = 'WOOD';
+            isSettingsModified = true;
             applyViewportAppearance();
         });
     }
-
     if (btnTitanium) {
         btnTitanium.addEventListener('click', () => {
             activeFrameBorder = 'TITANIUM';
+            isSettingsModified = true;
             applyViewportAppearance();
         });
     }
-
     if (btnBlackGlass) {
         btnBlackGlass.addEventListener('click', () => {
             activeFrameBorder = 'BLACK_GLASS';
+            isSettingsModified = true;
             applyViewportAppearance();
         });
     }
 
-    // COLOR TARGETS
     document.querySelectorAll('.color-target-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.color-target-btn').forEach(b => b.classList.remove('active-target'));
@@ -2176,7 +2254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // TEXT TARGETS
     document.querySelectorAll('.text-target-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.text-target-btn').forEach(b => b.classList.remove('active-target'));
@@ -2186,7 +2263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // TEXT FORMATTING
     const btnTextBold = document.getElementById('btn-text-bold');
     if (btnTextBold) {
         btnTextBold.addEventListener('click', () => {
@@ -2194,6 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentWeight = getComputedStyle(root).getPropertyValue(`--font-weight-${activeTextTarget}`).trim();
             const newWeight = (currentWeight === 'bold' || currentWeight === '700' || currentWeight === '900') ? 'normal' : 'bold';
             root.style.setProperty(`--font-weight-${activeTextTarget}`, newWeight);
+            isSettingsModified = true;
             updateTextOptionButtonStates();
         });
     }
@@ -2205,26 +2282,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentStyle = getComputedStyle(root).getPropertyValue(`--font-style-${activeTextTarget}`).trim();
             const newStyle = (currentStyle === 'italic') ? 'normal' : 'italic';
             root.style.setProperty(`--font-style-${activeTextTarget}`, newStyle);
+            isSettingsModified = true;
             updateTextOptionButtonStates();
         });
     }
 
-    // 16-FONT SELECTION ENGINE
     const selectTokenFont = document.getElementById('select-token-font');
     if (selectTokenFont) {
         selectTokenFont.addEventListener('change', (e) => {
             document.documentElement.style.setProperty(`--font-family-${activeTextTarget}`, e.target.value);
+            isSettingsModified = true;
         });
     }
 
     document.querySelectorAll('.theme-preset-card[data-theme]').forEach(card => {
         card.addEventListener('click', () => {
             currentThemeKey = card.getAttribute('data-theme');
+            isSettingsModified = true;
             applyViewportAppearance();
         });
     });
 
-    // SLATE MODES
+    // Slate Modes
     const btnNoun = document.getElementById('btn-mode-noun');
     const btnNounDesc = document.getElementById('btn-mode-noun-desc');
     const btnNounDescWhere = document.getElementById('btn-mode-noun-desc-where');
@@ -2288,6 +2367,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // CHECK FOR IMMEDIATE GATEWAY HANDOFF ON PAGE LOAD
     checkSessionHandoff();
 });
