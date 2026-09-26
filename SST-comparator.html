@@ -16,10 +16,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400..700&family=Cinzel:wght@400..900&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400..700&family=Inter:wght@300..800&family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Merriweather:ital,wght@0,300..900;1,300..900&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,300..900;1,300..900&family=Roboto+Mono:ital,wght@0,300..700;1,300..700&family=Roboto:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     
     <!-- Versioned CSS to avoid stale client styles -->
-    <link rel="stylesheet" href="SST-comparator.css?v=2.6.2">
+    <link rel="stylesheet" href="SST-comparator.css?v=2.6.3">
 
     <!-- Universal Mega-Footer Web Component -->
-    <script src="SST-footer.js?v=2.6.2"></script>
+    <script src="SST-footer.js?v=2.6.3"></script>
     <link rel="icon" type="image/png" href="SSTlogo.png">
 </head>
 <body>
@@ -92,10 +92,10 @@
         </div>      
 
         <!-- The Primary Active Workspace Core -->
-        <div class="workspace-core">
+        <div class="workspace-core" id="mainLayout">
             
             <!-- LEFT GOOGLE AD TEST ZONE -->
-            <div class="ad-zone-side">
+            <div class="ad-zone-side" id="towerAdLeft">
                 <div class="google-test-ad-banner">
                     <span class="ad-label">Google Ad Test<br>120 x 600</span>
                 </div>
@@ -117,7 +117,7 @@
                     <div class="console-viewport">
                         
                         <!-- Viewport Display 1: Courseware -->
-                        <div id="display-study-material" class="viewport-display active">
+                        <div id="display-study-material" class="viewport-display active viewport-mode-NOUN">
                             <div class="study-viewport-layout">
                                 
                                 <!-- 10 TAB HEADERS -->
@@ -155,6 +155,11 @@
                                         <button id="btn-study-unhide" class="study-footer-button" data-i18n="btn_unhide">UNHIDE</button>
                                         <button id="btn-study-delete" class="study-footer-button btn-danger-action" data-i18n="btn_delete">DELETE</button>
                                         <button id="btn-study-save" class="study-footer-button btn-save-action" data-i18n="btn_save">SAVE</button>
+                                        
+                                        <!-- 1 & 2. 3-STATE STRUCTURE TOGGLE -->
+                                        <button id="btn-courseware-toggle" class="study-footer-button btn-toggle-structure" data-mode="NOUN">
+                                            [ <span id="courseware-mode-label">NOUN</span> ]
+                                        </button>
                                     </div>
                                 </div>
 
@@ -443,7 +448,7 @@
             </div>
 
             <!-- RIGHT GOOGLE AD TEST ZONE -->
-            <div class="ad-zone-side">
+            <div class="ad-zone-side" id="towerAdRight">
                 <div class="google-test-ad-banner">
                     <span class="ad-label">Google Ad Test<br>120 x 600</span>
                 </div>
@@ -517,7 +522,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Version-Controlled Local Workstation Scripts -->
-    <script src="SST-comparator.js"></script>
-    <script src="SST-comparator_frames.js"></script>
+    <script src="SST-FORMATH_comparator.js?v=2.6.3"></script>
+    <script src="SST-comparator_frames.js?v=2.6.3"></script>
 </body>
 </html>
