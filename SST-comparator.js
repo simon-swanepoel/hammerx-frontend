@@ -29,7 +29,7 @@ window.switchStudyTab = function(evt, tabId) {
   if (evt && evt.currentTarget) evt.currentTarget.classList.add('active-study-tab');
 };
 
-let masterDataset = [];
+
 let activeDataset = [];
 let GROUP_SIZE = 10;
 let checkEngineMode = "VERBATUM";
