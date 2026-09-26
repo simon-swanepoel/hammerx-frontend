@@ -100,9 +100,11 @@ body.is-editing-locked .action-button-large {
     left: 0;
     width: 100vw;
     height: 100vh;
+    background-color: #050608;
     background-image: url('BG1.jpg');
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     z-index: 1;
 }
 
