@@ -21,7 +21,7 @@
     --btn-frame-bg: url('wood.webp');
     --btn-text-color: #111111;
     --btn-border-color: rgba(60, 36, 18, 0.75);
-    --btn-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4), 0 -1px 1px rgba(0, 0, 0, 0.7);
+    --btn-text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4), 0 -1px 1px rgba(0, 0, 0, 0.7); 
     --btn-box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.4), inset -1px -1px 3px rgba(0, 0, 0, 0.6), 0px 4px 8px rgba(0, 0, 0, 0.5);
 
     /* DEFAULT LINE TOKEN COLOR MATRIX */
