@@ -279,9 +279,9 @@ function resetToFactoryDefaults() {
     root.style.setProperty('--color-part-desc', '#8a8d97');
     root.style.setProperty('--color-part-where', '#00ff66');
 
-    // Reset frame & button visual styles
-    root.style.setProperty('--console-frame-bg', "url('wood.wp2')");
-    root.style.setProperty('--btn-frame-bg', "url('wood.wp2')");
+    // Reset frame & button visual styles to wood.webp
+    root.style.setProperty('--console-frame-bg', "url('wood.webp')");
+    root.style.setProperty('--btn-frame-bg', "url('wood.webp')");
     root.style.setProperty('--btn-text-color', '#000000');
     root.style.setProperty('--btn-text-shadow', '-1px -1px 1px rgba(0,0,0,0.8), 1px 1px 1px rgba(255,255,255,0.4)');
     root.style.setProperty('--btn-box-shadow', 'inset -1px -1px 2px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.5), 0px 4px 8px rgba(0,0,0,0.5)');
@@ -295,7 +295,14 @@ function resetToFactoryDefaults() {
     const disp = document.getElementById("group-size-display");
     if (disp) disp.textContent = GROUP_SIZE;
 
-    applyViewportAppearance();
+    // Apply material engine if present, else fallback
+    if (window.MATERIAL_PRESETS && typeof applyMaterialPreset === 'function') {
+        const defaultPreset = window.MATERIAL_PRESETS.find(p => p.id === 'WOOD');
+        if (defaultPreset) applyMaterialPreset(defaultPreset);
+        else applyViewportAppearance();
+    } else {
+        applyViewportAppearance();
+    }
 
     // 2. Clear courseware memory buckets
     rawMasterBuckets = null;
@@ -396,7 +403,6 @@ async function loadUserPreferencesFromCloud(userId) {
                 if (prefs.custom_colors.part_where) root.style.setProperty('--color-part-where', prefs.custom_colors.part_where);
             }
 
-            // Sync visual bezel styling across the preset registry
             if (window.MATERIAL_PRESETS) {
                 const matchedPreset = window.MATERIAL_PRESETS.find(p => p.id === activeFrameBorder);
                 if (matchedPreset && typeof applyMaterialPreset === 'function') {
@@ -513,7 +519,7 @@ function applyViewportAppearance() {
     } else if (frameKey === 'GUNMETAL') {
         if (consoleEl) consoleEl.classList.add('gunmetal-frame');
     } else {
-        root.style.setProperty('--console-frame-bg', "url('wood.wp2')");
+        root.style.setProperty('--console-frame-bg', "url('wood.webp')");
         if (consoleEl) consoleEl.classList.add('wood-frame');
     }
 
@@ -1559,24 +1565,23 @@ function checkSessionHandoff() {
     return false;
 }
 
+// Optimized Dropdown Population (No getSession deadlock)
 async function populateCloudProjectsDropdown() {
     const dropdown = document.getElementById('select-cloud-projects');
     if (!dropdown || !supa) return;
 
+    if (!activeUserId) {
+        dropdown.innerHTML = '<option value="">Please sign in to view projects</option>';
+        return;
+    }
+
     dropdown.innerHTML = '<option value="">Scanning cloud projects...</option>';
 
     try {
-        const { data: { session } } = await supa.auth.getSession();
-        const user = session?.user;
-        if (!user) {
-            dropdown.innerHTML = '<option value="">Please sign in to view projects</option>';
-            return;
-        }
-
         const { data: items, error } = await supa
             .from('study_materials') 
             .select('id, title, created_at, page_range')
-            .eq('owner_id', user.id)
+            .eq('owner_id', activeUserId)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -1857,13 +1862,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.preventDefault();
                         e.stopPropagation();
                         if (rightDrawer) rightDrawer.classList.remove('drawer-open');
+
+                        // Instant optimistic state reset: zero wait time
+                        localStorage.removeItem('sst_auth_token');
+                        updateAuthUi(null);
+
+                        // Fire server-side release in background
                         try {
                             if (supa) await supa.auth.signOut({ scope: 'local' });
                         } catch (err) {
-                            console.warn("Sign out catch:", err);
-                        } finally {
-                            localStorage.removeItem('sst_auth_token');
-                            await updateAuthUi(null);
+                            console.warn("Sign-out background sync:", err);
                         }
                     };
                 }
@@ -1920,11 +1928,8 @@ document.addEventListener('DOMContentLoaded', () => {
         populateCloudProjectsDropdown();
     }
 
+    // Single unified auth event listener: eliminates race condition & 10s wait
     if (supa) {
-        supa.auth.getSession().then(({ data: { session } }) => {
-            updateAuthUi(session);
-        });
-
         supa.auth.onAuthStateChange((_event, session) => {
             updateAuthUi(session);
         });
