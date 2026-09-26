@@ -136,7 +136,7 @@ let currentProjectMetadata = {
 let hasUnsavedChanges = false;
 let isSettingsModified = false;
 
-// 1. COURSEWARE 3-STATE STRUCTURE TOGGLE
+// Courseware Structure Toggle & Dimension Mapping
 const CW_MODES = [
     { id: "NOUN", label: "[ NOUN ]" },
     { id: "NOUN_DESC", label: "[ NOUN + DESCRIPTION ]" },
@@ -144,7 +144,6 @@ const CW_MODES = [
 ];
 let currentCwModeIndex = 0;
 
-// 3. DIMENSIONING QUESTION EXPANSIONS
 const DIMENSION_QUESTION_MAP = [
     { match: "[what]", text: "[what is/are?]" },
     { match: "[purpose]", text: "[what is the purpose of ____ to?]" },
@@ -162,7 +161,7 @@ let activeFrameBorder = 'WOOD';
 let activeColorTargetVar = '--color-part-tag';
 let activeTextTarget = 'tag';
 
-// --- HAMMER STATE ---
+// Hammer Slate Memory
 let slateMode = 'NOUN';
 let checkEngineMode = 'VERBATUM';
 let currentLineNum = 1;
@@ -172,7 +171,11 @@ let REQUIRED_PASS_PERCENTAGE = 80;
 let draggedRowElement = null;
 let activeEditingRow = null;
 
-// --- SUPABASE CLIENT & AUTH SESSION STATE ---
+// Telemetry & View Transitions
+let viewFlipCount = 0;
+let lastActiveDisplayId = 'display-study-material';
+
+// --- SUPABASE CLIENT SETUP ---
 const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
 
@@ -232,7 +235,7 @@ function markUnsavedChanges() {
     hasUnsavedChanges = true;
 }
 
-// 1 & 2. Pure White Writing Courseware Toggle & Auto-hide [what]
+// Courseware Structure Cycling & Dynamic Token Filtering
 function cycleCoursewareMode() {
     currentCwModeIndex = (currentCwModeIndex + 1) % CW_MODES.length;
     const activeMode = CW_MODES[currentCwModeIndex];
@@ -251,7 +254,6 @@ function cycleCoursewareMode() {
     }
 }
 
-// 3. Expand Dimensioning Tags
 function formatDimensionTagText(rawTag) {
     if (!rawTag) return "";
     const cleaned = rawTag.trim().toLowerCase();
@@ -259,7 +261,34 @@ function formatDimensionTagText(rawTag) {
     return entry ? entry.text : rawTag;
 }
 
-// 4. Autosave User Preferences on Settings Exit
+// ==========================================
+// PREFERENCES & USER PROFILE RESET
+// ==========================================
+function resetToFactoryDefaults() {
+    currentThemeKey = 'BLACK_BOARD';
+    activeFrameBorder = 'WOOD';
+    GROUP_SIZE = 10;
+    activeRuledLineColor = 'transparent';
+    activeMarginColor = 'transparent';
+
+    const root = document.documentElement;
+    root.style.setProperty('--color-part-tag', '#b29c6d');
+    root.style.setProperty('--color-part-name', '#ffffff');
+    root.style.setProperty('--color-part-desc', '#8a8d97');
+    root.style.setProperty('--color-part-where', '#00ff66');
+
+    const disp = document.getElementById("group-size-display");
+    if (disp) disp.textContent = GROUP_SIZE;
+
+    applyViewportAppearance();
+
+    if (activeBuckets) {
+        for (const [binKey, content] of Object.entries(activeBuckets)) {
+            renderGroupedText(binKey, content);
+        }
+    }
+}
+
 async function autoSavePreferencesOnSettingsExit() {
     if (!supa || !activeUserId || !isSettingsModified) return;
 
@@ -285,10 +314,10 @@ async function autoSavePreferencesOnSettingsExit() {
 
         if (!error) {
             isSettingsModified = false;
-            console.log("[SST] User settings autosaved to Supabase cloud.");
+            console.log("[SST] User preferences successfully synced to cloud.");
         }
     } catch (err) {
-        console.error("Autosave settings error:", err);
+        console.error("Autosave preferences error:", err);
     }
 }
 
@@ -318,10 +347,16 @@ async function loadUserPreferencesFromCloud(userId) {
                 if (prefs.custom_colors.part_desc) root.style.setProperty('--color-part-desc', prefs.custom_colors.part_desc);
                 if (prefs.custom_colors.part_where) root.style.setProperty('--color-part-where', prefs.custom_colors.part_where);
             }
+
             applyViewportAppearance();
+            if (activeBuckets) {
+                for (const [binKey, content] of Object.entries(activeBuckets)) {
+                    renderGroupedText(binKey, content);
+                }
+            }
         }
     } catch (err) {
-        console.warn("[SST] Could not load user cloud preferences:", err.message);
+        console.warn("[SST] Could not retrieve cloud preferences:", err.message);
     }
 }
 
@@ -1016,7 +1051,7 @@ function toggleGroup(paneId, groupIndex) {
     }
 }
 
-// Global scope export for inline onclick
+// Window export for inline tab switching
 window.switchStudyTab = function(evt, targetBin) {
     releaseEditLock();
     document.querySelectorAll('.study-tab-pane').forEach(pane => pane.classList.remove('active'));
@@ -1282,6 +1317,35 @@ function compileTestResultRecord() {
     };
 }
 
+async function logCheckRunTelemetry(record) {
+    if (!supa || !activeUserId) return;
+
+    const payload = {
+        user_id: activeUserId,
+        project_id: currentProjectMetadata.source_file || "local_session",
+        project_title: currentProjectMetadata.source_file || "Local JSON",
+        active_tab: record.active_tab,
+        open_groups: record.open_groups,
+        mode: record.mode,
+        engine: record.engine,
+        score_percentage: record.score_percentage,
+        passed_count: record.passed_count,
+        total_lines: record.total_open_lines,
+        view_flips: viewFlipCount,
+        detailed_records: record.records,
+        created_at: record.timestamp
+    };
+
+    try {
+        const { error } = await supa.from('study_stats').insert([payload]);
+        if (!error) {
+            console.log("[SST] Telemetry audit run recorded.");
+        }
+    } catch (err) {
+        console.warn("[SST] Telemetry push pass:", err.message);
+    }
+}
+
 function performSlateClear() {
     initCopySlate();
     const scoreDisplay = document.getElementById('slate-score-display');
@@ -1529,7 +1593,6 @@ document.addEventListener('DOMContentLoaded', () => {
     applyViewportAppearance();
     initCopySlate();
 
-    // 1. Hook the 3-State Structure Toggler
     const btnCwToggle = document.getElementById("btn-courseware-toggle");
     if (btnCwToggle) {
         btnCwToggle.addEventListener("click", cycleCoursewareMode);
@@ -1553,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Shutter ribbon
+    // Shutter Controls
     const shutterHeader = document.getElementById('workstation-shutter-header');
     const workspaceCore = document.querySelector('.workspace-core');
     let shutterIdleTimer = null;
@@ -1692,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Auth Engine
+    // Supabase Auth Engine
     const authTitle = document.getElementById('auth-modal-title');
     const inputEmail = document.getElementById('auth-input-email');
     const inputPass = document.getElementById('auth-input-password');
@@ -1711,6 +1774,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userDisplaySpan.textContent = session.user.email.split('@')[0].toUpperCase();
             }
             loadUserPreferencesFromCloud(activeUserId);
+
             if (profileDrawer) {
                 profileDrawer.innerHTML = `
                     <a href="javascript:void(0)" class="sst-nav-link" id="btn-open-account-settings" data-i18n="nav_account_settings">Account Settings</a>
@@ -1749,6 +1813,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userDisplaySpan) {
                 userDisplaySpan.textContent = "SIGN IN";
             }
+            resetToFactoryDefaults();
+
             if (profileDrawer) {
                 profileDrawer.innerHTML = `
                     <a href="javascript:void(0)" class="sst-nav-link" id="btn-trigger-login">Sign In / Register</a>
@@ -1851,7 +1917,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // View Switching & 4. Autosave on Settings Exit
+    // View Switching & Autosave on Settings Exit
     const btnStudy = document.getElementById('btn-nav-study');
     const btnGear  = document.getElementById('btn-nav-gear');
     const btnCopy  = document.getElementById('btn-nav-slate');
@@ -1865,8 +1931,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function switchView(activeDisplay, activeButton) {
         releaseEditLock();
+
         if (displaySettings && displaySettings.classList.contains('active') && activeDisplay !== displaySettings) {
             autoSavePreferencesOnSettingsExit();
+        }
+
+        if (activeDisplay && activeDisplay.id !== lastActiveDisplayId) {
+            viewFlipCount++;
+            lastActiveDisplayId = activeDisplay.id;
         }
 
         allDisplays.forEach(disp => disp && disp.classList.remove('active'));
@@ -1976,7 +2048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // File loading
+    // JSON Loading Handlers
     const btnLoadFile = document.getElementById('btn-load-file');
     const jsonFileInput = document.getElementById('json-file-input');
     const btnChoiceLocal = document.getElementById('btn-choice-local');
@@ -2210,7 +2282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnApplyHex.addEventListener('click', () => {
             let val = inputHex.value.trim();
             if (!val.startsWith('#') && val.length === 6) val = '#' + val;
-            if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
+            if (/^#[0-9A-F]{6}$/i.test(val) \vert{}\vert{} /^#[0-9A-F]{3}$/i.test(val)) {
                 document.documentElement.style.setProperty(activeColorTargetVar, val);
                 if (nativeColorWell) nativeColorWell.value = val;
                 isSettingsModified = true;
@@ -2362,8 +2434,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCheck = document.getElementById('btn-check-comparator');
     if (btnCheck) {
         btnCheck.addEventListener('click', () => {
-            if (checkEngineMode === 'VERBATUM') runVerbatimCheck();
-            else alert("[ AI CHECK ] Dispatching active slate & open group study lines to Gemini comparator engine.");
+            if (checkEngineMode === 'VERBATUM') {
+                runVerbatimCheck();
+                const record = compileTestResultRecord();
+                logCheckRunTelemetry(record);
+            } else {
+                alert("[ AI CHECK ] Dispatching active slate & open group study lines to Gemini comparator engine.");
+            }
         });
     }
 
