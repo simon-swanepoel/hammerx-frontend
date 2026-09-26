@@ -5,21 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SST-comparator / Hammer-X Workstation</title>
 
-    <!-- Cache-Control Directives: Prevents stale HTML caching -->
+    <!-- Cache-Control Directives -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
     <!-- Google Fonts Suite: 16 Curated Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@400..700&family=Cinzel:wght@400..900&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400..700&family=Inter:wght@300..800&family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Merriweather:ital,wght@0,300..900;1,300..900&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Patrick+Hand&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,300..900;1,300..900&family=Roboto+Mono:ital,wght@0,300..700;1,300..700&family=Roboto:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     
-    <!-- Versioned CSS to avoid stale client styles -->
-    <link rel="stylesheet" href="SST-comparator.css?v=2.6.2">
+    <!-- Unversioned Clean Stylesheet -->
+    <link rel="stylesheet" href="SST-comparator.css">
 
     <!-- Universal Mega-Footer Web Component -->
-    <script src="SST-footer.js?v=2.6.2"></script>
+    <script src="SST-footer.js"></script>
     <link rel="icon" type="image/png" href="SSTlogo.png">
 </head>
 <body>
@@ -66,7 +66,7 @@
                 </div>
             </div>
 
-            <!-- Centered horizontal logo and text branding block -->
+            <!-- Centered branding block -->
             <div class="logo-wrapper">
                 <img src="SSTlogo.png" alt="Swanepoel Study Tools Brand Logo" class="sst-logo" id="shutter-logo">
                 <div class="sst-branding-text-zone">
@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- Right Configuration & User Profile Anchor (3-Dots Menu) -->
+            <!-- Right Configuration & Profile Anchor -->
             <div class="top-menu-container menu-right">
                 <div class="drawer-wrapper">
                     <div class="user-profile-trigger" id="comparator-user-profile-trigger">
@@ -117,7 +117,7 @@
                     <div class="console-viewport">
                         
                         <!-- Viewport Display 1: Courseware -->
-                        <div id="display-study-material" class="viewport-display active">
+                        <div id="display-study-material" class="viewport-display active viewport-mode-NOUN">
                             <div class="study-viewport-layout">
                                 
                                 <!-- 10 TAB HEADERS -->
@@ -148,13 +148,16 @@
                                     <div id="09_WHY" class="study-tab-pane"></div>
                                 </div>
                                 
-                                <!-- FOOTER STRIP -->
+                                <!-- FOOTER STRIP WITH CLEAN WHITE TEXT TOGGLE -->
                                 <div class="study-footer-strip">
                                     <div class="footer-left-group">
                                         <button id="btn-study-hide" class="study-footer-button" data-i18n="btn_hide">HIDE</button>
                                         <button id="btn-study-unhide" class="study-footer-button" data-i18n="btn_unhide">UNHIDE</button>
                                         <button id="btn-study-delete" class="study-footer-button btn-danger-action" data-i18n="btn_delete">DELETE</button>
                                         <button id="btn-study-save" class="study-footer-button btn-save-action" data-i18n="btn_save">SAVE</button>
+                                        
+                                        <!-- White Writing Structure Toggle (No Box/Border) -->
+                                        <button id="btn-courseware-toggle" class="study-footer-button btn-toggle-plain" data-mode="NOUN">[ NOUN ]</button>
                                     </div>
                                 </div>
 
@@ -478,7 +481,7 @@
         </div>
     </div>
 
-    <!-- ACCOUNT SETTINGS MODAL VIEWPORT WITH EMERGENCY WORKSTATION RESET -->
+    <!-- ACCOUNT SETTINGS MODAL VIEWPORT WITH HARD RESET -->
     <div class="comparator-modal-overlay" id="account-settings-modal">
         <div class="account-settings-box">
             <div class="modal-title" data-i18n="account_settings_title">ACCOUNT SETTINGS</div>
@@ -494,7 +497,6 @@
                     </select>
                 </div>
 
-                <!-- Client-Side RAM / Cache Hard Reset Control -->
                 <div class="settings-sub-divider" style="margin: 8px 0;"></div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <span class="settings-modal-label" style="font-size: 0.8rem; color: #b29c6d;">WORKSTATION MAINTENANCE</span>
@@ -513,10 +515,10 @@
     <!-- UNIVERSAL FAT FOOTER WEB COMPONENT -->
     <sst-footer></sst-footer>
 
-    <!-- Supabase CDN (Must execute first) -->
+    <!-- Supabase CDN (Direct Script Reference) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Version-Controlled Local Workstation Scripts -->
+    <!-- Clean, Non-Versioned Workstation Scripts (Loaded exactly once) -->
     <script src="SST-comparator.js"></script>
     <script src="SST-comparator_frames.js"></script>
 </body>
