@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SST Institute Portal — Institutional Command Console</title>
+
+    <!-- Cache-Control Directives -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- Google Fonts Suite -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Fira+Code:wght@400..700&family=Inter:wght@300..800&display=swap" rel="stylesheet">
+
+    <!-- Universal Fat Footer Web Component -->
+    <script src="SST-footer.js"></script>
+    <link rel="icon" type="image/png" href="SSTlogo.png">
+
+    <style>
+        /* ===================================================
+           1. CORE PALETTE & BASE RESETS
+           =================================================== */
+        :root {
+            /* Google Dark Surface Palette */
+            --bg-google-charcoal: #202124;
+            --slate-surface-charcoal: #292a2d;
+            --slate-border-charcoal: #3c4043;
+
+            /* SST Shutter Palette */
+            --shutter-bg: rgba(255, 255, 255, 0.98);
+            --shutter-title-color: #0b2545;
+            --shutter-divider-color: #0b2545;
+            --shutter-sub-color: #b29c6d;
+            --shutter-icon-color: #2c2d30;
+
+            /* Hardware Accents & Text */
+            --gold-accent: #b29c6d;
+            --gold-glow: rgba(178, 156, 109, 0.35);
+            --text-main: #e8eaed;
+            --text-muted: #9aa0a6;
+            --text-dim: #5f6368;
+            --grid-line-color: rgba(255, 255, 255, 0.08);
+
+            /* Dynamic Shutter Height Variables */
+            --shutter-height-open: 16vh;
+            --shutter-height-collapsed: 5vh;
+            --current-shutter-height: var(--shutter-height-open);
+
+            /* Console Geometry */
+            --viewport-margin-x: 3vw;
+            --viewport-offset-top: 3vh;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body, html {
+            width: 100%;
+            min-height: 100%;
+            height: auto;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background-color: var(--bg-google-charcoal);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+            scroll-behavior: smooth;
+        }
+
+        body::-webkit-scrollbar {
+            width: 10px;
+        }
+        body::-webkit-scrollbar-track {
+            background: #17181a;
+        }
+        body::-webkit-scrollbar-thumb {
+            background: #3c4043;
+            border-radius: 4px;
+            border: 2px solid #17181a;
+        }
+        body::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-accent);
+        }
+
+        /* ===================================================
+           2. WORKSTATION TOP SHUTTER BAR (1:1 REPRODUCTION)
+           =================================================== */
+        .workstation-header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: var(--shutter-height-open) !important; 
+            max-height: var(--shutter-height-open) !important;
+            background-color: var(--shutter-bg);
+            border-bottom: 3px solid #b29c6d;
+            z-index: 1000 !important;
+            display: flex !important;          
+            flex-direction: column !important;   
+            justify-content: center !important; 
+            align-items: center !important;     
+            box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.4);
+            overflow: visible !important;
+            transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .workstation-header.shutter-collapsed {
+            height: var(--shutter-height-collapsed) !important;
+            max-height: var(--shutter-height-collapsed) !important;
+            cursor: pointer !important;
+            overflow: hidden !important;
+        }
+
+        .workstation-header.shutter-collapsed .logo-wrapper,
+        .workstation-header.shutter-collapsed .top-menu-container {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.2s ease !important;
+        }
+
+        .logo-wrapper,
+        .top-menu-container {
+            transition: opacity 0.3s ease;
+        }
+
+        .logo-wrapper {
+            display: flex;
+            flex-direction: row;      
+            justify-content: center;  
+            align-items: center;      
+            gap: 25px;                
+            width: auto;
+            margin: 0 auto;           
+        }
+
+        .sst-logo {
+            height: 12vh; 
+            width: auto;  
+            display: block;
+            mix-blend-mode: multiply; 
+        }
+
+        .sst-branding-text-zone {
+            display: flex;
+            flex-direction: column;   
+            justify-content: center;  
+            align-items: flex-start;  
+            height: auto;             
+        }
+
+        .sst-title-main {
+            color: var(--shutter-title-color);
+            font-family: "Cinzel", "Didot", "Bodoni MT", serif;
+            font-size: clamp(1.2rem, 3.5vh + 0.1rem, 2.2rem); 
+            font-weight: 1000;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;   
+            margin: 0;               
+            text-align: left;         
+            user-select: none;
+        }
+
+        .sst-title-divider {
+            height: 2px;
+            background-color: var(--shutter-divider-color);
+            align-self: stretch; 
+            margin: 0.5vh 0;
+        }
+
+        .sst-title-sub {
+            color: var(--shutter-sub-color);
+            font-family: "Cinzel", "Didot", "Bodoni MT", serif;
+            font-size: clamp(0.7rem, 3vh + 0.05rem, 1.1rem); 
+            font-weight: 1000;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;   
+            margin: 0.3vh 0 0 0;       
+            text-align: left;         
+            user-select: none;
+        }
+
+        .top-menu-container {
+            position: absolute;
+            top: 0;
+            height: 100%; 
+            z-index: 100;
+            display: flex;
+            align-items: center; 
+        }
+        .menu-left { left: 30px; gap: 15px; }
+        .menu-right { right: 30px; flex-direction: row; gap: 15px; }
+
+        .menu-trigger {
+            font-size: clamp(1.25rem, 1.35vw + 0.45vh, 2.15rem);
+            color: var(--shutter-icon-color);
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s ease, transform 0.2s ease;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .menu-trigger:hover { color: #b29c6d; transform: scale(1.1); }
+
+        .drawer-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            pointer-events: auto !important;
+        }
+
+        .nav-links-drawer {
+            position: absolute;
+            top: 100%; 
+            display: flex;
+            flex-direction: column; 
+            gap: 12px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            background: rgba(13, 15, 18, 0.98);
+            border: 1px solid #b29c6d;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 10000 !important;
+        }
+
+        .menu-left .nav-links-drawer { left: 0; }
+        .menu-right .nav-links-drawer { right: 0; align-items: flex-end; }
+
+        .drawer-wrapper:hover .nav-links-drawer,
+        .drawer-wrapper.drawer-open .nav-links-drawer {
+            opacity: 1 !important;
+            max-height: 380px !important; 
+            padding: 15px 20px !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+        }
+
+        .sst-nav-link {
+            color: #b29c6d;
+            text-decoration: none;
+            font-size: clamp(0.78rem, 0.8vw + 0.1vh, 1.05rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s ease, transform 0.2s ease;
+            cursor: pointer !important;
+        }
+        .sst-nav-link:hover { color: #00f0ff; transform: translateX(4px); }
+        .menu-right .sst-nav-link:hover { transform: translateX(-4px); }
+
+        .user-profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+            height: 100%;
+        }
+
+        .user-display-name {
+            color: var(--shutter-icon-color);
+            font-size: clamp(0.72rem, 0.72vw + 0.1vh, 1.05rem);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.85;
+        }
+        .user-profile-trigger:hover .user-display-name { color: #b29c6d; }
+
+        /* ===================================================
+           3. SUNKEN CONSOLE VIEWPORT & RESIZABLE GRID
+           =================================================== */
+        #portal-sunken-viewport {
+            margin-left: var(--viewport-margin-x);
+            margin-right: var(--viewport-margin-x);
+            width: calc(100vw - (2 * var(--viewport-margin-x)));
+            margin-top: calc(var(--current-shutter-height) + var(--viewport-offset-top));
+            margin-bottom: 5vh;
+            background-color: var(--slate-surface-charcoal);
+            border: 1px solid var(--slate-border-charcoal);
+            border-radius: 6px;
+            box-shadow: 
+                inset 3px 3px 12px rgba(0, 0, 0, 0.85), 
+                inset -1px -1px 3px rgba(255, 255, 255, 0.1),
+                0 14px 40px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 10;
+            transition: margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .console-status-rail {
+            height: 42px;
+            background: #1c1d20;
+            border-bottom: 1px solid var(--slate-border-charcoal);
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-family: 'Fira Code', monospace;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .console-terminal-tag {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--gold-accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-beacon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff66;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.8);
+        }
+
+        .status-beacon.beacon-locked {
+            background: #ff3344;
+            box-shadow: 0 0 10px rgba(255, 51, 68, 0.8);
+        }
+
+        .console-meta-details {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            display: flex;
+            gap: 16px;
+        }
+
+        .top-scrollbar-sync-runner {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 12px;
+            background: #17181a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+
+        .top-scrollbar-sync-runner::-webkit-scrollbar {
+            height: 8px;
+        }
+        .top-scrollbar-sync-runner::-webkit-scrollbar-track {
+            background: #17181a;
+        }
+        .top-scrollbar-sync-runner::-webkit-scrollbar-thumb {
+            background: var(--slate-border-charcoal);
+            border-radius: 4px;
+        }
+        .top-scrollbar-sync-runner::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-accent);
+        }
+
+        .top-scrollbar-phantom-track {
+            height: 1px;
+        }
+
+        .portal-grid-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+            position: relative;
+        }
+
+        .portal-grid-scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .portal-grid-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--slate-border-charcoal);
+            border-radius: 4px;
+        }
+
+        .portal-data-table {
+            border-collapse: collapse;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            text-align: left;
+            width: max-content;
+            min-width: 100%;
+            background-color: var(--slate-surface-charcoal);
+            table-layout: fixed;
+        }
+
+        .portal-data-table thead th {
+            position: sticky;
+            top: 0;
+            background: #1c1d20;
+            color: var(--gold-accent);
+            padding: 12px 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            user-select: none;
+            z-index: 50;
+            border-bottom: 2px solid #ffffff !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .portal-data-table thead th:not(:last-child) {
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 6px;
+            cursor: col-resize;
+            user-select: none;
+            height: 100%;
+            z-index: 60;
+        }
+        .resizer:hover, .resizing {
+            background: var(--gold-accent);
+        }
+
+        .portal-data-table tbody td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--grid-line-color);
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background-color 0.15s ease;
+        }
+
+        .portal-data-table tbody td:not(:last-child) {
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .portal-data-table tbody tr {
+            cursor: pointer;
+        }
+        .portal-data-table tbody tr:hover {
+            background-color: rgba(178, 156, 109, 0.12);
+        }
+
+        .clickable-cell {
+            cursor: pointer;
+        }
+        .clickable-cell:hover {
+            color: #00f0ff !important;
+            text-decoration: underline;
+        }
+
+        .action-cell-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-cell-action {
+            background: #17181b;
+            border: 1px solid var(--slate-border-charcoal);
+            padding: 3px 7px;
+            border-radius: 3px;
+            font-size: 0.68rem;
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+        .btn-action-activate { color: #00ff66; border-color: rgba(0, 255, 102, 0.3); }
+        .btn-action-activate:hover { background: rgba(0, 255, 102, 0.2); }
+        
+        .btn-action-deactivate { color: #ffd700; border-color: rgba(255, 215, 0, 0.3); }
+        .btn-action-deactivate:hover { background: rgba(255, 215, 0, 0.2); }
+
+        .btn-action-archive { color: #4fa3e3; border-color: rgba(79, 163, 227, 0.3); }
+        .btn-action-archive:hover { background: rgba(79, 163, 227, 0.2); }
+
+        .btn-action-delete { color: #ff3344; border-color: rgba(255, 51, 68, 0.3); }
+        .btn-action-delete:hover { background: rgba(255, 51, 68, 0.2); }
+
+        .btn-action-stats { color: var(--gold-accent); border-color: var(--gold-accent); text-decoration: none; }
+        .btn-action-stats:hover { background: var(--gold-accent); color: #000; }
+
+        .th-add-col-btn {
+            background: #24262b;
+            color: var(--gold-accent);
+            border: 1px dashed var(--gold-accent);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 0.72rem;
+            transition: all 0.2s ease;
+        }
+        .th-add-col-btn:hover {
+            background: var(--gold-accent);
+            color: #000;
+        }
+
+        .floating-h-scroll-dock {
+            position: fixed;
+            bottom: 0;
+            left: var(--viewport-margin-x);
+            width: calc(100vw - (2 * var(--viewport-margin-x)));
+            height: 16px;
+            background: rgba(23, 24, 26, 0.95);
+            border-top: 1px solid var(--slate-border-charcoal);
+            border-radius: 6px 6px 0 0;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.7);
+            z-index: 500;
+            backdrop-filter: blur(4px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .floating-h-scroll-dock.dock-hidden {
+            opacity: 0;
+            transform: translateY(100%);
+            pointer-events: none;
+        }
+
+        .floating-scroll-runner {
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        .floating-scroll-runner::-webkit-scrollbar { height: 10px; }
+        .floating-scroll-runner::-webkit-scrollbar-thumb {
+            background: var(--slate-border-charcoal);
+            border-radius: 4px;
+        }
+
+        /* ===================================================
+           4. MODAL OVERLAYS (READ-ONLY / EDITABLE WORKFLOW)
+           =================================================== */
+        .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.88) !important;
+            backdrop-filter: blur(5px) !important;
+            z-index: 999999 !important;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: #0d0f12;
+            border: 2px solid var(--gold-accent);
+            border-radius: 6px;
+            padding: 24px;
+            width: 90%;
+            max-width: 580px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .modal-title {
+            color: var(--gold-accent);
+            font-size: 0.95rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .text-font-dropdown {
+            background: #17181b;
+            color: var(--text-main);
+            border: 1px solid var(--slate-border-charcoal);
+            border-radius: 4px;
+            padding: 9px 12px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+        }
+        .text-font-dropdown:focus { border-color: var(--gold-accent); }
+        .text-font-dropdown:read-only {
+            background: #121315;
+            color: #9aa0a6;
+            border-color: #2c2d30;
+            cursor: default;
+        }
+
+        .modal-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.78rem;
+            font-weight: bold;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 3px;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+        .btn-modal-save { border-color: var(--gold-accent); color: var(--gold-accent); }
+        .btn-modal-save:hover { background: var(--gold-accent); color: #000; }
+        .btn-modal-danger { border-color: #ff3344; color: #ff3344; }
+        .btn-modal-danger:hover { background: #ff3344; color: #fff; }
+
+        .form-set-block {
+            background: #141619;
+            border: 1px solid #2a2c30;
+            padding: 12px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .btn-remove-set {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #ff3344;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .input-with-arrow {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-down-arrow {
+            background: #17181b;
+            border: 1px solid var(--slate-border-charcoal);
+            color: var(--gold-accent);
+            padding: 9px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-down-arrow:hover {
+            border-color: var(--gold-accent);
+        }
+
+        sst-footer {
+            display: block !important;
+            position: relative !important;
+            width: 100vw !important;
+            min-height: 350px !important;
+            z-index: 100 !important;
+            clear: both !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUTHENTICATION MODAL -->
+    <div class="modal-overlay" id="sst-auth-modal">
+        <div class="modal-box" style="max-width: 420px;">
+            <div class="modal-title">INSTITUTE PORTAL ACCESS</div>
+            <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+                This portal is strictly reserved for School Administrators and Institutional Directors.
+            </p>
+            <form id="sst-auth-form" onsubmit="event.preventDefault();" style="display: flex; flex-direction: column; gap: 10px;">
+                <input type="email" id="auth-input-email" autocomplete="username" placeholder="Institute Admin Email" class="text-font-dropdown" required />
+                <input type="password" id="auth-input-password" autocomplete="current-password" placeholder="Password" class="text-font-dropdown" required />
+                <div id="auth-error-msg" style="color: #ff3344; font-size: 0.75rem; min-height: 16px; font-weight: bold;"></div>
+            </form>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" id="btn-auth-submit" class="modal-btn btn-modal-save" style="width: 100%;">AUTHENTICATE INSTITUTE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. CORE STATIC/EDIT OVERLAY (Student ID, Name, Password, Grade, Cohort) -->
+    <div class="modal-overlay" id="modal-core-student">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="core-modal-heading">STUDENT PROFILE RECORD</span>
+                <span id="core-modal-id-tag" style="color: var(--text-muted); font-size: 0.75rem;"></span>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">STUDENT ID</label>
+                    <input type="text" id="core-input-display-id" class="text-font-dropdown" readonly />
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">STUDENT NAME</label>
+                    <input type="text" id="core-input-full-name" class="text-font-dropdown" readonly />
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">ACCOUNT PASSWORD</label>
+                    <input type="text" id="core-input-password" class="text-font-dropdown" readonly />
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">GRADE</label>
+                    <input type="text" id="core-input-grade" class="text-font-dropdown" readonly />
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: var(--text-muted);">COHORT</label>
+                    <input type="text" id="core-input-cohort" class="text-font-dropdown" readonly />
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" class="modal-btn" onclick="closeModal('modal-core-student')">CLOSE</button>
+                <button type="button" id="btn-core-edit-toggle" class="modal-btn btn-modal-save">EDIT</button>
+                <button type="button" id="btn-core-save" class="modal-btn btn-modal-save" style="display: none;">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. GUARDIAN OVERLAY (Multi-Set: Name, Tel, Email, Physical Address) -->
+    <div class="modal-overlay" id="modal-guardian">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="guardian-modal-heading">GUARDIAN PROFILE DATA</span>
+                <span id="guardian-modal-id-tag" style="color: var(--text-muted); font-size: 0.75rem;"></span>
+            </div>
+
+            <div id="guardian-sets-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+            <button type="button" id="btn-add-guardian-set" class="modal-btn" style="border-style: dashed; display: none;">+ ADD SET</button>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" class="modal-btn" onclick="closeModal('modal-guardian')">CLOSE</button>
+                <button type="button" id="btn-guardian-edit-toggle" class="modal-btn btn-modal-save">EDIT</button>
+                <button type="button" id="btn-guardian-save" class="modal-btn btn-modal-save" style="display: none;">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SUBJECTS / TEACHERS OVERLAY (Multi-Set with Downward Arrow Placeholders) -->
+    <div class="modal-overlay" id="modal-subjects">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="subject-modal-heading">SUBJECTS & TEACHERS</span>
+                <span id="subject-modal-id-tag" style="color: var(--text-muted); font-size: 0.75rem;"></span>
+            </div>
+
+            <div id="subject-sets-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+            <button type="button" id="btn-add-subject-set" class="modal-btn" style="border-style: dashed; display: none;">+ ADD SET</button>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" class="modal-btn" onclick="closeModal('modal-subjects')">CLOSE</button>
+                <button type="button" id="btn-subject-edit-toggle" class="modal-btn btn-modal-save">EDIT</button>
+                <button type="button" id="btn-subject-save" class="modal-btn btn-modal-save" style="display: none;">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. CUSTOM COLUMN OVERLAY (Static Read -> Editable Form -> Save) -->
+    <div class="modal-overlay" id="modal-custom-col-view">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="custom-modal-title">CUSTOM COLUMN RECORD</span>
+                <span id="custom-modal-id-tag" style="color: var(--text-muted); font-size: 0.75rem;"></span>
+            </div>
+            
+            <div id="custom-fields-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+            <button type="button" id="btn-add-custom-field-row" class="modal-btn" style="border-style: dashed; display: none;">+ ADD FIELD</button>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" class="modal-btn" onclick="closeModal('modal-custom-col-view')">CLOSE</button>
+                <button type="button" id="btn-custom-edit-toggle" class="modal-btn btn-modal-save">EDIT</button>
+                <button type="button" id="btn-custom-save" class="modal-btn btn-modal-save" style="display: none;">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. ADD COLUMN POPUP -->
+    <div class="modal-overlay" id="modal-add-column-prompt">
+        <div class="modal-box" style="max-width: 420px;">
+            <div class="modal-title">ADD REGISTRY COLUMN</div>
+            <p style="font-size: 0.72rem; color: var(--text-muted);">
+                Specify the name for this new dynamic column:
+            </p>
+            <input type="text" id="input-new-column-title" placeholder="e.g. Locker Number" class="text-font-dropdown" />
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" class="modal-btn" onclick="closeModal('modal-add-column-prompt')">CANCEL</button>
+                <button type="button" id="btn-confirm-add-column" class="modal-btn btn-modal-save">CREATE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. ACTION CONFIRMATION MODAL (Archive / Delete) -->
+    <div class="modal-overlay" id="modal-action-confirm">
+        <div class="modal-box" style="max-width: 420px;">
+            <div class="modal-title" id="confirm-modal-title">CONFIRM ACTION</div>
+            <p id="confirm-modal-question" style="font-size: 0.85rem; color: #fff; line-height: 1.4;"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" class="modal-btn" onclick="closeModal('modal-action-confirm')">NO</button>
+                <button type="button" id="btn-confirm-action-yes" class="modal-btn btn-modal-danger">YES</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1:1 CONSOLIDATED WHITE & GOLD SHUTTER HEADER BAR -->
+    <header class="workstation-header" id="workstation-shutter-header">
+        <div class="top-menu-container menu-left">
+            <div class="drawer-wrapper">
+                <div class="menu-trigger">☰</div>
+                <nav class="nav-links-drawer">
+                    <a href="https://simon-swanepoel.github.io/hammerx-frontend/index.html" class="sst-nav-link">HOME</a>
+                    <a href="institute-portal.html" class="sst-nav-link" style="color: #00f0ff;">STUDENTS</a>
+                    <a href="teacher-portal.html" class="sst-nav-link">TEACHERS</a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="logo-wrapper">
+            <img src="SSTlogo.png" alt="Swanepoel Study Tools Brand Logo" class="sst-logo" id="shutter-logo">
+            <div class="sst-branding-text-zone">
+                <h2 class="sst-title-main" id="shutter-title-main">Swanepoel Study Tools</h2>
+                <div class="sst-title-divider" id="shutter-title-divider"></div>
+                <h3 class="sst-title-sub" id="shutter-title-sub">INSTITUTE REGISTRY PORTAL</h3>
+            </div>
+        </div>
+
+        <div class="top-menu-container menu-right">
+            <div class="drawer-wrapper">
+                <div class="user-profile-trigger" id="comparator-user-profile-trigger">
+                    <span class="user-display-name" id="user-display-label">SIGN IN</span>
+                    <div class="menu-trigger">⋮</div>
+                </div>
+                <nav class="nav-links-drawer profile-drawer" id="profile-drawer-menu">
+                    <a href="javascript:void(0)" class="sst-nav-link" id="btn-trigger-login">Institute Sign In</a>
+                    <a href="javascript:void(0)" class="sst-nav-link" id="btn-export-rows">Export Registry CSV</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- SUNKEN CONSOLE VIEWPORT SLATE -->
+    <main id="portal-sunken-viewport">
+        
+        <!-- Console Terminal Rail Strip -->
+        <div class="console-status-rail">
+            <div class="console-terminal-tag">
+                <span class="status-beacon beacon-locked" id="auth-status-beacon"></span>
+                <span id="console-status-text">INITIALIZING SECURE SESSION...</span>
+            </div>
+            <div class="console-meta-details">
+                <span id="label-active-count">0 STUDENTS LOADED</span>
+                <span id="label-col-count">12 COLUMNS ACTIVE</span>
+                <span>SCOPE: INSTITUTIONAL</span>
+            </div>
+        </div>
+
+        <!-- 1. Dedicated Top Horizontal Scrollbar (Mirrored Runner) -->
+        <div class="top-scrollbar-sync-runner" id="top-scroll-runner">
+            <div class="top-scrollbar-phantom-track" id="top-scroll-phantom"></div>
+        </div>
+
+        <!-- 2. Scrollable Resizable Data Grid Wrapper -->
+        <div class="portal-grid-scroll-container" id="grid-scroll-container">
+            <table class="portal-data-table" id="student-data-table">
+                <thead>
+                    <tr id="table-header-row">
+                        <!-- EXACT HEADINGS SPECIFIED IN REQUEST -->
+                        <th style="width: 150px;">STUDENT ID</th>
+                        <th style="width: 190px;">STUDENT NAME</th>
+                        <th style="width: 170px;">ACCOUNT PASSWORD</th>
+                        <th style="width: 110px;">GRADE</th>
+                        <th style="width: 120px;">COHORT</th>
+                        <th style="width: 220px;">GUARDIAN</th>
+                        <th style="width: 220px;">SUBJECTS/TEACHERS</th>
+                        <th style="width: 280px; text-align: center;">ACTIONS (DE/ACTIVATE | ARCHIVE | DELETE | STATS)</th>
+                        <!-- Dynamic Columns added here -->
+                        <th style="width: 140px; text-align: center;" id="th-add-col-anchor">
+                            <button type="button" class="th-add-col-btn" id="btn-open-add-col-prompt">ADD COLUMN +</button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="student-table-body">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--gold-accent); font-weight: bold;">
+                            [ LOCKED ] AUTHENTICATION REQUIRED TO VIEW REGISTRY.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- FLOATING HORIZONTAL SCROLL RUNNER -->
+    <div class="floating-h-scroll-dock" id="floating-scroll-dock">
+        <div class="floating-scroll-runner" id="floating-scroll-runner">
+            <div class="floating-scroll-phantom" id="floating-scroll-phantom"></div>
+        </div>
+    </div>
+
+    <!-- UNIVERSAL FAT FOOTER WEB COMPONENT -->
+    <sst-footer></sst-footer>
+
+    <!-- Supabase CDN Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- SCRIPT CONTROLLER -->
+    <script>
+        const SUPABASE_URL = "https://jqycpxdzeevoxmcvvmvu.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxeWNweGR6ZWV2b3htY3Z2bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDExNTAsImV4cCI6MjEwNTQ3NzE1MH0.NgSWSuXa-4gJu7pnJCSCKpaGU4S2q4z8wrV1t6sz6_w";
+
+        const supa = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                storageKey: 'sst_auth_token',
+                storage: window.localStorage,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        }) : null;
+
+        // Global Registry State
+        let currentInstituteId = null;
+        let studentRecords = [];
+        let customColumnsList = [];
+        let activeStudent = null;
+        let activeActionStudentId = null;
+        let activeActionType = null;
+        let activeCustomColKey = null;
+
+        // DOM Referencing
+        const authModal = document.getElementById('sst-auth-modal');
+        const userDisplayLabel = document.getElementById('user-display-label');
+        const profileDrawerMenu = document.getElementById('profile-drawer-menu');
+        const statusBeacon = document.getElementById('auth-status-beacon');
+        const consoleStatusText = document.getElementById('console-status-text');
+        const studentTableBody = document.getElementById('student-table-body');
+        const tableHeaderRow = document.getElementById('table-header-row');
+        const thAddColAnchor = document.getElementById('th-add-col-anchor');
+        const labelActiveCount = document.getElementById('label-active-count');
+        const labelColCount = document.getElementById('label-col-count');
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- 1. RBAC IDENTIFICATION & DATA HYDRATION ---
+        async function verifyInstituteRole(session) {
+            if (!session || !session.user) {
+                lockConsoleView("AUTHENTICATION REQUIRED // PLEASE LOG IN");
+                return false;
+            }
+
+            try {
+                const { data: profile, error } = await supa
+                    .from('profiles')
+                    .select('id, role, full_name, display_id, institute_id')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (error || !profile) throw error || new Error("Profile not found.");
+
+                if (profile.role === 'institute' || profile.role === 'admin') {
+                    currentInstituteId = profile.role === 'institute' ? profile.id : (profile.institute_id || profile.id);
+                    unlockConsoleView(profile.full_name || profile.display_id || session.user.email);
+                    await fetchRegistry();
+                    return true;
+                } else {
+                    await supa.auth.signOut();
+                    lockConsoleView("ACCESS DENIED // NON-INSTITUTE ROLE");
+                    alert("ACCESS DENIED: Institutional clearance required.");
+                    openModal('sst-auth-modal');
+                    return false;
+                }
+            } catch (err) {
+                console.error("Auth check failed:", err);
+                lockConsoleView("SECURITY EXCEPTION // ACCESS RESTRICTED");
+                return false;
+            }
+        }
+
+        function lockConsoleView(msg) {
+            statusBeacon.className = "status-beacon beacon-locked";
+            consoleStatusText.textContent = msg;
+            userDisplayLabel.textContent = "SIGN IN";
+            profileDrawerMenu.innerHTML = `<a href="javascript:void(0)" class="sst-nav-link" id="btn-trigger-login">Institute Sign In</a>`;
+            studentTableBody.innerHTML = `
+                <tr>
+                    <td colspan="${9 + customColumnsList.length}" style="text-align: center; padding: 40px; color: var(--gold-accent); font-weight: bold;">
+                        [ LOCKED ] ${msg}
+                    </td>
+                </tr>
+            `;
+            const btn = document.getElementById('btn-trigger-login');
+            if (btn) btn.onclick = () => openModal('sst-auth-modal');
+        }
+
+        function unlockConsoleView(identifier) {
+            statusBeacon.className = "status-beacon";
+            consoleStatusText.textContent = "INSTITUTE REGISTRY // VERIFIED ADMINISTRATIVE ACCESS";
+            userDisplayLabel.textContent = identifier.split('@')[0].toUpperCase();
+            profileDrawerMenu.innerHTML = `
+                <a href="javascript:void(0)" class="sst-nav-link" id="btn-export-rows">Export Registry CSV</a>
+                <a href="javascript:void(0)" class="sst-nav-link" id="btn-logout" style="color: #ff3344;">Log Out</a>
+            `;
+            document.getElementById('btn-logout').onclick = async () => {
+                await supa.auth.signOut();
+                window.location.reload();
+            };
+            document.getElementById('btn-export-rows').onclick = exportRegistryCSV;
+        }
+
+        async function fetchRegistry() {
+            consoleStatusText.textContent = "SYNCHRONIZING WITH SUPABASE...";
+            try {
+                const { data, error } = await supa
+                    .from('profiles')
+                    .select('*')
+                    .eq('role', 'student')
+                    .eq('institute_id', currentInstituteId)
+                    .order('display_id', { ascending: true });
+
+                if (error) throw error;
+                studentRecords = data || [];
+                labelActiveCount.textContent = `${studentRecords.length} STUDENTS LOADED`;
+
+                // Aggregate unique custom column names
+                const colSet = new Set(customColumnsList);
+                studentRecords.forEach(s => {
+                    if (s.custom_columns && typeof s.custom_columns === 'object') {
+                        Object.keys(s.custom_columns).forEach(k => colSet.add(k));
+                    }
+                });
+                customColumnsList = Array.from(colSet);
+                labelColCount.textContent = `${8 + customColumnsList.length + 4} COLUMNS ACTIVE`;
+
+                renderCustomHeaders();
+                renderTableBody();
+                initColumnResizers();
+                consoleStatusText.textContent = "INSTITUTE REGISTRY // VERIFIED ADMINISTRATIVE ACCESS";
+            } catch (err) {
+                console.error("Registry fetch error:", err);
+                consoleStatusText.textContent = "SYNC ERROR: " + err.message;
+            }
+        }
+
+        // --- 2. HEADER & TABLE BODY RENDERING ---
+        function renderCustomHeaders() {
+            document.querySelectorAll('.dynamic-th').forEach(el => el.remove());
+            
+            customColumnsList.forEach(colName => {
+                const th = document.createElement('th');
+                th.className = 'dynamic-th';
+                th.style.width = '180px';
+                th.textContent = colName.toUpperCase();
+                tableHeaderRow.insertBefore(th, thAddColAnchor);
+            });
+        }
+
+        function renderTableBody() {
+            studentTableBody.innerHTML = '';
+            if (studentRecords.length === 0) {
+                studentTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="${9 + customColumnsList.length}" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            No students registered under this institutional account.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            studentRecords.forEach(student => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', student.id);
+
+                let gText = "No Guardians";
+                if (Array.isArray(student.guardian_data) && student.guardian_data.length > 0) {
+                    gText = student.guardian_data.map(g => `${g.fullName || 'Contact'} (${g.tel || g.email || 'N/A'})`).join(' | ');
+                }
+
+                let sText = "No Subjects";
+                if (Array.isArray(student.subject_data) && student.subject_data.length > 0) {
+                    sText = student.subject_data.map(sb => `${sb.subject || 'Course'} (${sb.teacher || 'Unassigned'})`).join(' | ');
+                }
+
+                const isAct = student.account_status === 'ACTIVE';
+
+                let rowHTML = `
+                    <td class="clickable-cell" onclick="openCoreOverlay('${student.id}')" style="color: var(--gold-accent); font-weight: bold;">${student.display_id || 'STU-NEW'}</td>
+                    <td class="clickable-cell" onclick="openCoreOverlay('${student.id}')">${student.full_name || '—'}</td>
+                    <td class="clickable-cell" onclick="openCoreOverlay('${student.id}')" style="color: #ffaa44;">${student.student_password_plain || '••••••••'}</td>
+                    <td class="clickable-cell" onclick="openCoreOverlay('${student.id}')">${student.grade || '—'}</td>
+                    <td class="clickable-cell" onclick="openCoreOverlay('${student.id}')">${student.cohort_tag || '—'}</td>
+                    <td class="clickable-cell" onclick="openGuardianOverlay('${student.id}')" title="${gText}">${gText}</td>
+                    <td class="clickable-cell" onclick="openSubjectsOverlay('${student.id}')" title="${sText}">${sText}</td>
+                    
+                    <!-- ACTIONS BUTTON CLUSTER: DE/ACTIVATE | ARCHIVE | DELETE | STATS -->
+                    <td>
+                        <div class="action-cell-group">
+                            <button type="button" class="btn-cell-action ${isAct ? 'btn-action-deactivate' : 'btn-action-activate'}" onclick="toggleStudentActivation('${student.id}', '${student.account_status}')">
+                                ${isAct ? 'DEACTIVATE' : 'ACTIVATE'}
+                            </button>
+                            <button type="button" class="btn-cell-action btn-action-archive" onclick="promptActionConfirm('${student.id}', 'ARCHIVE')">ARCHIVE</button>
+                            <button type="button" class="btn-cell-action btn-action-delete" onclick="promptActionConfirm('${student.id}', 'DELETE')">DELETE</button>
+                            <a href="student-stats.html?student_id=${student.id}" target="_blank" class="btn-cell-action btn-action-stats">STATS</a>
+                        </div>
+                    </td>
+                `;
+
+                customColumnsList.forEach(colKey => {
+                    const val = (student.custom_columns && student.custom_columns[colKey]) ? JSON.stringify(student.custom_columns[colKey]) : '—';
+                    rowHTML += `<td class="clickable-cell" onclick="openCustomColOverlay('${student.id}', '${colKey}')">${val}</td>`;
+                });
+
+                rowHTML += `<td></td>`;
+                tr.innerHTML = rowHTML;
+                fragment.appendChild(tr);
+            });
+
+            studentTableBody.appendChild(fragment);
+            synchronizeTrackWidths();
+            updateFloatingScrollVisibility();
+        }
+
+        // --- 3. CORE POPUP OVERLAY (Static Read -> Editable Form -> Save) ---
+        window.openCoreOverlay = function(studentId) {
+            activeStudent = studentRecords.find(s => s.id === studentId);
+            if (!activeStudent) return;
+
+            document.getElementById('core-modal-id-tag').textContent = `[ ${activeStudent.display_id || ''} ]`;
+            document.getElementById('core-input-display-id').value = activeStudent.display_id || '';
+            document.getElementById('core-input-full-name').value = activeStudent.full_name || '';
+            document.getElementById('core-input-password').value = activeStudent.student_password_plain || '';
+            document.getElementById('core-input-grade').value = activeStudent.grade || '';
+            document.getElementById('core-input-cohort').value = activeStudent.cohort_tag || '';
+
+            setCoreModalEditable(false);
+            openModal('modal-core-student');
+        };
+
+        function setCoreModalEditable(isEditable) {
+            const inputs = [
+                'core-input-display-id', 'core-input-full-name', 
+                'core-input-password', 'core-input-grade', 'core-input-cohort'
+            ];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (isEditable) {
+                    el.removeAttribute('readonly');
+                } else {
+                    el.setAttribute('readonly', 'true');
+                }
+            });
+
+            document.getElementById('btn-core-edit-toggle').style.display = isEditable ? 'none' : 'inline-block';
+            document.getElementById('btn-core-save').style.display = isEditable ? 'inline-block' : 'none';
+        }
+
+        document.getElementById('btn-core-edit-toggle').onclick = () => setCoreModalEditable(true);
+
+        document.getElementById('btn-core-save').onclick = async () => {
+            if (!activeStudent) return;
+
+            const payload = {
+                display_id: document.getElementById('core-input-display-id').value.trim(),
+                full_name: document.getElementById('core-input-full-name').value.trim(),
+                student_password_plain: document.getElementById('core-input-password').value.trim(),
+                grade: document.getElementById('core-input-grade').value.trim(),
+                cohort_tag: document.getElementById('core-input-cohort').value.trim()
+            };
+
+            const { error } = await supa
+                .from('profiles')
+                .update(payload)
+                .eq('id', activeStudent.id);
+
+            if (error) {
+                alert("Failed to save student profile: " + error.message);
+            } else {
+                closeModal('modal-core-student');
+                fetchRegistry();
+            }
+        };
+
+        // --- 4. GUARDIAN OVERLAY (Multi-Set Management) ---
+        window.openGuardianOverlay = function(studentId) {
+            activeStudent = studentRecords.find(s => s.id === studentId);
+            if (!activeStudent) return;
+
+            document.getElementById('guardian-modal-id-tag').textContent = `[ ${activeStudent.display_id || ''} ]`;
+            const container = document.getElementById('guardian-sets-container');
+            container.innerHTML = '';
+
+            const list = Array.isArray(activeStudent.guardian_data) && activeStudent.guardian_data.length > 0 
+                ? activeStudent.guardian_data 
+                : [{ fullName: '', tel: '', email: '', physicalAddress: '' }];
+
+            list.forEach(item => appendGuardianSetBlock(item, false));
+            setGuardianModalEditable(false);
+            openModal('modal-guardian');
+        };
+
+        function appendGuardianSetBlock(data = {}, isEditable = false) {
+            const container = document.getElementById('guardian-sets-container');
+            const block = document.createElement('div');
+            block.className = 'form-set-block guardian-set-block';
+            block.innerHTML = `
+                <button type="button" class="btn-remove-set" style="display: ${isEditable ? 'block' : 'none'};" onclick="this.parentElement.remove()">✕</button>
+                <input type="text" placeholder="Full Name" value="${data.fullName || ''}" class="text-font-dropdown g-name" ${isEditable ? '' : 'readonly'} />
+                <input type="text" placeholder="Telephone Number" value="${data.tel || ''}" class="text-font-dropdown g-tel" ${isEditable ? '' : 'readonly'} />
+                <input type="email" placeholder="Email Address" value="${data.email || ''}" class="text-font-dropdown g-email" ${isEditable ? '' : 'readonly'} />
+                <input type="text" placeholder="Physical Address" value="${data.physicalAddress || ''}" class="text-font-dropdown g-addr" ${isEditable ? '' : 'readonly'} />
+            `;
+            container.appendChild(block);
+        }
+
+        function setGuardianModalEditable(isEditable) {
+            document.querySelectorAll('.guardian-set-block input').forEach(input => {
+                if (isEditable) input.removeAttribute('readonly');
+                else input.setAttribute('readonly', 'true');
+            });
+            document.querySelectorAll('.guardian-set-block .btn-remove-set').forEach(btn => {
+                btn.style.display = isEditable ? 'block' : 'none';
+            });
+            document.getElementById('btn-add-guardian-set').style.display = isEditable ? 'block' : 'none';
+            document.getElementById('btn-guardian-edit-toggle').style.display = isEditable ? 'none' : 'inline-block';
+            document.getElementById('btn-guardian-save').style.display = isEditable ? 'inline-block' : 'none';
+        }
+
+        document.getElementById('btn-guardian-edit-toggle').onclick = () => setGuardianModalEditable(true);
+        document.getElementById('btn-add-guardian-set').onclick = () => appendGuardianSetBlock({}, true);
+
+        document.getElementById('btn-guardian-save').onclick = async () => {
+            if (!activeStudent) return;
+            const blocks = document.querySelectorAll('.guardian-set-block');
+            const updated = [];
+
+            blocks.forEach(b => {
+                const fullName = b.querySelector('.g-name').value.trim();
+                const tel = b.querySelector('.g-tel').value.trim();
+                const email = b.querySelector('.g-email').value.trim();
+                const physicalAddress = b.querySelector('.g-addr').value.trim();
+                if (fullName || tel || email || physicalAddress) {
+                    updated.push({ fullName, tel, email, physicalAddress });
+                }
+            });
+
+            const { error } = await supa
+                .from('profiles')
+                .update({ guardian_data: updated })
+                .eq('id', activeStudent.id);
+
+            if (error) {
+                alert("Failed to update guardian set: " + error.message);
+            } else {
+                closeModal('modal-guardian');
+                fetchRegistry();
+            }
+        };
+
+        // --- 5. SUBJECTS / TEACHERS OVERLAY ---
+        window.openSubjectsOverlay = function(studentId) {
+            activeStudent = studentRecords.find(s => s.id === studentId);
+            if (!activeStudent) return;
+
+            document.getElementById('subject-modal-id-tag').textContent = `[ ${activeStudent.display_id || ''} ]`;
+            const container = document.getElementById('subject-sets-container');
+            container.innerHTML = '';
+
+            const list = Array.isArray(activeStudent.subject_data) && activeStudent.subject_data.length > 0 
+                ? activeStudent.subject_data 
+                : [{ subject: '', teacher: '' }];
+
+            list.forEach(item => appendSubjectSetBlock(item, false));
+            setSubjectModalEditable(false);
+            openModal('modal-subjects');
+        };
+
+        function appendSubjectSetBlock(data = {}, isEditable = false) {
+            const container = document.getElementById('subject-sets-container');
+            const block = document.createElement('div');
+            block.className = 'form-set-block subject-set-block';
+            block.innerHTML = `
+                <button type="button" class="btn-remove-set" style="display: ${isEditable ? 'block' : 'none'};" onclick="this.parentElement.remove()">✕</button>
+                <div class="input-with-arrow">
+                    <input type="text" placeholder="Subject Name" value="${data.subject || ''}" class="text-font-dropdown s-subject" ${isEditable ? '' : 'readonly'} />
+                    <button type="button" class="btn-down-arrow" title="Select pre-entered subject" onclick="alert('Subject selector dropdown linked.')">▼</button>
+                </div>
+                <div class="input-with-arrow">
+                    <input type="text" placeholder="Assigned Teacher" value="${data.teacher || ''}" class="text-font-dropdown s-teacher" ${isEditable ? '' : 'readonly'} />
+                    <button type="button" class="btn-down-arrow" title="Select registered teacher" onclick="alert('Teacher selector dropdown linked.')">▼</button>
+                </div>
+            `;
+            container.appendChild(block);
+        }
+
+        function setSubjectModalEditable(isEditable) {
+            document.querySelectorAll('.subject-set-block input').forEach(input => {
+                if (isEditable) input.removeAttribute('readonly');
+                else input.setAttribute('readonly', 'true');
+            });
+            document.querySelectorAll('.subject-set-block .btn-remove-set').forEach(btn => {
+                btn.style.display = isEditable ? 'block' : 'none';
+            });
+            document.getElementById('btn-add-subject-set').style.display = isEditable ? 'block' : 'none';
+            document.getElementById('btn-subject-edit-toggle').style.display = isEditable ? 'none' : 'inline-block';
+            document.getElementById('btn-subject-save').style.display = isEditable ? 'inline-block' : 'none';
+        }
+
+        document.getElementById('btn-subject-edit-toggle').onclick = () => setSubjectModalEditable(true);
+        document.getElementById('btn-add-subject-set').onclick = () => appendSubjectSetBlock({}, true);
+
+        document.getElementById('btn-subject-save').onclick = async () => {
+            if (!activeStudent) return;
+            const blocks = document.querySelectorAll('.subject-set-block');
+            const updated = [];
+
+            blocks.forEach(b => {
+                const subject = b.querySelector('.s-subject').value.trim();
+                const teacher = b.querySelector('.s-teacher').value.trim();
+                if (subject || teacher) {
+                    updated.push({ subject, teacher });
+                }
+            });
+
+            const { error } = await supa
+                .from('profiles')
+                .update({ subject_data: updated })
+                .eq('id', activeStudent.id);
+
+            if (error) {
+                alert("Failed to save subjects/teachers: " + error.message);
+            } else {
+                closeModal('modal-subjects');
+                fetchRegistry();
+            }
+        };
+
+        // --- 6. ACTION HANDLERS: DE/ACTIVATE, ARCHIVE, DELETE ---
+        window.toggleStudentActivation = async function(studentId, currentStatus) {
+            const nextStatus = currentStatus === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
+            const { error } = await supa
+                .from('profiles')
+                .update({ account_status: nextStatus })
+                .eq('id', studentId);
+
+            if (error) {
+                alert("Status modification error: " + error.message);
+            } else {
+                fetchRegistry();
+            }
+        };
+
+        window.promptActionConfirm = function(studentId, actionType) {
+            activeActionStudentId = studentId;
+            activeActionType = actionType;
+            const q = actionType === 'ARCHIVE' ? "Do you want to archive?" : "Do you want to delete?";
+            document.getElementById('confirm-modal-title').textContent = `${actionType} STUDENT RECORD`;
+            document.getElementById('confirm-modal-question').textContent = q;
+            openModal('modal-action-confirm');
+        };
+
+        document.getElementById('btn-confirm-action-yes').onclick = async () => {
+            if (!activeActionStudentId || !activeActionType) return;
+
+            const targetStatus = activeActionType === 'ARCHIVE' ? 'SUSPENDED' : 'PENDING';
+            const { error } = await supa
+                .from('profiles')
+                .update({ account_status: targetStatus })
+                .eq('id', activeActionStudentId);
+
+            if (error) {
+                alert(`Action error: ${error.message}`);
+            } else {
+                closeModal('modal-action-confirm');
+                fetchRegistry();
+            }
+        };
+
+        // --- 7. DYNAMIC ADD COLUMN & CUSTOM CELL OVERLAY ---
+        document.getElementById('btn-open-add-col-prompt').onclick = () => {
+            document.getElementById('input-new-column-title').value = '';
+            openModal('modal-add-column-prompt');
+        };
+
+        document.getElementById('btn-confirm-add-column').onclick = () => {
+            const name = document.getElementById('input-new-column-title').value.trim();
+            if (!name) return;
+
+            if (!customColumnsList.includes(name)) {
+                customColumnsList.push(name);
+            }
+            closeModal('modal-add-column-prompt');
+            renderCustomHeaders();
+            renderTableBody();
+            initColumnResizers();
+        };
+
+        window.openCustomColOverlay = function(studentId, colKey) {
+            activeStudent = studentRecords.find(s => s.id === studentId);
+            activeCustomColKey = colKey;
+            if (!activeStudent) return;
+
+            document.getElementById('custom-modal-title').textContent = `${colKey.toUpperCase()} RECORD`;
+            document.getElementById('custom-modal-id-tag').textContent = `[ ${activeStudent.display_id || ''} ]`;
+            
+            const container = document.getElementById('custom-fields-container');
+            container.innerHTML = '';
+
+            const currentVal = (activeStudent.custom_columns && activeStudent.custom_columns[colKey]) ? activeStudent.custom_columns[colKey] : '';
+            appendCustomFieldInput(currentVal, false);
+
+            setCustomModalEditable(false);
+            openModal('modal-custom-col-view');
+        };
+
+        function appendCustomFieldInput(val = '', isEditable = false) {
+            const container = document.getElementById('custom-fields-container');
+            const div = document.createElement('div');
+            div.className = 'custom-field-row';
+            div.style.display = 'flex';
+            div.style.gap = '6px';
+            div.innerHTML = `
+                <input type="text" value="${typeof val === 'object' ? JSON.stringify(val) : val}" class="text-font-dropdown custom-val-input" ${isEditable ? '' : 'readonly'} />
+                ${isEditable ? '<button type="button" class="btn-remove-set" style="position:static;" onclick="this.parentElement.remove()">✕</button>' : ''}
+            `;
+            container.appendChild(div);
+        }
+
+        function setCustomModalEditable(isEditable) {
+            document.querySelectorAll('.custom-field-row input').forEach(input => {
+                if (isEditable) input.removeAttribute('readonly');
+                else input.setAttribute('readonly', 'true');
+            });
+            document.getElementById('btn-add-custom-field-row').style.display = isEditable ? 'block' : 'none';
+            document.getElementById('btn-custom-edit-toggle').style.display = isEditable ? 'none' : 'inline-block';
+            document.getElementById('btn-custom-save').style.display = isEditable ? 'inline-block' : 'none';
+        }
+
+        document.getElementById('btn-custom-edit-toggle').onclick = () => setCustomModalEditable(true);
+        document.getElementById('btn-add-custom-field-row').onclick = () => appendCustomFieldInput('', true);
+
+        document.getElementById('btn-custom-save').onclick = async () => {
+            if (!activeStudent || !activeCustomColKey) return;
+            const inputs = document.querySelectorAll('.custom-val-input');
+            let finalVal;
+
+            if (inputs.length <= 1) {
+                finalVal = inputs[0] ? inputs[0].value.trim() : '';
+            } else {
+                finalVal = Array.from(inputs).map(inp => inp.value.trim()).filter(Boolean);
+            }
+
+            const updatedColumns = { ...(activeStudent.custom_columns || {}), [activeCustomColKey]: finalVal };
+
+            const { error } = await supa
+                .from('profiles')
+                .update({ custom_columns: updatedColumns })
+                .eq('id', activeStudent.id);
+
+            if (error) {
+                alert("Failed to save column data: " + error.message);
+            } else {
+                closeModal('modal-custom-col-view');
+                fetchRegistry();
+            }
+        };
+
+        // --- 8. DRAG-ADJUSTABLE COLUMN RESIZING ENGINE ---
+        function initColumnResizers() {
+            const table = document.getElementById('student-data-table');
+            const cols = table.querySelectorAll('thead th');
+
+            cols.forEach(th => {
+                const existing = th.querySelector('.resizer');
+                if (existing) existing.remove();
+
+                if (th.id === 'th-add-col-anchor') return;
+
+                const resizer = document.createElement('div');
+                resizer.className = 'resizer';
+                th.appendChild(resizer);
+
+                let startX = 0;
+                let startWidth = 0;
+
+                resizer.addEventListener('mousedown', (e) => {
+                    startX = e.pageX;
+                    startWidth = th.offsetWidth;
+                    resizer.classList.add('resizing');
+
+                    const onMouseMove = (moveEvent) => {
+                        const newWidth = Math.max(startWidth + (moveEvent.pageX - startX), 70);
+                        th.style.width = newWidth + 'px';
+                        synchronizeTrackWidths();
+                    };
+
+                    const onMouseUp = () => {
+                        resizer.classList.remove('resizing');
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            });
+        }
+
+        // --- 9. SHUTTER & SCROLL SYNCHRONIZATION ---
+        const topScrollRunner = document.getElementById('top-scroll-runner');
+        const topScrollPhantom = document.getElementById('top-scroll-phantom');
+        const floatingScrollDock = document.getElementById('floating-scroll-dock');
+        const floatingScrollRunner = document.getElementById('floating-scroll-runner');
+        const floatingScrollPhantom = document.getElementById('floating-scroll-phantom');
+        const gridScrollContainer = document.getElementById('grid-scroll-container');
+        const dataTable = document.getElementById('student-data-table');
+        const portalViewport = document.getElementById('portal-sunken-viewport');
+
+        function synchronizeTrackWidths() {
+            if (dataTable) {
+                const fullWidth = dataTable.scrollWidth + 'px';
+                if (topScrollPhantom) topScrollPhantom.style.width = fullWidth;
+                if (floatingScrollPhantom) floatingScrollPhantom.style.width = fullWidth;
+            }
+        }
+
+        let isSyncing = false;
+        function syncScroll(source, targets) {
+            if (isSyncing) return;
+            isSyncing = true;
+            const x = source.scrollLeft;
+            targets.forEach(t => { if (t) t.scrollLeft = x; });
+            requestAnimationFrame(() => { isSyncing = false; });
+        }
+
+        topScrollRunner.addEventListener('scroll', () => syncScroll(topScrollRunner, [gridScrollContainer, floatingScrollRunner]));
+        gridScrollContainer.addEventListener('scroll', () => syncScroll(gridScrollContainer, [topScrollRunner, floatingScrollRunner]));
+        floatingScrollRunner.addEventListener('scroll', () => syncScroll(floatingScrollRunner, [gridScrollContainer, topScrollRunner]));
+
+        function updateFloatingScrollVisibility() {
+            if (!portalViewport || !floatingScrollDock) return;
+            const rect = portalViewport.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const tableTopInView = rect.top > windowHeight - 80;
+            const tableBottomInView = rect.bottom <= windowHeight;
+            if (tableTopInView || tableBottomInView) {
+                floatingScrollDock.classList.add('dock-hidden');
+            } else {
+                floatingScrollDock.classList.remove('dock-hidden');
+            }
+        }
+
+        window.addEventListener('scroll', updateFloatingScrollVisibility, { passive: true });
+        window.addEventListener('resize', () => {
+            synchronizeTrackWidths();
+            updateFloatingScrollVisibility();
+        });
+
+        // Workstation Shutter Dynamics
+        const shutterHeader = document.getElementById('workstation-shutter-header');
+        let shutterIdleTimer = null;
+
+        function collapseShutter() {
+            if (shutterHeader) {
+                shutterHeader.classList.add('shutter-collapsed');
+                document.documentElement.style.setProperty('--current-shutter-height', 'var(--shutter-height-collapsed)');
+            }
+        }
+
+        function expandShutter() {
+            if (shutterHeader) {
+                shutterHeader.classList.remove('shutter-collapsed');
+                document.documentElement.style.setProperty('--current-shutter-height', 'var(--shutter-height-open)');
+            }
+        }
+
+        function resetShutterIdleTimer() {
+            clearTimeout(shutterIdleTimer);
+            shutterIdleTimer = setTimeout(collapseShutter, 2500);
+        }
+
+        if (shutterHeader) {
+            shutterHeader.addEventListener('mouseenter', () => { clearTimeout(shutterIdleTimer); expandShutter(); });
+            shutterHeader.addEventListener('mouseleave', resetShutterIdleTimer);
+            shutterHeader.addEventListener('click', () => {
+                if (shutterHeader.classList.contains('shutter-collapsed')) expandShutter();
+            });
+            resetShutterIdleTimer();
+        }
+
+        // --- 10. AUTH & DRAWER LISTENERS ---
+        const btnAuthSubmit = document.getElementById('btn-auth-submit');
+        if (btnAuthSubmit) {
+            btnAuthSubmit.addEventListener('click', async () => {
+                const email = document.getElementById('auth-input-email').value.trim().toLowerCase();
+                const pass = document.getElementById('auth-input-password').value.trim();
+                const authError = document.getElementById('auth-error-msg');
+                authError.textContent = "";
+
+                if (!email || !pass) {
+                    authError.textContent = "Please enter institutional email and password.";
+                    return;
+                }
+
+                btnAuthSubmit.textContent = "VERIFYING CLEARANCE...";
+                try {
+                    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+                    if (error) throw error;
+
+                    const isAuthorized = await verifyInstituteRole(data.session);
+                    if (isAuthorized) {
+                        closeModal('sst-auth-modal');
+                    }
+                } catch (err) {
+                    authError.textContent = err.message;
+                } finally {
+                    btnAuthSubmit.textContent = "AUTHENTICATE INSTITUTE";
+                }
+            });
+        }
+
+        const leftDrawer = document.querySelector('.menu-left .drawer-wrapper');
+        const rightDrawer = document.querySelector('.menu-right .drawer-wrapper');
+        const burgerTrigger = document.querySelector('.menu-left .menu-trigger');
+        const userProfileTrigger = document.getElementById('comparator-user-profile-trigger');
+
+        if (burgerTrigger && leftDrawer) {
+            burgerTrigger.onclick = (e) => {
+                e.stopPropagation();
+                leftDrawer.classList.toggle('drawer-open');
+                if (rightDrawer) rightDrawer.classList.remove('drawer-open');
+            };
+        }
+
+        if (userProfileTrigger && rightDrawer) {
+            userProfileTrigger.onclick = (e) => {
+                e.stopPropagation();
+                rightDrawer.classList.toggle('drawer-open');
+                if (leftDrawer) leftDrawer.classList.remove('drawer-open');
+            };
+        }
+
+        document.addEventListener('click', () => {
+            if (leftDrawer) leftDrawer.classList.remove('drawer-open');
+            if (rightDrawer) rightDrawer.classList.remove('drawer-open');
+        });
+
+        function exportRegistryCSV() {
+            if (!studentRecords.length) {
+                alert("No records loaded.");
+                return;
+            }
+            const headers = ["STUDENT ID", "STUDENT NAME", "PASSWORD", "GRADE", "COHORT", "STATUS", ...customColumnsList];
+            const rows = studentRecords.map(s => {
+                const base = [
+                    s.display_id || '',
+                    `"${(s.full_name || '').replace(/"/g, '""')}"`,
+                    s.student_password_plain || '',
+                    s.grade || '',
+                    s.cohort_tag || '',
+                    s.account_status || ''
+                ];
+                const customs = customColumnsList.map(k => `"${((s.custom_columns && s.custom_columns[k]) || '').toString().replace(/"/g, '""')}"`);
+                return [...base, ...customs].join(',');
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+            const link = document.createElement('a');
+            link.setAttribute('href', encodeURI(csvContent));
+            link.setAttribute('download', `SST_Student_Registry_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (supa) {
+                const { data: { session } } = await supa.auth.getSession();
+                verifyInstituteRole(session);
+                supa.auth.onAuthStateChange((_event, session) => verifyInstituteRole(session));
+            } else {
+                lockConsoleView("SUPABASE CLIENT UNAVAILABLE");
+            }
+        });
+    </script>
+</body>
+</html>
